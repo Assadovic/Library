@@ -19,8 +19,6 @@ namespace Library.Net.Outopos
 
         private Settings _settings;
 
-        private WatchTimer _watchTimer;
-
         private ManagerState _state = ManagerState.Stop;
 
         private const HashAlgorithm _hashAlgorithm = HashAlgorithm.Sha256;
@@ -36,273 +34,360 @@ namespace Library.Net.Outopos
 
             _settings = new Settings(this.ThisLock);
 
-            _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
+            _connectionsManager.GetLockSignaturesEvent = (object sender) =>
+            {
+                return this.SearchSignatures;
+            };
+
+            _connectionsManager.GetLockWikisEvent = (object sender) =>
+            {
+                return this.SearchWikis;
+            };
+
+            _connectionsManager.GetLockChatsEvent = (object sender) =>
+            {
+                return this.SearchChats;
+            };
         }
 
-        private void WatchTimer()
+        public IEnumerable<string> SearchSignatures
         {
-            lock (this.ThisLock)
+            get
             {
-                if (this.State == ManagerState.Stop) return;
-
-                var now = DateTime.UtcNow;
-
-                foreach (var item in _settings.LifeSpans.ToArray())
+                lock (this.ThisLock)
                 {
-                    if ((now - item.Value) > new TimeSpan(64, 0, 0, 0))
-                    {
-                        _cacheManager.Unlock(item.Key);
-                        _settings.LifeSpans.Remove(item.Key);
-                    }
+                    return _settings.Signatures.ToArray();
                 }
             }
         }
 
-        public Profile GetMessage(ProfileMetadata metadata)
+        public IEnumerable<Wiki> SearchWikis
         {
-            if (metadata == null) throw new ArgumentNullException("metadata");
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _settings.Wikis.ToArray();
+                }
+            }
+        }
 
+        public IEnumerable<Chat> SearchChats
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _settings.Chats.ToArray();
+                }
+            }
+        }
+
+        public void SetSearchSignatures(IEnumerable<string> signatures)
+        {
             lock (this.ThisLock)
             {
-                if (!_cacheManager.Contains(metadata.Key))
+                lock (_settings.Signatures.ThisLock)
                 {
-                    _connectionsManager.Download(metadata.Key);
-
-                    return null;
+                    _settings.Signatures.Clear();
+                    _settings.Signatures.UnionWith(new SignatureCollection(signatures));
                 }
-                else
+            }
+        }
+
+        public void SetSearchWikis(IEnumerable<Wiki> wikis)
+        {
+            lock (this.ThisLock)
+            {
+                lock (_settings.Wikis.ThisLock)
                 {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
+                    _settings.Wikis.Clear();
+                    _settings.Wikis.UnionWith(new WikiCollection(wikis));
+                }
+            }
+        }
 
-                    try
+        public void SetSearchChats(IEnumerable<Chat> chats)
+        {
+            lock (this.ThisLock)
+            {
+                lock (_settings.Chats.ThisLock)
+                {
+                    _settings.Chats.Clear();
+                    _settings.Chats.UnionWith(new ChatCollection(chats));
+                }
+            }
+        }
+
+        public IEnumerable<Profile> GetProfiles()
+        {
+            lock (this.ThisLock)
+            {
+                var profiles = new Dictionary<string, Profile>();
+
+                foreach (var signature in this.SearchSignatures)
+                {
+                    var metadata = _connectionsManager.GetProfileMetadata(signature);
+                    if (metadata == null) continue;
+
+                    if (!_cacheManager.Contains(metadata.Key))
                     {
-                        buffer = _cacheManager[metadata.Key];
-
-                        var message = ContentConverter.FromProfileBlock(buffer);
-
-                        if (metadata.CreationTime != message.CreationTime
-                            || metadata.Certificate.ToString() != message.Certificate.ToString()) return null;
-
-                        this.Lock(metadata.Key);
-
-                        return message;
+                        _connectionsManager.Download(metadata.Key);
                     }
-                    catch (Exception)
+                    else
                     {
+                        ArraySegment<byte> buffer = new ArraySegment<byte>();
 
-                    }
-                    finally
-                    {
-                        if (buffer.Array != null)
+                        try
                         {
-                            _bufferManager.ReturnBuffer(buffer.Array);
+                            buffer = _cacheManager[metadata.Key];
+
+                            var package = ContentConverter.FromProfileBlock(buffer);
+
+                            if (metadata.CreationTime != package.CreationTime
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            profiles[signature] = package;
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                        finally
+                        {
+                            if (buffer.Array != null)
+                            {
+                                _bufferManager.ReturnBuffer(buffer.Array);
+                            }
                         }
                     }
-
-                    return null;
                 }
+
+                foreach (var signature in this.SearchSignatures)
+                {
+                    if (!profiles.ContainsKey(signature) && _settings.Profiles.ContainsKey(signature))
+                    {
+                        profiles[signature] = _settings.Profiles[signature];
+                    }
+                }
+
+                _settings.Profiles.Clear();
+
+                foreach (var pair in profiles)
+                {
+                    _settings.Profiles.Add(pair.Key, pair.Value);
+                }
+
+                return _settings.Profiles.Values;
             }
         }
 
-        public SignatureMessage GetMessage(SignatureMessageMetadata metadata, ExchangePrivateKey exchangePrivateKey)
+        public IEnumerable<SignatureMessage> GetSignatureMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
         {
-            if (metadata == null) throw new ArgumentNullException("metadata");
+            if (signature == null) throw new ArgumentNullException("signature");
             if (exchangePrivateKey == null) throw new ArgumentNullException("exchangePrivateKey");
 
             lock (this.ThisLock)
             {
-                if (!_cacheManager.Contains(metadata.Key))
+                if (!_settings.Signatures.Contains(signature)) return new SignatureMessage[0];
+
+                var signatureMessages = new List<SignatureMessage>();
+
+                foreach (var metadata in _connectionsManager.GetSignatureMessageMetadatas(signature))
                 {
-                    _connectionsManager.Download(metadata.Key);
+                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
-                    return null;
-                }
-                else
-                {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
-
-                    try
+                    if (!_cacheManager.Contains(metadata.Key))
                     {
-                        buffer = _cacheManager[metadata.Key];
-
-                        var message = ContentConverter.FromSignatureMessageBlock(buffer, exchangePrivateKey);
-
-                        if (metadata.Signature != message.Signature
-                            || metadata.CreationTime != message.CreationTime
-                            || metadata.Certificate.ToString() != message.Certificate.ToString()) return null;
-
-                        this.Lock(metadata.Key);
-
-                        return message;
+                        _connectionsManager.Download(metadata.Key);
                     }
-                    catch (Exception)
+                    else
                     {
+                        ArraySegment<byte> buffer = new ArraySegment<byte>();
 
-                    }
-                    finally
-                    {
-                        if (buffer.Array != null)
+                        try
                         {
-                            _bufferManager.ReturnBuffer(buffer.Array);
+                            buffer = _cacheManager[metadata.Key];
+
+                            var package = ContentConverter.FromSignatureMessageBlock(buffer, exchangePrivateKey);
+
+                            if (metadata.Signature != package.Signature
+                                || metadata.CreationTime != package.CreationTime
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            signatureMessages.Add(package);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                        finally
+                        {
+                            if (buffer.Array != null)
+                            {
+                                _bufferManager.ReturnBuffer(buffer.Array);
+                            }
                         }
                     }
-
-                    return null;
                 }
+
+                return signatureMessages;
             }
         }
 
-        public WikiDocument GetMessage(WikiDocumentMetadata metadata)
+        public IEnumerable<WikiDocument> GetWikiDocuments(Wiki tag, int limit)
         {
-            if (metadata == null) throw new ArgumentNullException("metadata");
+            if (tag == null) throw new ArgumentNullException("tag");
 
             lock (this.ThisLock)
             {
-                if (!_cacheManager.Contains(metadata.Key))
+                if (!_settings.Wikis.Contains(tag)) return new WikiDocument[0];
+
+                var wikiDocuments = new List<WikiDocument>();
+
+                foreach (var metadata in _connectionsManager.GetWikiDocumentMetadatas(tag))
                 {
-                    _connectionsManager.Download(metadata.Key);
+                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
-                    return null;
-                }
-                else
-                {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
-
-                    try
+                    if (!_cacheManager.Contains(metadata.Key))
                     {
-                        buffer = _cacheManager[metadata.Key];
-
-                        var message = ContentConverter.FromWikiDocumentBlock(buffer);
-
-                        if (metadata.Tag != message.Tag
-                            || metadata.CreationTime != message.CreationTime
-                            || metadata.Certificate.ToString() != message.Certificate.ToString()) return null;
-
-                        this.Lock(metadata.Key);
-
-                        return message;
+                        _connectionsManager.Download(metadata.Key);
                     }
-                    catch (Exception)
+                    else
                     {
+                        ArraySegment<byte> buffer = new ArraySegment<byte>();
 
-                    }
-                    finally
-                    {
-                        if (buffer.Array != null)
+                        try
                         {
-                            _bufferManager.ReturnBuffer(buffer.Array);
+                            buffer = _cacheManager[metadata.Key];
+
+                            var package = ContentConverter.FromWikiDocumentBlock(buffer);
+
+                            if (metadata.Tag != package.Tag
+                                || metadata.CreationTime != package.CreationTime
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            wikiDocuments.Add(package);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                        finally
+                        {
+                            if (buffer.Array != null)
+                            {
+                                _bufferManager.ReturnBuffer(buffer.Array);
+                            }
                         }
                     }
-
-                    return null;
                 }
+
+                return wikiDocuments;
             }
         }
 
-        public ChatTopic GetMessage(ChatTopicMetadata metadata)
+        public IEnumerable<ChatTopic> GetChatTopics(Chat tag, int limit)
         {
-            if (metadata == null) throw new ArgumentNullException("metadata");
+            if (tag == null) throw new ArgumentNullException("tag");
 
             lock (this.ThisLock)
             {
-                if (!_cacheManager.Contains(metadata.Key))
+                if (!_settings.Chats.Contains(tag)) return new ChatTopic[0];
+
+                var chatTopics = new List<ChatTopic>();
+
+                foreach (var metadata in _connectionsManager.GetChatTopicMetadatas(tag))
                 {
-                    _connectionsManager.Download(metadata.Key);
+                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
-                    return null;
-                }
-                else
-                {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
-
-                    try
+                    if (!_cacheManager.Contains(metadata.Key))
                     {
-                        buffer = _cacheManager[metadata.Key];
-
-                        var message = ContentConverter.FromChatTopicBlock(buffer);
-
-                        if (metadata.Tag != message.Tag
-                            || metadata.CreationTime != message.CreationTime
-                            || metadata.Certificate.ToString() != message.Certificate.ToString()) return null;
-
-                        this.Lock(metadata.Key);
-
-                        return message;
+                        _connectionsManager.Download(metadata.Key);
                     }
-                    catch (Exception)
+                    else
                     {
+                        ArraySegment<byte> buffer = new ArraySegment<byte>();
 
-                    }
-                    finally
-                    {
-                        if (buffer.Array != null)
+                        try
                         {
-                            _bufferManager.ReturnBuffer(buffer.Array);
+                            buffer = _cacheManager[metadata.Key];
+
+                            var package = ContentConverter.FromChatTopicBlock(buffer);
+
+                            if (metadata.Tag != package.Tag
+                                || metadata.CreationTime != package.CreationTime
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            chatTopics.Add(package);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                        finally
+                        {
+                            if (buffer.Array != null)
+                            {
+                                _bufferManager.ReturnBuffer(buffer.Array);
+                            }
                         }
                     }
-
-                    return null;
                 }
+
+                return chatTopics;
             }
         }
 
-        public ChatMessage GetMessage(ChatMessageMetadata metadata)
+        public IEnumerable<ChatMessage> GetChatMessages(Chat tag, int limit)
         {
-            if (metadata == null) throw new ArgumentNullException("metadata");
+            if (tag == null) throw new ArgumentNullException("tag");
 
             lock (this.ThisLock)
             {
-                if (!_cacheManager.Contains(metadata.Key))
+                if (!_settings.Chats.Contains(tag)) return new ChatMessage[0];
+
+                var chatMessages = new List<ChatMessage>();
+
+                foreach (var metadata in _connectionsManager.GetChatMessageMetadatas(tag))
                 {
-                    _connectionsManager.Download(metadata.Key);
+                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
-                    return null;
-                }
-                else
-                {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
-
-                    try
+                    if (!_cacheManager.Contains(metadata.Key))
                     {
-                        buffer = _cacheManager[metadata.Key];
-
-                        var message = ContentConverter.FromChatMessageBlock(buffer);
-
-                        if (metadata.Tag != message.Tag
-                            || metadata.CreationTime != message.CreationTime
-                            || metadata.Certificate.ToString() != message.Certificate.ToString()) return null;
-
-                        this.Lock(metadata.Key);
-
-                        return message;
+                        _connectionsManager.Download(metadata.Key);
                     }
-                    catch (Exception)
+                    else
                     {
+                        ArraySegment<byte> buffer = new ArraySegment<byte>();
 
-                    }
-                    finally
-                    {
-                        if (buffer.Array != null)
+                        try
                         {
-                            _bufferManager.ReturnBuffer(buffer.Array);
+                            buffer = _cacheManager[metadata.Key];
+
+                            var package = ContentConverter.FromChatMessageBlock(buffer);
+
+                            if (metadata.Tag != package.Tag
+                                || metadata.CreationTime != package.CreationTime
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            chatMessages.Add(package);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                        finally
+                        {
+                            if (buffer.Array != null)
+                            {
+                                _bufferManager.ReturnBuffer(buffer.Array);
+                            }
                         }
                     }
-
-                    return null;
-                }
-            }
-        }
-
-        private void Lock(Key key)
-        {
-            lock (this.ThisLock)
-            {
-                if (!_settings.LifeSpans.ContainsKey(key))
-                {
-                    _cacheManager.Lock(key);
                 }
 
-                _settings.LifeSpans[key] = DateTime.UtcNow;
+                return chatMessages;
             }
         }
 
@@ -327,8 +412,6 @@ namespace Library.Net.Outopos
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
-
-                    _watchTimer.Change(0, 1000 * 60 * 10);
                 }
             }
         }
@@ -342,8 +425,6 @@ namespace Library.Net.Outopos
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
                 }
-
-                _watchTimer.Change(Timeout.Infinite);
             }
         }
 
@@ -354,11 +435,6 @@ namespace Library.Net.Outopos
             lock (this.ThisLock)
             {
                 _settings.Load(directoryPath);
-
-                foreach (var key in _settings.LifeSpans.Keys)
-                {
-                    _cacheManager.Lock(key);
-                }
             }
         }
 
@@ -378,7 +454,10 @@ namespace Library.Net.Outopos
 
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() { 
-                    new Library.Configuration.SettingContent<Dictionary<Key, DateTime>>() { Name = "LifeSpans", Value = new Dictionary<Key, DateTime>() },
+                    new Library.Configuration.SettingContent<LockedHashSet<string>>() { Name = "Signatures", Value = new LockedHashSet<string>() },
+                    new Library.Configuration.SettingContent<LockedHashSet<Wiki>>() { Name = "Wikis", Value = new LockedHashSet<Wiki>() },
+                    new Library.Configuration.SettingContent<LockedHashSet<Chat>>() { Name = "Chats", Value = new LockedHashSet<Chat>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<string, Profile>>() { Name = "Profiles", Value = new LockedHashDictionary<string, Profile>() },
                 })
             {
                 _thisLock = lockObject;
@@ -400,13 +479,46 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public Dictionary<Key, DateTime> LifeSpans
+            public LockedHashSet<string> Signatures
             {
                 get
                 {
                     lock (_thisLock)
                     {
-                        return (Dictionary<Key, DateTime>)this["LifeSpans"];
+                        return (LockedHashSet<string>)this["Signatures"];
+                    }
+                }
+            }
+
+            public LockedHashSet<Wiki> Wikis
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashSet<Wiki>)this["Wikis"];
+                    }
+                }
+            }
+
+            public LockedHashSet<Chat> Chats
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashSet<Chat>)this["Chats"];
+                    }
+                }
+            }
+
+            public LockedHashDictionary<string, Profile> Profiles
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<string, Profile>)this["Profiles"];
                     }
                 }
             }

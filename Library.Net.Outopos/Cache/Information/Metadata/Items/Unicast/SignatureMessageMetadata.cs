@@ -9,7 +9,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "SignatureMessageMetadata", Namespace = "http://Library/Net/Outopos")]
-    public sealed class SignatureMessageMetadata : UnicastMetadata<SignatureMessageMetadata>
+    sealed class SignatureMessageMetadata : UnicastMetadata<SignatureMessageMetadata>
     {
         public SignatureMessageMetadata(string signature, DateTime creationTime, Key key, Miner miner, DigitalSignature digitalSignature)
             : base(signature, creationTime, key, miner, digitalSignature)

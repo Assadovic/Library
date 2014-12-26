@@ -9,37 +9,40 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "SignatureMessage", Namespace = "http://Library/Net/Outopos")]
-    public sealed class SignatureMessage : ImmutableCertificateItemBase<SignatureMessage>, IUnicastHeader, ISignatureMessageContent
+    [DataContract(Name = "ChatMessage", Namespace = "http://Library/Net/Outopos")]
+    public sealed class ChatMessage : ImmutableCertificateItemBase<ChatMessage>, IMulticastHeader<Chat>, IChatMessageContent
     {
         private enum SerializeId : byte
         {
-            Signature = 0,
+            Tag = 0,
             CreationTime = 1,
 
             Comment = 2,
+            Anchor = 3,
 
-            Certificate = 3,
+            Certificate = 4,
         }
 
-        private volatile string _signature;
+        private volatile Chat _tag;
         private DateTime _creationTime;
 
         private volatile string _comment;
+        private volatile AnchorCollection _anchors;
 
         private volatile Certificate _certificate;
 
         private volatile object _thisLock;
 
-        public static readonly int MaxCommentLength = 1024 * 32;
+        public static readonly int MaxCommentLength = 1024 * 4;
         public static readonly int MaxAnchorCount = 32;
 
-        internal SignatureMessage(string signature, DateTime creationTime, string comment, DigitalSignature digitalSignature)
+        internal ChatMessage(Chat tag, DateTime creationTime, string comment, IEnumerable<Anchor> anchors, DigitalSignature digitalSignature)
         {
-            this.Signature = signature;
+            this.Tag = tag;
             this.CreationTime = creationTime;
 
             this.Comment = comment;
+            if (anchors != null) this.ProtectedAnchors.AddRange(anchors);
 
             this.CreateCertificate(digitalSignature);
         }
@@ -69,9 +72,9 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Signature)
+                    if (id == (byte)SerializeId.Tag)
                     {
-                        this.Signature = ItemUtilities.GetString(rangeStream);
+                        this.Tag = Chat.Import(rangeStream, bufferManager);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
@@ -81,6 +84,10 @@ namespace Library.Net.Outopos
                     else if (id == (byte)SerializeId.Comment)
                     {
                         this.Comment = ItemUtilities.GetString(rangeStream);
+                    }
+                    else if (id == (byte)SerializeId.Anchor)
+                    {
+                        this.ProtectedAnchors.Add(Anchor.Import(rangeStream, bufferManager));
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -95,10 +102,13 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Signature
-            if (this.Signature != null)
+            // Tag
+            if (this.Tag != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
+                using (var stream = this.Tag.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
+                }
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
@@ -110,6 +120,14 @@ namespace Library.Net.Outopos
             if (this.Comment != null)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
+            }
+            // Anchors
+            foreach (var value in this.Anchors)
+            {
+                using (var stream = value.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Anchor, stream);
+                }
             }
 
             // Certificate
@@ -127,30 +145,35 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            if (this.Comment == null) return 0;
-            else return this.Comment.GetHashCode();
+            return this.CreationTime.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is SignatureMessage)) return false;
+            if ((object)obj == null || !(obj is ChatMessage)) return false;
 
-            return this.Equals((SignatureMessage)obj);
+            return this.Equals((ChatMessage)obj);
         }
 
-        public override bool Equals(SignatureMessage other)
+        public override bool Equals(ChatMessage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Signature != other.Signature
+            if (this.Tag != other.Tag
                 || this.CreationTime != other.CreationTime
 
                 || this.Comment != other.Comment
+                || (this.Anchors == null) != (other.Anchors == null)
 
                 || this.Certificate != other.Certificate)
             {
                 return false;
+            }
+
+            if (this.Anchors != null && other.Anchors != null)
+            {
+                if (!CollectionUtilities.Equals(this.Anchors, other.Anchors)) return false;
             }
 
             return true;
@@ -193,18 +216,18 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IUnicastHeader
+        #region IMulticastHeader<Chat>
 
-        [DataMember(Name = "Signature")]
-        public string Signature
+        [DataMember(Name = "Tag")]
+        public Chat Tag
         {
             get
             {
-                return _signature;
+                return _tag;
             }
             private set
             {
-                _signature = value;
+                _tag = value;
             }
         }
 
@@ -230,7 +253,7 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region ISignatureMessageContent
+        #region IChatMessageContent
 
         [DataMember(Name = "Comment")]
         public string Comment
@@ -241,7 +264,7 @@ namespace Library.Net.Outopos
             }
             private set
             {
-                if (value != null && value.Length > SignatureMessage.MaxCommentLength)
+                if (value != null && value.Length > ChatMessage.MaxCommentLength)
                 {
                     throw new ArgumentException();
                 }
@@ -252,25 +275,50 @@ namespace Library.Net.Outopos
             }
         }
 
+        private volatile ReadOnlyCollection<Anchor> _readOnlyAnchors;
+
+        public IEnumerable<Anchor> Anchors
+        {
+            get
+            {
+                if (_readOnlyAnchors == null)
+                    _readOnlyAnchors = new ReadOnlyCollection<Anchor>(this.ProtectedAnchors.ToArray());
+
+                return _readOnlyAnchors;
+            }
+        }
+
+        [DataMember(Name = "Anchors")]
+        private AnchorCollection ProtectedAnchors
+        {
+            get
+            {
+                if (_anchors == null)
+                    _anchors = new AnchorCollection(ChatMessage.MaxAnchorCount);
+
+                return _anchors;
+            }
+        }
+
         #endregion
 
         #region IComputeHash
 
-        private volatile byte[] _Sha256_hash;
+        private volatile byte[] _sha256_hash;
 
         public byte[] CreateHash(HashAlgorithm hashAlgorithm)
         {
-            if (_Sha256_hash == null)
+            if (_sha256_hash == null)
             {
                 using (var stream = this.Export(BufferManager.Instance))
                 {
-                    _Sha256_hash = Sha256.ComputeHash(stream);
+                    _sha256_hash = Sha256.ComputeHash(stream);
                 }
             }
 
             if (hashAlgorithm == HashAlgorithm.Sha256)
             {
-                return _Sha256_hash;
+                return _sha256_hash;
             }
 
             return null;

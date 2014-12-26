@@ -351,21 +351,21 @@ namespace Library.Net.Outopos
 
         #region IComputeHash
 
-        private volatile byte[] _Sha256_hash;
+        private volatile byte[] _sha256_hash;
 
         public byte[] CreateHash(HashAlgorithm hashAlgorithm)
         {
-            if (_Sha256_hash == null)
+            if (_sha256_hash == null)
             {
                 using (var stream = this.Export(BufferManager.Instance))
                 {
-                    _Sha256_hash = Sha256.ComputeHash(stream);
+                    _sha256_hash = Sha256.ComputeHash(stream);
                 }
             }
 
             if (hashAlgorithm == HashAlgorithm.Sha256)
             {
-                return _Sha256_hash;
+                return _sha256_hash;
             }
 
             return null;

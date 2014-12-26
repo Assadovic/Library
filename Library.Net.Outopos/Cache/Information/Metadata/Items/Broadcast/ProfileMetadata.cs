@@ -9,7 +9,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "ProfileMetadata", Namespace = "http://Library/Net/Outopos")]
-    public sealed class ProfileMetadata : BroadcastMetadata<ProfileMetadata>
+    sealed class ProfileMetadata : BroadcastMetadata<ProfileMetadata>
     {
         public ProfileMetadata(DateTime creationTime, Key key, DigitalSignature digitalSignature)
             : base(creationTime, key, digitalSignature)

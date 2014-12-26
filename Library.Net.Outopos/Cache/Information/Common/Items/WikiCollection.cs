@@ -3,7 +3,7 @@ using Library.Collections;
 
 namespace Library.Net.Outopos
 {
-    public sealed class WikiCollection : LockedList<Wiki>, IEnumerable<Wiki>
+    public sealed class WikiCollection : LockedList<Wiki>
     {
         public WikiCollection() : base() { }
         public WikiCollection(int capacity) : base(capacity) { }
@@ -15,29 +15,5 @@ namespace Library.Net.Outopos
 
             return false;
         }
-
-        #region IEnumerable<Wiki>
-
-        IEnumerator<Wiki> IEnumerable<Wiki>.GetEnumerator()
-        {
-            lock (base.ThisLock)
-            {
-                return base.GetEnumerator();
-            }
-        }
-
-        #endregion
-
-        #region IEnumerable
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            lock (base.ThisLock)
-            {
-                return this.GetEnumerator();
-            }
-        }
-
-        #endregion
     }
 }

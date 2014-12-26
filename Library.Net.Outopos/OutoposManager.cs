@@ -417,103 +417,43 @@ namespace Library.Net.Outopos
             }
         }
 
-        public ProfileMetadata GetProfileMetadata(string signature)
+        public IEnumerable<Profile> GetProfiles()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                return _connectionsManager.GetProfileMetadata(signature);
+                return _downloadManager.GetProfiles();
             }
         }
 
-        public IEnumerable<SignatureMessageMetadata> GetSignatureMessageMetadatas(string signature)
+        public IEnumerable<SignatureMessage> GetSignatureMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                return _connectionsManager.GetSignatureMessageMetadatas(signature);
+                return _downloadManager.GetSignatureMessages(signature, exchangePrivateKey, limit);
             }
         }
 
-        public IEnumerable<WikiDocumentMetadata> GetWikiDocumentMetadatas(Wiki tag)
+        public IEnumerable<WikiDocument> GetWikiDocuments(Wiki tag, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                return _connectionsManager.GetWikiDocumentMetadatas(tag);
+                return _downloadManager.GetWikiDocuments(tag, limit);
             }
         }
 
-        public IEnumerable<ChatTopicMetadata> GetChatTopicMetadatas(Chat tag)
+        public IEnumerable<ChatTopic> GetChatTopics(Chat tag, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                return _connectionsManager.GetChatTopicMetadatas(tag);
+                return _downloadManager.GetChatTopics(tag, limit);
             }
         }
 
-        public IEnumerable<ChatMessageMetadata> GetChatMessageMetadatas(Chat tag)
+        public IEnumerable<ChatMessage> GetChatMessages(Chat tag, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                return _connectionsManager.GetChatMessageMetadatas(tag);
-            }
-        }
-
-        public Profile GetMessage(ProfileMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetMessage(metadata);
-            }
-        }
-
-        public SignatureMessage GetMessage(SignatureMessageMetadata metadata, ExchangePrivateKey exchangePrivateKey)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetMessage(metadata, exchangePrivateKey);
-            }
-        }
-
-        public WikiDocument GetMessage(WikiDocumentMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetMessage(metadata);
-            }
-        }
-
-        public ChatTopic GetMessage(ChatTopicMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetMessage(metadata);
-            }
-        }
-
-        public ChatMessage GetMessage(ChatMessageMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetMessage(metadata);
+                return _downloadManager.GetChatMessages(tag, limit);
             }
         }
 

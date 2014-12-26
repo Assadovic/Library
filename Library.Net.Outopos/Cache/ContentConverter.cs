@@ -542,14 +542,14 @@ namespace Library.Net.Outopos
             throw new NotSupportedException();
         }
 
-        public static ArraySegment<byte> ToProfileBlock(Profile message)
+        public static ArraySegment<byte> ToProfileBlock(Profile package)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (package == null) throw new ArgumentNullException("package");
 
             ArraySegment<byte> value;
 
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream packageStream = package.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(packageStream))
             using (Stream typeStream = ContentConverter.AddType(compressStream, "Profile"))
             {
                 value = new ArraySegment<byte>(_bufferManager.TakeBuffer((int)typeStream.Length), 0, (int)typeStream.Length);
@@ -559,17 +559,17 @@ namespace Library.Net.Outopos
             return value;
         }
 
-        public static Profile FromProfileBlock(ArraySegment<byte> message)
+        public static Profile FromProfileBlock(ArraySegment<byte> package)
         {
-            if (message.Array == null) throw new ArgumentNullException("message.Array");
+            if (package.Array == null) throw new ArgumentNullException("package.Array");
 
             try
             {
-                using (Stream typeStream = new MemoryStream(message.Array, message.Offset, message.Count))
+                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
                 using (Stream compressStream = ContentConverter.RemoveType(typeStream, "Profile"))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                using (Stream packageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return Profile.Import(messageStream, _bufferManager);
+                    return Profile.Import(packageStream, _bufferManager);
                 }
             }
             catch (Exception)
@@ -578,14 +578,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static ArraySegment<byte> ToWikiDocumentBlock(WikiDocument message)
+        public static ArraySegment<byte> ToWikiDocumentBlock(WikiDocument package)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (package == null) throw new ArgumentNullException("package");
 
             ArraySegment<byte> value;
 
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream packageStream = package.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(packageStream))
             using (Stream typeStream = ContentConverter.AddType(compressStream, "WikiDocument"))
             {
                 value = new ArraySegment<byte>(_bufferManager.TakeBuffer((int)typeStream.Length), 0, (int)typeStream.Length);
@@ -595,17 +595,17 @@ namespace Library.Net.Outopos
             return value;
         }
 
-        public static WikiDocument FromWikiDocumentBlock(ArraySegment<byte> message)
+        public static WikiDocument FromWikiDocumentBlock(ArraySegment<byte> package)
         {
-            if (message.Array == null) throw new ArgumentNullException("message.Array");
+            if (package.Array == null) throw new ArgumentNullException("package.Array");
 
             try
             {
-                using (Stream typeStream = new MemoryStream(message.Array, message.Offset, message.Count))
+                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
                 using (Stream compressStream = ContentConverter.RemoveType(typeStream, "WikiDocument"))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                using (Stream packageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return WikiDocument.Import(messageStream, _bufferManager);
+                    return WikiDocument.Import(packageStream, _bufferManager);
                 }
             }
             catch (Exception)
@@ -614,14 +614,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static ArraySegment<byte> ToChatTopicBlock(ChatTopic message)
+        public static ArraySegment<byte> ToChatTopicBlock(ChatTopic package)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (package == null) throw new ArgumentNullException("package");
 
             ArraySegment<byte> value;
 
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream packageStream = package.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(packageStream))
             using (Stream typeStream = ContentConverter.AddType(compressStream, "ChatTopic"))
             {
                 value = new ArraySegment<byte>(_bufferManager.TakeBuffer((int)typeStream.Length), 0, (int)typeStream.Length);
@@ -631,17 +631,17 @@ namespace Library.Net.Outopos
             return value;
         }
 
-        public static ChatTopic FromChatTopicBlock(ArraySegment<byte> message)
+        public static ChatTopic FromChatTopicBlock(ArraySegment<byte> package)
         {
-            if (message.Array == null) throw new ArgumentNullException("message.Array");
+            if (package.Array == null) throw new ArgumentNullException("package.Array");
 
             try
             {
-                using (Stream typeStream = new MemoryStream(message.Array, message.Offset, message.Count))
+                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
                 using (Stream compressStream = ContentConverter.RemoveType(typeStream, "ChatTopic"))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                using (Stream packageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return ChatTopic.Import(messageStream, _bufferManager);
+                    return ChatTopic.Import(packageStream, _bufferManager);
                 }
             }
             catch (Exception)
@@ -650,14 +650,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static ArraySegment<byte> ToChatMessageBlock(ChatMessage message)
+        public static ArraySegment<byte> ToChatMessageBlock(ChatMessage package)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (package == null) throw new ArgumentNullException("package");
 
             ArraySegment<byte> value;
 
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream packageStream = package.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(packageStream))
             using (Stream typeStream = ContentConverter.AddType(compressStream, "ChatMessage"))
             {
                 value = new ArraySegment<byte>(_bufferManager.TakeBuffer((int)typeStream.Length), 0, (int)typeStream.Length);
@@ -667,17 +667,17 @@ namespace Library.Net.Outopos
             return value;
         }
 
-        public static ChatMessage FromChatMessageBlock(ArraySegment<byte> message)
+        public static ChatMessage FromChatMessageBlock(ArraySegment<byte> package)
         {
-            if (message.Array == null) throw new ArgumentNullException("message.Array");
+            if (package.Array == null) throw new ArgumentNullException("package.Array");
 
             try
             {
-                using (Stream typeStream = new MemoryStream(message.Array, message.Offset, message.Count))
+                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
                 using (Stream compressStream = ContentConverter.RemoveType(typeStream, "ChatMessage"))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                using (Stream packageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return ChatMessage.Import(messageStream, _bufferManager);
+                    return ChatMessage.Import(packageStream, _bufferManager);
                 }
             }
             catch (Exception)
@@ -686,15 +686,15 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static ArraySegment<byte> ToSignatureMessageBlock(SignatureMessage message, IExchangeEncrypt publicKey)
+        public static ArraySegment<byte> ToSignatureMessageBlock(SignatureMessage package, IExchangeEncrypt publicKey)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (package == null) throw new ArgumentNullException("package");
             if (publicKey == null) throw new ArgumentNullException("publicKey");
 
             ArraySegment<byte> value;
 
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream packageStream = package.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(packageStream))
             using (Stream paddingStream = ContentConverter.AddPadding(compressStream, 1024 * 256))
             using (Stream hashStream = ContentConverter.AddHash(paddingStream))
             using (Stream cryptostream = ContentConverter.Encrypt(hashStream, publicKey))
@@ -707,21 +707,21 @@ namespace Library.Net.Outopos
             return value;
         }
 
-        public static SignatureMessage FromSignatureMessageBlock(ArraySegment<byte> message, IExchangeDecrypt privateKey)
+        public static SignatureMessage FromSignatureMessageBlock(ArraySegment<byte> package, IExchangeDecrypt privateKey)
         {
-            if (message.Array == null) throw new ArgumentNullException("message.Array");
+            if (package.Array == null) throw new ArgumentNullException("package.Array");
             if (privateKey == null) throw new ArgumentNullException("privateKey");
 
             try
             {
-                using (Stream typeStream = new MemoryStream(message.Array, message.Offset, message.Count))
+                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
                 using (Stream cryptoStream = ContentConverter.RemoveType(typeStream, "SignatureMessage"))
                 using (Stream hashStream = ContentConverter.Decrypt(cryptoStream, privateKey))
                 using (Stream paddingStream = ContentConverter.RemoveHash(hashStream))
                 using (Stream compressStream = ContentConverter.RemovePadding(paddingStream))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                using (Stream packageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return SignatureMessage.Import(messageStream, _bufferManager);
+                    return SignatureMessage.Import(packageStream, _bufferManager);
                 }
             }
             catch (Exception)

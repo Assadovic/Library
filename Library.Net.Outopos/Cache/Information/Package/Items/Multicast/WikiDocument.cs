@@ -1,53 +1,50 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
-using System.Text;
 using Library.Io;
 using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "ChatTopic", Namespace = "http://Library/Net/Outopos")]
-    public sealed class ChatTopic : ImmutableCertificateItemBase<ChatTopic>, IMulticastHeader<Chat>, IChatTopicContent
+    [DataContract(Name = "WikiDocument", Namespace = "http://Library/Net/Outopos")]
+    public sealed class WikiDocument : ImmutableCertificateItemBase<WikiDocument>, IMulticastHeader<Wiki>, IWikiDocumentContent
     {
         private enum SerializeId : byte
         {
             Tag = 0,
             CreationTime = 1,
 
-            FormatType = 2,
-            Hypertext = 3,
+            WikiPage = 0,
 
-            Certificate = 3,
+            Certificate = 1,
         }
 
-        private volatile Chat _tag;
+        private volatile Wiki _tag;
         private DateTime _creationTime;
 
-        private volatile HypertextFormatType _formatType;
-        private volatile string _hypertext;
+        private volatile WikiPageCollection _wikiPages;
 
         private volatile Certificate _certificate;
 
         private volatile object _thisLock;
 
-        public static readonly int MaxCommentLength = 1024 * 4;
+        public static readonly int MaxWikiPageCount = 256;
 
-        internal ChatTopic(Chat tag, DateTime creationTime, HypertextFormatType formatType, string hypertext, DigitalSignature digitalSignature)
+        internal WikiDocument(Wiki tag, DateTime creationTime, IEnumerable<WikiPage> wikiPages, DigitalSignature digitalSignature)
         {
             this.Tag = tag;
             this.CreationTime = creationTime;
 
-            this.FormatType = formatType;
-            this.Hypertext = hypertext;
+            if (wikiPages != null) this.ProtectedWikiPages.AddRange(wikiPages);
 
             this.CreateCertificate(digitalSignature);
         }
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -72,20 +69,16 @@ namespace Library.Net.Outopos
                 {
                     if (id == (byte)SerializeId.Tag)
                     {
-                        this.Tag = Chat.Import(rangeStream, bufferManager);
+                        this.Tag = Wiki.Import(rangeStream, bufferManager);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.FormatType)
+                    else if (id == (byte)SerializeId.WikiPage)
                     {
-                        this.FormatType = (HypertextFormatType)Enum.Parse(typeof(HypertextFormatType), ItemUtilities.GetString(rangeStream));
-                    }
-                    else if (id == (byte)SerializeId.Hypertext)
-                    {
-                        this.Hypertext = ItemUtilities.GetString(rangeStream);
+                        this.ProtectedWikiPages.Add(WikiPage.Import(rangeStream, bufferManager));
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -114,15 +107,13 @@ namespace Library.Net.Outopos
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
-            // FormatType
-            if (this.FormatType != 0)
+            // WikiPages
+            foreach (var value in this.WikiPages)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.FormatType, this.FormatType.ToString());
-            }
-            // Hypertext
-            if (this.Hypertext != null)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Hypertext, this.Hypertext);
+                using (var stream = value.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.WikiPage, stream);
+                }
             }
 
             // Certificate
@@ -145,12 +136,12 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is ChatTopic)) return false;
+            if ((object)obj == null || !(obj is WikiDocument)) return false;
 
-            return this.Equals((ChatTopic)obj);
+            return this.Equals((WikiDocument)obj);
         }
 
-        public override bool Equals(ChatTopic other)
+        public override bool Equals(WikiDocument other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
@@ -158,12 +149,16 @@ namespace Library.Net.Outopos
             if (this.Tag != other.Tag
                 || this.CreationTime != other.CreationTime
 
-                || this.FormatType != other.FormatType
-                || this.Hypertext != other.Hypertext
+                || (this.WikiPages == null) != (other.WikiPages == null)
 
                 || this.Certificate != other.Certificate)
             {
                 return false;
+            }
+
+            if (this.WikiPages != null && other.WikiPages != null)
+            {
+                if (!CollectionUtilities.Equals(this.WikiPages, other.WikiPages)) return false;
             }
 
             return true;
@@ -206,10 +201,10 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IMulticastHeader<Chat>
+        #region IMulticastHeader<Wiki>
 
         [DataMember(Name = "Tag")]
-        public Chat Tag
+        public Wiki Tag
         {
             get
             {
@@ -243,45 +238,30 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region IHypertext
+        #region IWikiDocumentContent
 
-        [DataMember(Name = "FormatType")]
-        public HypertextFormatType FormatType
+        private volatile ReadOnlyCollection<WikiPage> _readOnlyWikiPages;
+
+        public IEnumerable<WikiPage> WikiPages
         {
             get
             {
-                return _formatType;
-            }
-            set
-            {
-                if (!Enum.IsDefined(typeof(HypertextFormatType), value))
-                {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _formatType = value;
-                }
+                if (_readOnlyWikiPages == null)
+                    _readOnlyWikiPages = new ReadOnlyCollection<WikiPage>(this.ProtectedWikiPages.ToArray());
+
+                return _readOnlyWikiPages;
             }
         }
 
-        [DataMember(Name = "Hypertext")]
-        public string Hypertext
+        [DataMember(Name = "WikiPages")]
+        private WikiPageCollection ProtectedWikiPages
         {
             get
             {
-                return _hypertext;
-            }
-            private set
-            {
-                if (value != null && value.Length > WikiPage.MaxHypertextLength)
-                {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _hypertext = value;
-                }
+                if (_wikiPages == null)
+                    _wikiPages = new WikiPageCollection(WikiDocument.MaxWikiPageCount);
+
+                return _wikiPages;
             }
         }
 
@@ -289,21 +269,21 @@ namespace Library.Net.Outopos
 
         #region IComputeHash
 
-        private volatile byte[] _Sha256_hash;
+        private volatile byte[] _sha256_hash;
 
         public byte[] CreateHash(HashAlgorithm hashAlgorithm)
         {
-            if (_Sha256_hash == null)
+            if (_sha256_hash == null)
             {
                 using (var stream = this.Export(BufferManager.Instance))
                 {
-                    _Sha256_hash = Sha256.ComputeHash(stream);
+                    _sha256_hash = Sha256.ComputeHash(stream);
                 }
             }
 
             if (hashAlgorithm == HashAlgorithm.Sha256)
             {
-                return _Sha256_hash;
+                return _sha256_hash;
             }
 
             return null;

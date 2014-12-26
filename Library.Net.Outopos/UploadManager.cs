@@ -56,23 +56,23 @@ namespace Library.Net.Outopos
 
                         if (item.Type == "Profile")
                         {
-                            contexts.Add(new InformationContext("Message", item.Profile));
+                            contexts.Add(new InformationContext("Package", item.Profile));
                         }
                         else if (item.Type == "SignatureMessage")
                         {
-                            contexts.Add(new InformationContext("Message", item.SignatureMessage));
+                            contexts.Add(new InformationContext("Package", item.SignatureMessage));
                         }
                         else if (item.Type == "WikiDocument")
                         {
-                            contexts.Add(new InformationContext("Message", item.WikiDocument));
+                            contexts.Add(new InformationContext("Package", item.WikiDocument));
                         }
                         else if (item.Type == "ChatTopic")
                         {
-                            contexts.Add(new InformationContext("Message", item.ChatTopic));
+                            contexts.Add(new InformationContext("Package", item.ChatTopic));
                         }
                         else if (item.Type == "ChatMessage")
                         {
-                            contexts.Add(new InformationContext("Message", item.ChatMessage));
+                            contexts.Add(new InformationContext("Package", item.ChatMessage));
                         }
 
                         contexts.Add(new InformationContext("DigitalSignature", item.DigitalSignature));

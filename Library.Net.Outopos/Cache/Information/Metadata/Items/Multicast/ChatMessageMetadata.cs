@@ -9,7 +9,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "ChatMessageMetadata", Namespace = "http://Library/Net/Outopos")]
-    public sealed class ChatMessageMetadata : MulticastMetadata<ChatMessageMetadata, Chat>
+    sealed class ChatMessageMetadata : MulticastMetadata<ChatMessageMetadata, Chat>
     {
         public ChatMessageMetadata(Chat tag, DateTime creationTime, Key key, Miner miner, DigitalSignature digitalSignature)
             : base(tag, creationTime, key, miner, digitalSignature)

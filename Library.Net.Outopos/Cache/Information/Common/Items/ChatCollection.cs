@@ -3,7 +3,7 @@ using Library.Collections;
 
 namespace Library.Net.Outopos
 {
-    public sealed class ChatCollection : LockedList<Chat>, IEnumerable<Chat>
+    public sealed class ChatCollection : LockedList<Chat>
     {
         public ChatCollection() : base() { }
         public ChatCollection(int capacity) : base(capacity) { }
@@ -15,29 +15,5 @@ namespace Library.Net.Outopos
 
             return false;
         }
-
-        #region IEnumerable<Chat>
-
-        IEnumerator<Chat> IEnumerable<Chat>.GetEnumerator()
-        {
-            lock (base.ThisLock)
-            {
-                return base.GetEnumerator();
-            }
-        }
-
-        #endregion
-
-        #region IEnumerable
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            lock (base.ThisLock)
-            {
-                return this.GetEnumerator();
-            }
-        }
-
-        #endregion
     }
 }
