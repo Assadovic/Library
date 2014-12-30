@@ -506,6 +506,17 @@ namespace Library.Net.Amoeba
             }
         }
 
+        public void SetSearchSignatures(IEnumerable<string> signatures)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                _backgroundDownloadManager.SetSearchSignatures(signatures);
+            }
+        }
+
         public void CheckInternalBlocks(CheckBlocksProgressEventHandler getProgressEvent)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -693,17 +704,6 @@ namespace Library.Net.Amoeba
             lock (this.ThisLock)
             {
                 return _backgroundDownloadManager.GetStore(signature);
-            }
-        }
-
-        public void SetSearchSignatures(IEnumerable<string> signatures)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
-
-            lock (this.ThisLock)
-            {
-                _backgroundDownloadManager.SetSearchSignatures(signatures);
             }
         }
 

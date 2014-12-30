@@ -384,6 +384,48 @@ namespace Library.Net.Outopos
             }
         }
 
+        public IEnumerable<string> SearchSignatures
+        {
+            get
+            {
+                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+                if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+                lock (this.ThisLock)
+                {
+                    return _downloadManager.SearchSignatures;
+                }
+            }
+        }
+
+        public IEnumerable<Wiki> SearchWikis
+        {
+            get
+            {
+                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+                if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+                lock (this.ThisLock)
+                {
+                    return _downloadManager.SearchWikis;
+                }
+            }
+        }
+
+        public IEnumerable<Chat> SearchChats
+        {
+            get
+            {
+                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+                if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+                lock (this.ThisLock)
+                {
+                    return _downloadManager.SearchChats;
+                }
+            }
+        }
+
         public void SetBaseNode(Node baseNode)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -417,11 +459,44 @@ namespace Library.Net.Outopos
             }
         }
 
-        public IEnumerable<Profile> GetProfiles()
+        public void SetSearchSignatures(IEnumerable<string> signatures)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                _downloadManager.SetSearchSignatures(signatures);
+            }
+        }
+
+        public void SetSearchWikis(IEnumerable<Wiki> wikis)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                _downloadManager.SetSearchWikis(wikis);
+            }
+        }
+
+        public void SetSearchChats(IEnumerable<Chat> chats)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                _downloadManager.SetSearchChats(chats);
+            }
+        }
+
+        public Profile GetProfile(string signature)
         {
             lock (this.ThisLock)
             {
-                return _downloadManager.GetProfiles();
+                return _downloadManager.GetProfile(signature);
             }
         }
 

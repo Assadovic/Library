@@ -92,6 +92,26 @@ namespace Library.Net.Outopos
                     _settings.Signatures.Clear();
                     _settings.Signatures.UnionWith(new SignatureCollection(signatures));
                 }
+
+                // Profile
+                {
+                    foreach (var metadata in _settings.Metadata_Profile_Pairs.Keys.ToArray())
+                    {
+                        if (_settings.Signatures.Contains(metadata.Certificate.ToString())) continue;
+
+                        _settings.Metadata_Profile_Pairs.Remove(metadata);
+                    }
+                }
+
+                // SignatureMessage
+                {
+                    foreach (var signature in _settings.Metadata_SignatureMessage_Pairs_Dictionary.Keys.ToArray())
+                    {
+                        if (_settings.Signatures.Contains(signature)) continue;
+
+                        _settings.Metadata_SignatureMessage_Pairs_Dictionary.Remove(signature);
+                    }
+                }
             }
         }
 
@@ -103,6 +123,16 @@ namespace Library.Net.Outopos
                 {
                     _settings.Wikis.Clear();
                     _settings.Wikis.UnionWith(new WikiCollection(wikis));
+                }
+
+                // WikiDocument
+                {
+                    foreach (var tag in _settings.Metadata_WikiDocument_Pairs_Dictionary.Keys.ToArray())
+                    {
+                        if (_settings.Wikis.Contains(tag)) continue;
+
+                        _settings.Metadata_WikiDocument_Pairs_Dictionary.Remove(tag);
+                    }
                 }
             }
         }
@@ -116,25 +146,47 @@ namespace Library.Net.Outopos
                     _settings.Chats.Clear();
                     _settings.Chats.UnionWith(new ChatCollection(chats));
                 }
+
+                // ChatTopic
+                {
+                    foreach (var tag in _settings.Metadata_ChatTopic_Pairs_Dictionary.Keys.ToArray())
+                    {
+                        if (_settings.Chats.Contains(tag)) continue;
+
+                        _settings.Metadata_ChatTopic_Pairs_Dictionary.Remove(tag);
+                    }
+                }
+
+                // ChatMessage
+                {
+                    foreach (var tag in _settings.Metadata_ChatMessage_Pairs_Dictionary.Keys.ToArray())
+                    {
+                        if (_settings.Chats.Contains(tag)) continue;
+
+                        _settings.Metadata_ChatMessage_Pairs_Dictionary.Remove(tag);
+                    }
+                }
             }
         }
 
-        public IEnumerable<Profile> GetProfiles()
+        public Profile GetProfile(string signature)
         {
             lock (this.ThisLock)
             {
-                var profiles = new Dictionary<string, Profile>();
+                if (!_settings.Signatures.Contains(signature)) return null;
 
-                foreach (var signature in this.SearchSignatures)
+                Profile profile = null;
+
                 {
                     var metadata = _connectionsManager.GetProfileMetadata(signature);
-                    if (metadata == null) continue;
+                    if (metadata == null) goto End;
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
                         _connectionsManager.Download(metadata.Key);
                     }
-                    else
+
+                    if (!_settings.Metadata_Profile_Pairs.TryGetValue(metadata, out profile))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -145,9 +197,11 @@ namespace Library.Net.Outopos
                             var package = ContentConverter.FromProfileBlock(buffer);
 
                             if (metadata.CreationTime != package.CreationTime
-                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+                                || metadata.Certificate.ToString() != package.Certificate.ToString()) goto End;
 
-                            profiles[signature] = package;
+                            _settings.Metadata_Profile_Pairs[metadata] = package;
+
+                            profile = package;
                         }
                         catch (Exception)
                         {
@@ -161,24 +215,11 @@ namespace Library.Net.Outopos
                             }
                         }
                     }
+
+                End: ;
                 }
 
-                foreach (var signature in this.SearchSignatures)
-                {
-                    if (!profiles.ContainsKey(signature) && _settings.Profiles.ContainsKey(signature))
-                    {
-                        profiles[signature] = _settings.Profiles[signature];
-                    }
-                }
-
-                _settings.Profiles.Clear();
-
-                foreach (var pair in profiles)
-                {
-                    _settings.Profiles.Add(pair.Key, pair.Value);
-                }
-
-                return _settings.Profiles.Values;
+                return profile;
             }
         }
 
@@ -191,9 +232,26 @@ namespace Library.Net.Outopos
             {
                 if (!_settings.Signatures.Contains(signature)) return new SignatureMessage[0];
 
+                Dictionary<SignatureMessageMetadata, SignatureMessage> dic;
+
+                if (!_settings.Metadata_SignatureMessage_Pairs_Dictionary.TryGetValue(signature, out dic))
+                {
+                    dic = new Dictionary<SignatureMessageMetadata, SignatureMessage>();
+                    _settings.Metadata_SignatureMessage_Pairs_Dictionary[signature] = dic;
+                }
+
+                var metadatas = new HashSet<SignatureMessageMetadata>(_connectionsManager.GetSignatureMessageMetadatas(signature));
+
+                foreach (var metadata in dic.Keys.ToArray())
+                {
+                    if (!metadatas.Contains(metadata)) continue;
+
+                    dic.Remove(metadata);
+                }
+
                 var signatureMessages = new List<SignatureMessage>();
 
-                foreach (var metadata in _connectionsManager.GetSignatureMessageMetadatas(signature))
+                foreach (var metadata in metadatas)
                 {
                     if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
@@ -201,7 +259,10 @@ namespace Library.Net.Outopos
                     {
                         _connectionsManager.Download(metadata.Key);
                     }
-                    else
+
+                    SignatureMessage signatureMessage;
+
+                    if (!dic.TryGetValue(metadata, out signatureMessage))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -214,6 +275,8 @@ namespace Library.Net.Outopos
                             if (metadata.Signature != package.Signature
                                 || metadata.CreationTime != package.CreationTime
                                 || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            dic[metadata] = package;
 
                             signatureMessages.Add(package);
                         }
@@ -243,9 +306,26 @@ namespace Library.Net.Outopos
             {
                 if (!_settings.Wikis.Contains(tag)) return new WikiDocument[0];
 
+                Dictionary<WikiDocumentMetadata, WikiDocument> dic;
+
+                if (!_settings.Metadata_WikiDocument_Pairs_Dictionary.TryGetValue(tag, out dic))
+                {
+                    dic = new Dictionary<WikiDocumentMetadata, WikiDocument>();
+                    _settings.Metadata_WikiDocument_Pairs_Dictionary[tag] = dic;
+                }
+
+                var metadatas = new HashSet<WikiDocumentMetadata>(_connectionsManager.GetWikiDocumentMetadatas(tag));
+
+                foreach (var metadata in dic.Keys.ToArray())
+                {
+                    if (!metadatas.Contains(metadata)) continue;
+
+                    dic.Remove(metadata);
+                }
+
                 var wikiDocuments = new List<WikiDocument>();
 
-                foreach (var metadata in _connectionsManager.GetWikiDocumentMetadatas(tag))
+                foreach (var metadata in metadatas)
                 {
                     if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
@@ -253,7 +333,10 @@ namespace Library.Net.Outopos
                     {
                         _connectionsManager.Download(metadata.Key);
                     }
-                    else
+
+                    WikiDocument wikiDocument;
+
+                    if (!dic.TryGetValue(metadata, out wikiDocument))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -266,6 +349,8 @@ namespace Library.Net.Outopos
                             if (metadata.Tag != package.Tag
                                 || metadata.CreationTime != package.CreationTime
                                 || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            dic[metadata] = package;
 
                             wikiDocuments.Add(package);
                         }
@@ -295,9 +380,26 @@ namespace Library.Net.Outopos
             {
                 if (!_settings.Chats.Contains(tag)) return new ChatTopic[0];
 
+                Dictionary<ChatTopicMetadata, ChatTopic> dic;
+
+                if (!_settings.Metadata_ChatTopic_Pairs_Dictionary.TryGetValue(tag, out dic))
+                {
+                    dic = new Dictionary<ChatTopicMetadata, ChatTopic>();
+                    _settings.Metadata_ChatTopic_Pairs_Dictionary[tag] = dic;
+                }
+
+                var metadatas = new HashSet<ChatTopicMetadata>(_connectionsManager.GetChatTopicMetadatas(tag));
+
+                foreach (var metadata in dic.Keys.ToArray())
+                {
+                    if (!metadatas.Contains(metadata)) continue;
+
+                    dic.Remove(metadata);
+                }
+
                 var chatTopics = new List<ChatTopic>();
 
-                foreach (var metadata in _connectionsManager.GetChatTopicMetadatas(tag))
+                foreach (var metadata in metadatas)
                 {
                     if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
@@ -305,7 +407,10 @@ namespace Library.Net.Outopos
                     {
                         _connectionsManager.Download(metadata.Key);
                     }
-                    else
+
+                    ChatTopic chatTopic;
+
+                    if (!dic.TryGetValue(metadata, out chatTopic))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -318,6 +423,8 @@ namespace Library.Net.Outopos
                             if (metadata.Tag != package.Tag
                                 || metadata.CreationTime != package.CreationTime
                                 || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            dic[metadata] = package;
 
                             chatTopics.Add(package);
                         }
@@ -347,9 +454,26 @@ namespace Library.Net.Outopos
             {
                 if (!_settings.Chats.Contains(tag)) return new ChatMessage[0];
 
+                Dictionary<ChatMessageMetadata, ChatMessage> dic;
+
+                if (!_settings.Metadata_ChatMessage_Pairs_Dictionary.TryGetValue(tag, out dic))
+                {
+                    dic = new Dictionary<ChatMessageMetadata, ChatMessage>();
+                    _settings.Metadata_ChatMessage_Pairs_Dictionary[tag] = dic;
+                }
+
+                var metadatas = new HashSet<ChatMessageMetadata>(_connectionsManager.GetChatMessageMetadatas(tag));
+
+                foreach (var metadata in dic.Keys.ToArray())
+                {
+                    if (!metadatas.Contains(metadata)) continue;
+
+                    dic.Remove(metadata);
+                }
+
                 var chatMessages = new List<ChatMessage>();
 
-                foreach (var metadata in _connectionsManager.GetChatMessageMetadatas(tag))
+                foreach (var metadata in metadatas)
                 {
                     if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
@@ -357,7 +481,10 @@ namespace Library.Net.Outopos
                     {
                         _connectionsManager.Download(metadata.Key);
                     }
-                    else
+
+                    ChatMessage chatMessage;
+
+                    if (!dic.TryGetValue(metadata, out chatMessage))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -370,6 +497,8 @@ namespace Library.Net.Outopos
                             if (metadata.Tag != package.Tag
                                 || metadata.CreationTime != package.CreationTime
                                 || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+
+                            dic[metadata] = package;
 
                             chatMessages.Add(package);
                         }
@@ -457,7 +586,11 @@ namespace Library.Net.Outopos
                     new Library.Configuration.SettingContent<LockedHashSet<string>>() { Name = "Signatures", Value = new LockedHashSet<string>() },
                     new Library.Configuration.SettingContent<LockedHashSet<Wiki>>() { Name = "Wikis", Value = new LockedHashSet<Wiki>() },
                     new Library.Configuration.SettingContent<LockedHashSet<Chat>>() { Name = "Chats", Value = new LockedHashSet<Chat>() },
-                    new Library.Configuration.SettingContent<LockedHashDictionary<string, Profile>>() { Name = "Profiles", Value = new LockedHashDictionary<string, Profile>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<ProfileMetadata, Profile>>() { Name = "Metadata_Profile_Pairs", Value = new LockedHashDictionary<ProfileMetadata, Profile>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>>>() { Name = "Metadata_SignatureMessage_Pairs_Dictionary", Value = new LockedHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>>>() { Name = "Metadata_WikiDocument_Pairs_Dictionary", Value = new LockedHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Chat, Dictionary<ChatTopicMetadata, ChatTopic>>>() { Name = "Metadata_ChatTopic_Pairs_Dictionary", Value = new LockedHashDictionary<Chat, Dictionary<ChatTopicMetadata, ChatTopic>>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>>>() { Name = "Metadata_ChatMessage_Pairs_Dictionary", Value = new LockedHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>>() },
                 })
             {
                 _thisLock = lockObject;
@@ -512,13 +645,57 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public LockedHashDictionary<string, Profile> Profiles
+            public LockedHashDictionary<ProfileMetadata, Profile> Metadata_Profile_Pairs
             {
                 get
                 {
                     lock (_thisLock)
                     {
-                        return (LockedHashDictionary<string, Profile>)this["Profiles"];
+                        return (LockedHashDictionary<ProfileMetadata, Profile>)this["Metadata_Profile_Pairs"];
+                    }
+                }
+            }
+
+            public LockedHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>> Metadata_SignatureMessage_Pairs_Dictionary
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>>)this["Metadata_SignatureMessage_Pairs_Dictionary"];
+                    }
+                }
+            }
+
+            public LockedHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>> Metadata_WikiDocument_Pairs_Dictionary
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>>)this["Metadata_WikiDocument_Pairs_Dictionary"];
+                    }
+                }
+            }
+
+            public LockedHashDictionary<Chat, Dictionary<ChatTopicMetadata, ChatTopic>> Metadata_ChatTopic_Pairs_Dictionary
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<Chat, Dictionary<ChatTopicMetadata, ChatTopic>>)this["Metadata_ChatTopic_Pairs_Dictionary"];
+                    }
+                }
+            }
+
+            public LockedHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>> Metadata_ChatMessage_Pairs_Dictionary
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>>)this["Metadata_ChatMessage_Pairs_Dictionary"];
                     }
                 }
             }

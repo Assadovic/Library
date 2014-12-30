@@ -129,13 +129,7 @@ namespace Library.Net.Amoeba
                 lock (_settings.Signatures.ThisLock)
                 {
                     _settings.Signatures.Clear();
-
-                    foreach (var signature in signatures)
-                    {
-                        if (signature == null || !Signature.Check(signature)) continue;
-
-                        _settings.Signatures.Add(signature);
-                    }
+                    _settings.Signatures.UnionWith(new SignatureCollection(signatures));
                 }
             }
         }
