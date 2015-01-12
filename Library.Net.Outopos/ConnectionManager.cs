@@ -1273,14 +1273,6 @@ namespace Library.Net.Outopos
                 return bufferStream;
             }
 
-            public NodesMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return NodesMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             private volatile ReadOnlyCollection<Node> _readOnlyNodes;
 
             public IEnumerable<Node> Nodes
@@ -1371,14 +1363,6 @@ namespace Library.Net.Outopos
                 return bufferStream;
             }
 
-            public BlocksLinkMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlocksLinkMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             private volatile ReadOnlyCollection<Key> _readOnlyKeys;
 
             public IEnumerable<Key> Keys
@@ -1467,14 +1451,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public BlocksRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlocksRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<Key> _readOnlyKeys;
@@ -1603,14 +1579,6 @@ namespace Library.Net.Outopos
                 return bufferStream;
             }
 
-            public BlockMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlockMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             public Key Key
             {
                 get
@@ -1695,14 +1663,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public BroadcastMetadatasRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BroadcastMetadatasRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<string> _readOnlySignatures;
@@ -1796,14 +1756,6 @@ namespace Library.Net.Outopos
                 return bufferStream;
             }
 
-            public BroadcastMetadatasMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BroadcastMetadatasMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             private volatile ReadOnlyCollection<ProfileMetadata> _readOnlyProfileMetadatas;
 
             public IEnumerable<ProfileMetadata> ProfileMetadatas
@@ -1889,14 +1841,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public BroadcastMetadatasRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BroadcastMetadatasRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<string> _readOnlySignatures;
@@ -1988,14 +1932,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public UnicastMetadatasMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return UnicastMetadatasMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<SignatureMessageMetadata> _readOnlySignatureMessageMetadatas;
@@ -2103,14 +2039,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public MulticastMetadatasRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return MulticastMetadatasRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<Wiki> _readOnlyWikis;
@@ -2259,14 +2187,6 @@ namespace Library.Net.Outopos
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public MulticastMetadatasMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return MulticastMetadatasMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<WikiDocumentMetadata> _readOnlyWikiDocumentMetadatas;

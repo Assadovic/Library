@@ -119,14 +119,6 @@ namespace Library.Security
             return true;
         }
 
-        public Cash Clone()
-        {
-            using (var stream = this.Export(BufferManager.Instance))
-            {
-                return Cash.Import(stream, BufferManager.Instance);
-            }
-        }
-
         [DataMember(Name = "CashAlgorithm")]
         public CashAlgorithm CashAlgorithm
         {

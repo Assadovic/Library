@@ -290,7 +290,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public int BandWidthLimit
+        public int BandwidthLimit
         {
             get
             {
@@ -299,7 +299,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    return _connectionsManager.BandWidthLimit;
+                    return _connectionsManager.BandwidthLimit;
                 }
             }
             set
@@ -309,7 +309,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    _connectionsManager.BandWidthLimit = value;
+                    _connectionsManager.BandwidthLimit = value;
                 }
             }
         }

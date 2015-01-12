@@ -267,7 +267,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public int BandWidthLimit
+        public int BandwidthLimit
         {
             get
             {

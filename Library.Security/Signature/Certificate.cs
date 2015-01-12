@@ -166,14 +166,6 @@ namespace Library.Security
             return true;
         }
 
-        public Certificate Clone()
-        {
-            using (var stream = this.Export(BufferManager.Instance))
-            {
-                return Certificate.Import(stream, BufferManager.Instance);
-            }
-        }
-
         public override string ToString()
         {
             if (_toString == null)

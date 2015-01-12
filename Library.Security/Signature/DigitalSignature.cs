@@ -174,14 +174,6 @@ namespace Library.Security
             return true;
         }
 
-        public DigitalSignature Clone()
-        {
-            using (var stream = this.Export(BufferManager.Instance))
-            {
-                return DigitalSignature.Import(stream, BufferManager.Instance);
-            }
-        }
-
         public override string ToString()
         {
             if (_toString == null)

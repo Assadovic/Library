@@ -990,14 +990,6 @@ namespace Library.Net.Amoeba
                 return bufferStream;
             }
 
-            public NodesMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return NodesMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             private volatile ReadOnlyCollection<Node> _readOnlyNodes;
 
             public IEnumerable<Node> Nodes
@@ -1088,14 +1080,6 @@ namespace Library.Net.Amoeba
                 return bufferStream;
             }
 
-            public BlocksLinkMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlocksLinkMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             private volatile ReadOnlyCollection<Key> _readOnlyKeys;
 
             public IEnumerable<Key> Keys
@@ -1184,14 +1168,6 @@ namespace Library.Net.Amoeba
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public BlocksRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlocksRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<Key> _readOnlyKeys;
@@ -1320,14 +1296,6 @@ namespace Library.Net.Amoeba
                 return bufferStream;
             }
 
-            public BlockMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return BlockMessage.Import(stream, BufferManager.Instance);
-                }
-            }
-
             public Key Key
             {
                 get
@@ -1412,14 +1380,6 @@ namespace Library.Net.Amoeba
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public SeedsRequestMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return SeedsRequestMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<string> _readOnlySignatures;
@@ -1510,14 +1470,6 @@ namespace Library.Net.Amoeba
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
                 return bufferStream;
-            }
-
-            public SeedsMessage Clone()
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return SeedsMessage.Import(stream, BufferManager.Instance);
-                }
             }
 
             private volatile ReadOnlyCollection<Seed> _readOnlySeeds;
