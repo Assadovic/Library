@@ -19,11 +19,10 @@ namespace Library.Net.Outopos
             Cost = 1,
             ExchangePublicKey = 2,
             TrustSignature = 3,
-            DeleteSignature = 4,
-            Wiki = 5,
-            Chat = 6,
+            Wiki = 4,
+            Chat = 5,
 
-            Certificate = 7,
+            Certificate = 6,
         }
 
         private DateTime _creationTime;
@@ -31,7 +30,6 @@ namespace Library.Net.Outopos
         private volatile int _cost;
         private volatile ExchangePublicKey _exchangePublicKey;
         private volatile SignatureCollection _trustSignatures;
-        private volatile SignatureCollection _deleteSignatures;
         private volatile WikiCollection _wikis;
         private volatile ChatCollection _chats;
 
@@ -44,14 +42,13 @@ namespace Library.Net.Outopos
         public static readonly int MaxWikiCount = 256;
         public static readonly int MaxChatCount = 256;
 
-        internal Profile(DateTime creationTime, int cost, ExchangePublicKey exchangePublicKey, IEnumerable<string> trustSignatures, IEnumerable<string> deleteSignatures, IEnumerable<Wiki> wikis, IEnumerable<Chat> chats, DigitalSignature digitalSignature)
+        internal Profile(DateTime creationTime, int cost, ExchangePublicKey exchangePublicKey, IEnumerable<string> trustSignatures, IEnumerable<Wiki> wikis, IEnumerable<Chat> chats, DigitalSignature digitalSignature)
         {
             this.CreationTime = creationTime;
 
             this.Cost = cost;
             this.ExchangePublicKey = exchangePublicKey;
             if (trustSignatures != null) this.ProtectedTrustSignatures.AddRange(trustSignatures);
-            if (deleteSignatures != null) this.ProtectedDeleteSignatures.AddRange(deleteSignatures);
             if (wikis != null) this.ProtectedWikis.AddRange(wikis);
             if (chats != null) this.ProtectedChats.AddRange(chats);
 
@@ -100,10 +97,6 @@ namespace Library.Net.Outopos
                     {
                         this.ProtectedTrustSignatures.Add(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.DeleteSignature)
-                    {
-                        this.ProtectedDeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
-                    }
                     else if (id == (byte)SerializeId.Wiki)
                     {
                         this.ProtectedWikis.Add(Wiki.Import(rangeStream, bufferManager));
@@ -148,11 +141,6 @@ namespace Library.Net.Outopos
             foreach (var value in this.TrustSignatures)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.TrustSignature, value);
-            }
-            // DeleteSignatures
-            foreach (var value in this.DeleteSignatures)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.DeleteSignature, value);
             }
             // Wikis
             foreach (var value in this.Wikis)
@@ -206,7 +194,6 @@ namespace Library.Net.Outopos
                 || this.Cost != other.Cost
                 || this.ExchangePublicKey != other.ExchangePublicKey
                 || (this.TrustSignatures == null) != (other.TrustSignatures == null)
-                || (this.DeleteSignatures == null) != (other.DeleteSignatures == null)
                 || (this.Wikis == null) != (other.Wikis == null)
                 || (this.Chats == null) != (other.Chats == null)
 
@@ -218,11 +205,6 @@ namespace Library.Net.Outopos
             if (this.TrustSignatures != null && other.TrustSignatures != null)
             {
                 if (!CollectionUtilities.Equals(this.TrustSignatures, other.TrustSignatures)) return false;
-            }
-
-            if (this.DeleteSignatures != null && other.DeleteSignatures != null)
-            {
-                if (!CollectionUtilities.Equals(this.DeleteSignatures, other.DeleteSignatures)) return false;
             }
 
             if (this.Wikis != null && other.Wikis != null)
@@ -349,31 +331,6 @@ namespace Library.Net.Outopos
                     _trustSignatures = new SignatureCollection(Profile.MaxTrustSignatureCount);
 
                 return _trustSignatures;
-            }
-        }
-
-        private volatile ReadOnlyCollection<string> _readOnlyDeleteSignatures;
-
-        public IEnumerable<string> DeleteSignatures
-        {
-            get
-            {
-                if (_readOnlyDeleteSignatures == null)
-                    _readOnlyDeleteSignatures = new ReadOnlyCollection<string>(this.ProtectedDeleteSignatures.ToArray());
-
-                return _readOnlyDeleteSignatures;
-            }
-        }
-
-        [DataMember(Name = "DeleteSignatures")]
-        private SignatureCollection ProtectedDeleteSignatures
-        {
-            get
-            {
-                if (_deleteSignatures == null)
-                    _deleteSignatures = new SignatureCollection(Profile.MaxDeleteSignatureCount);
-
-                return _deleteSignatures;
             }
         }
 

@@ -44,7 +44,7 @@ namespace Library.Net.Outopos
 
         protected override void Initialize()
         {
-
+            _thisLock = new object();
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

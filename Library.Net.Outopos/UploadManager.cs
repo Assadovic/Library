@@ -252,7 +252,6 @@ namespace Library.Net.Outopos
             int cost,
             ExchangePublicKey exchangePublicKey,
             IEnumerable<string> trustSignatures,
-            IEnumerable<string> deleteSignatures,
             IEnumerable<Wiki> wikis,
             IEnumerable<Chat> chats,
 
@@ -262,7 +261,7 @@ namespace Library.Net.Outopos
             {
                 var uploadItem = new UploadItem();
                 uploadItem.Type = "Profile";
-                uploadItem.Profile = new Profile(DateTime.UtcNow, cost, exchangePublicKey, trustSignatures, deleteSignatures, wikis, chats, digitalSignature);
+                uploadItem.Profile = new Profile(DateTime.UtcNow, cost, exchangePublicKey, trustSignatures, wikis, chats, digitalSignature);
                 uploadItem.DigitalSignature = digitalSignature;
 
                 _settings.UploadItems.RemoveAll((target) =>
