@@ -253,8 +253,14 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString())
-                        && (limit >= 0 && metadata.Cost < limit)) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (metadata.Cost < limit) continue;
+                    }
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
@@ -328,8 +334,14 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString())
-                        && (limit >= 0 && metadata.Cost < limit)) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (metadata.Cost < limit) continue;
+                    }
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
@@ -403,8 +415,14 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString())
-                        && (limit >= 0 && metadata.Cost < limit)) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (metadata.Cost < limit) continue;
+                    }
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
@@ -478,8 +496,14 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (!_settings.Signatures.Contains(metadata.Certificate.ToString())
-                        && (limit >= 0 && metadata.Cost < limit)) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (metadata.Cost < limit) continue;
+                    }
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
