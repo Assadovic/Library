@@ -259,7 +259,7 @@ namespace Library.Net.Outopos
                     }
                     else
                     {
-                        if (metadata.Cost < limit) continue;
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
                     }
 
                     if (!_cacheManager.Contains(metadata.Key))
@@ -285,7 +285,7 @@ namespace Library.Net.Outopos
 
                             dic[metadata] = package;
 
-                            signatureMessages.Add(package);
+                            signatureMessage = package;
                         }
                         catch (Exception)
                         {
@@ -299,6 +299,8 @@ namespace Library.Net.Outopos
                             }
                         }
                     }
+
+                    if (signatureMessage != null) signatureMessages.Add(signatureMessage);
                 }
 
                 return signatureMessages;
@@ -340,7 +342,7 @@ namespace Library.Net.Outopos
                     }
                     else
                     {
-                        if (metadata.Cost < limit) continue;
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
                     }
 
                     if (!_cacheManager.Contains(metadata.Key))
@@ -366,7 +368,7 @@ namespace Library.Net.Outopos
 
                             dic[metadata] = package;
 
-                            wikiDocuments.Add(package);
+                            wikiDocument = package;
                         }
                         catch (Exception)
                         {
@@ -380,6 +382,8 @@ namespace Library.Net.Outopos
                             }
                         }
                     }
+
+                    if (wikiDocument != null) wikiDocuments.Add(wikiDocument);
                 }
 
                 return wikiDocuments;
@@ -421,7 +425,7 @@ namespace Library.Net.Outopos
                     }
                     else
                     {
-                        if (metadata.Cost < limit) continue;
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
                     }
 
                     if (!_cacheManager.Contains(metadata.Key))
@@ -447,7 +451,7 @@ namespace Library.Net.Outopos
 
                             dic[metadata] = package;
 
-                            chatTopics.Add(package);
+                            chatTopic = package;
                         }
                         catch (Exception)
                         {
@@ -461,6 +465,8 @@ namespace Library.Net.Outopos
                             }
                         }
                     }
+
+                    if (chatTopic != null) chatTopics.Add(chatTopic);
                 }
 
                 return chatTopics;
@@ -502,7 +508,7 @@ namespace Library.Net.Outopos
                     }
                     else
                     {
-                        if (metadata.Cost < limit) continue;
+                        if (!_settings.Signatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
                     }
 
                     if (!_cacheManager.Contains(metadata.Key))
@@ -528,7 +534,7 @@ namespace Library.Net.Outopos
 
                             dic[metadata] = package;
 
-                            chatMessages.Add(package);
+                            chatMessage = package;
                         }
                         catch (Exception)
                         {
@@ -542,6 +548,8 @@ namespace Library.Net.Outopos
                             }
                         }
                     }
+
+                    if (chatMessage != null) chatMessages.Add(chatMessage);
                 }
 
                 return chatMessages;

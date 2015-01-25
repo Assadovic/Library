@@ -966,11 +966,11 @@ namespace Library.Net.Outopos
 
                                     var liveWikis = new HashSet<Wiki>(_settings.MetadataManager.GetMulticastWikis());
 
-                                    foreach (var section in _multicastWikiLastAccessTimes.Keys.ToArray())
+                                    foreach (var tag in _multicastWikiLastAccessTimes.Keys.ToArray())
                                     {
-                                        if (liveWikis.Contains(section)) continue;
+                                        if (liveWikis.Contains(tag)) continue;
 
-                                        _multicastWikiLastAccessTimes.Remove(section);
+                                        _multicastWikiLastAccessTimes.Remove(tag);
                                     }
                                 }
 
@@ -993,11 +993,11 @@ namespace Library.Net.Outopos
 
                                     var liveChats = new HashSet<Chat>(_settings.MetadataManager.GetMulticastChats());
 
-                                    foreach (var section in _multicastChatLastAccessTimes.Keys.ToArray())
+                                    foreach (var tag in _multicastChatLastAccessTimes.Keys.ToArray())
                                     {
-                                        if (liveChats.Contains(section)) continue;
+                                        if (liveChats.Contains(tag)) continue;
 
-                                        _multicastChatLastAccessTimes.Remove(section);
+                                        _multicastChatLastAccessTimes.Remove(tag);
                                     }
                                 }
                             }
@@ -1048,7 +1048,7 @@ namespace Library.Net.Outopos
                                                 }
                                             }
 
-                                            removeSignatureMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(32).SelectMany(n => n.Value));
+                                            removeSignatureMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
 
                                             foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
                                             {
@@ -1113,7 +1113,7 @@ namespace Library.Net.Outopos
                                                 }
                                             }
 
-                                            removeWikiDocumentMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(32).SelectMany(n => n.Value));
+                                            removeWikiDocumentMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
 
                                             foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
                                             {
@@ -1191,7 +1191,7 @@ namespace Library.Net.Outopos
                                                 }
                                             }
 
-                                            removeChatMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(32).SelectMany(n => n.Value));
+                                            removeChatMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
 
                                             foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
                                             {
