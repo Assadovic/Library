@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1046,7 +1047,7 @@ namespace Library.Tools
 
             StringBuilder sb = new StringBuilder();
 
-            var list = System.Web.HttpUtility.HtmlEncode(text).ToCharArray();
+            var list = SecurityElement.Escape(text).ToCharArray();
 
             {
                 var length = list.Length;
