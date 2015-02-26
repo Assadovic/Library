@@ -946,13 +946,6 @@ namespace Library.Net.Amoeba
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
 
-                    var messageManagers = new Dictionary<Node, MessageManager>();
-
-                    foreach (var node in otherNodes)
-                    {
-                        messageManagers[node] = _messagesManager[node];
-                    }
-
                     var diffusionBlocksList = new List<Key>();
 
                     {
