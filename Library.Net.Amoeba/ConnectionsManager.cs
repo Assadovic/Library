@@ -897,7 +897,7 @@ namespace Library.Net.Amoeba
 
                 // 拡散アップロード
                 if (connectionCount > _diffusionConnectionCountLowerLimit
-                    && pushBlockDiffusionStopwatch.Elapsed.TotalSeconds >= 60)
+                    && pushBlockDiffusionStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushBlockDiffusionStopwatch.Restart();
 
@@ -1085,7 +1085,7 @@ namespace Library.Net.Amoeba
 
                 // ダウンロード
                 if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushBlockDownloadStopwatch.Elapsed.TotalSeconds >= 60)
+                    && pushBlockDownloadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushBlockDownloadStopwatch.Restart();
 
@@ -1301,9 +1301,9 @@ namespace Library.Net.Amoeba
                     }
                 }
 
-                // Seedのアップロード
+                // Seedの拡散アップロード
                 if (connectionCount >= _uploadingConnectionCountLowerLimit
-                    && pushSeedUploadStopwatch.Elapsed.TotalMinutes >= 3)
+                    && pushSeedUploadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushSeedUploadStopwatch.Restart();
 
@@ -1348,7 +1348,7 @@ namespace Library.Net.Amoeba
 
                 // Seedのダウンロード
                 if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushSeedDownloadStopwatch.Elapsed.TotalSeconds >= 60)
+                    && pushSeedDownloadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushSeedDownloadStopwatch.Restart();
 
@@ -1557,7 +1557,7 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    if (updateTime.Elapsed.TotalSeconds >= 60)
+                    if (updateTime.Elapsed.TotalSeconds >= 30)
                     {
                         updateTime.Restart();
 
@@ -1808,7 +1808,7 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    if (seedUpdateTime.Elapsed.TotalSeconds >= 60)
+                    if (seedUpdateTime.Elapsed.TotalSeconds >= 30)
                     {
                         seedUpdateTime.Restart();
 

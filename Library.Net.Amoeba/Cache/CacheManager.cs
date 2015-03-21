@@ -1414,19 +1414,13 @@ namespace Library.Net.Amoeba
                                         int length = Math.Min(remain, CacheManager.SectorSize);
                                         _fileStream.Read(buffer, CacheManager.SectorSize * i, length);
                                     }
-                                    catch (EndOfStreamException)
+                                    catch (ArgumentOutOfRangeException)
                                     {
                                         this.Remove(key);
 
                                         throw new BlockNotFoundException();
                                     }
                                     catch (IOException)
-                                    {
-                                        this.Remove(key);
-
-                                        throw new BlockNotFoundException();
-                                    }
-                                    catch (ArgumentOutOfRangeException)
                                     {
                                         this.Remove(key);
 
@@ -1506,7 +1500,13 @@ namespace Library.Net.Amoeba
                                     return new ArraySegment<byte>(buffer, 0, length);
                                 }
                             }
-                            catch (Exception)
+                            catch (ArgumentOutOfRangeException)
+                            {
+                                _bufferManager.ReturnBuffer(buffer);
+
+                                throw new BlockNotFoundException();
+                            }
+                            catch (IOException)
                             {
                                 _bufferManager.ReturnBuffer(buffer);
 

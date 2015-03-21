@@ -11,6 +11,7 @@ namespace Library.Net.Outopos
         int Cost { get; }
         ExchangePublicKey ExchangePublicKey { get; }
         IEnumerable<string> TrustSignatures { get; }
+        IEnumerable<string> DeleteSignatures { get; }
         IEnumerable<Wiki> Wikis { get; }
         IEnumerable<Chat> Chats { get; }
     }
