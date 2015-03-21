@@ -313,26 +313,18 @@ namespace Library.Net.Amoeba
                             {
                                 if (_existManager.GetCount(group) >= group.InformationLength) continue;
 
-                                int downloadCount = 0;
                                 List<Key> tempKeys = new List<Key>();
 
                                 foreach (var key in _existManager.GetKeys(group, false))
                                 {
-                                    if (_connectionsManager.IsDownloadWaiting(key))
-                                    {
-                                        downloadCount++;
-                                    }
-                                    else
+                                    if (!_connectionsManager.IsDownloadWaiting(key))
                                     {
                                         tempKeys.Add(key);
                                     }
                                 }
 
-                                int length = Math.Max(group.InformationLength, 32) - downloadCount;
-                                if (length <= 0) continue;
-
                                 random.Shuffle(tempKeys);
-                                foreach (var key in tempKeys.Take(length))
+                                foreach (var key in tempKeys)
                                 {
                                     _connectionsManager.Download(key);
 
