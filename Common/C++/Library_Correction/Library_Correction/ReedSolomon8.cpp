@@ -48,7 +48,7 @@ void mul(byte* src, byte* dst, byte* mulc, int32_t len)
     // アライメントを揃える。
     for( ; i < len; i++)
     {
-        if(((uintptr_t)dst % 32) == 0) break;
+        if(((uintptr_t)dst % 64) == 0) break;
 
         *dst++ ^= mulc[*src++];
     }
@@ -297,7 +297,7 @@ void mul(byte* src, byte* dst, byte* mulc, int32_t len)
     // アライメントを揃える。
     for( ; i < len; i++)
     {
-        if(((uintptr_t)dst % 16) == 0) break;
+        if(((uintptr_t)dst % 32) == 0) break;
 
         *dst++ ^= mulc[*src++];
     }

@@ -196,7 +196,7 @@ void xor(byte* x, byte* y, byte* result, int32_t len)
         {
             __m128i xmm_x = _mm_loadu_si128((__m128i*)x);
             __m128i xmm_y = _mm_loadu_si128((__m128i*)y);
-            __m128i xmm_res =  _mm_xor_si128(xmm_x, xmm_y);
+            __m128i xmm_res = _mm_xor_si128(xmm_x, xmm_y);
             _mm_storeu_si128((__m128i*)result, xmm_res);
         }
     }
@@ -230,7 +230,7 @@ void xor(byte* x, byte* y, byte* result, int32_t len)
         {
             __m128i xmm_x = _mm_loadu_si128((__m128i*)x);
             __m128i xmm_y = _mm_loadu_si128((__m128i*)y);
-            __m128i xmm_res =  _mm_xor_si128(xmm_x, xmm_y);
+            __m128i xmm_res = _mm_xor_si128(xmm_x, xmm_y);
             _mm_storeu_si128((__m128i*)result, xmm_res);
         }
     }
