@@ -25,61 +25,73 @@
 
 void copy(byte* src, byte* dst, int32_t len)
 {
-    if (len <= 256)
+#if defined (PORTABLE_64_BIT)
+    if (len >= 16)
     {
-        memcpy(dst, src, len);
-    }
-    else
-    {
-        __m128i xmm0;
-        __m128i xmm1;
-        __m128i xmm2;
-        __m128i xmm3;
-        __m128i xmm4; 
-        __m128i xmm5;
-        __m128i xmm6;
-        __m128i xmm7;
-
-        int32_t i = 0;
-        
-        // アライメントを揃える。
-        for( ; i < len; i++)
+        for (int32_t i = (len / 16) - 1; i >= 0; i--, src += 16, dst += 16)
         {
-            if(((uintptr_t)src % 16) == 0) break;
-
-            *dst++ = *src++;
-        }
-
-        for (int32_t count = ((len - i) / 128) - 1; count >= 0 ; count--)
-        {
-            xmm0 = _mm_load_si128((__m128i*)src);
-            xmm1 = _mm_load_si128((__m128i*)(src + 16));
-            xmm2 = _mm_load_si128((__m128i*)(src + (16 * 2)));
-            xmm3 = _mm_load_si128((__m128i*)(src + (16 * 3)));
-            xmm4 = _mm_load_si128((__m128i*)(src + (16 * 4)));
-            xmm5 = _mm_load_si128((__m128i*)(src + (16 * 5)));
-            xmm6 = _mm_load_si128((__m128i*)(src + (16 * 6)));
-            xmm7 = _mm_load_si128((__m128i*)(src + (16 * 7)));
-
-            _mm_storeu_si128((__m128i*)dst, xmm0);
-            _mm_storeu_si128((__m128i*)(dst + 16), xmm1);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 2)), xmm2);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 3)), xmm3);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 4)), xmm4);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 5)), xmm5);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 6)), xmm6);
-            _mm_storeu_si128((__m128i*)(dst + (16 * 7)), xmm7);
-
-            src += 128;
-            dst += 128;
-            i += 128;
-        }
-
-        for( ; i < len; i++)
-        {
-            *dst++ = *src++;
+            __m128i xmm_target = _mm_loadu_si128((__m128i*)src);
+            _mm_storeu_si128((__m128i*)dst, xmm_target);
         }
     }
+
+    if ((len & 8) != 0)
+    {
+        *((uint64_t*)dst) = *((uint64_t*)src);
+        dst += 8; src += 8;
+    }
+
+    if ((len & 4) != 0)
+    {
+        *((uint32_t*)dst) = *((uint32_t*)src);
+        dst += 4; src += 4;
+    }
+
+    if ((len & 2) != 0)
+    {
+        *((uint16_t*)dst) = *((uint16_t*)src);
+        dst += 2; src += 2;
+    }
+
+    if ((len & 1) != 0)
+    {
+        *((byte*)dst) = *((byte*)src);
+    }
+#elif defined (PORTABLE_32_BIT)
+    if (len >= 16)
+    {
+        for (int32_t i = (len / 16) - 1; i >= 0; i--, src += 16, dst += 16)
+        {
+            __m128i xmm_target = _mm_loadu_si128((__m128i*)src);
+            _mm_storeu_si128((__m128i*)dst, xmm_target);
+        }
+    }
+
+    if ((len & 8) != 0)
+    {
+        *((uint32_t*)dst) = *((uint32_t*)src);
+        dst += 4; src += 4;
+        *((uint32_t*)dst) = *((uint32_t*)src);
+        dst += 4; src += 4;
+    }
+
+    if ((len & 4) != 0)
+    {
+        *((uint32_t*)dst) = *((uint32_t*)src);
+        dst += 4; src += 4;
+    }
+
+    if ((len & 2) != 0)
+    {
+        *((uint16_t*)dst) = *((uint16_t*)src);
+        dst += 2; src += 2;
+    }
+
+    if ((len & 1) != 0)
+    {
+        *((byte*)dst) = *((byte*)src);
+    }
+#endif
 }
 
 // https://gist.github.com/karthick18/1361842
