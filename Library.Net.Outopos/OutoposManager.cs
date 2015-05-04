@@ -536,6 +536,7 @@ namespace Library.Net.Outopos
             int cost,
             ExchangePublicKey exchangePublicKey,
             IEnumerable<string> trustSignatures,
+            IEnumerable<string> deleteSignatures,
             IEnumerable<Wiki> wikis,
             IEnumerable<Chat> chats,
 
@@ -545,7 +546,7 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadProfile(cost, exchangePublicKey, trustSignatures, wikis, chats, digitalSignature);
+                return _uploadManager.UploadProfile(cost, exchangePublicKey, trustSignatures, deleteSignatures, wikis, chats, digitalSignature);
             }
         }
 
