@@ -1117,7 +1117,7 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
+                                if (messageManagers.Values.Count(n => n.PushBlocksLink.Contains(array[i])) < 2)
                                 {
                                     pushBlocksLinkList.Add(array[i]);
 
@@ -1138,7 +1138,7 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
+                                if (messageManagers.Values.Count(n => n.PushBlocksLink.Contains(array[i])) < 2)
                                 {
                                     pushBlocksLinkList.Add(array[i]);
 
@@ -1155,7 +1155,7 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
+                                if (messageManagers.Values.Count(n => n.PushBlocksRequest.Contains(array[i])) < 3)
                                 {
                                     pushBlocksRequestList.Add(array[i]);
 
@@ -1176,7 +1176,7 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
+                                if (messageManagers.Values.Count(n => n.PushBlocksRequest.Contains(array[i])) < 3)
                                 {
                                     pushBlocksRequestList.Add(array[i]);
 
@@ -1198,7 +1198,7 @@ namespace Library.Net.Amoeba
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 1))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1248,7 +1248,7 @@ namespace Library.Net.Amoeba
                             {
                                 List<Node> requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 3))
                                 {
                                     requestNodes.Add(node);
                                 }
