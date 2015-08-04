@@ -5,8 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
+using System.Xml;
 
 namespace Library.Net.Upnp
 {
@@ -394,7 +397,7 @@ namespace Library.Net.Upnp
             return false;
         }
 
-        private static string GetPortEntryFromService(string services, string serviceType, string gatewayIp, int gatewayPort, int index, TimeSpan timeout)
+        private static Information GetPortEntryFromService(string services, string serviceType, string gatewayIp, int gatewayPort, int index, TimeSpan timeout)
         {
             if (services == null || !services.Contains(serviceType)) return null;
 
@@ -434,20 +437,38 @@ namespace Library.Net.Upnp
                     stream.Write(body, 0, body.Length);
                 }
 
-                string text = null;
+                List<InformationContext> contexts = new List<InformationContext>();
 
                 using (WebResponse wres = wr.GetResponse())
                 {
                     if (((HttpWebResponse)wres).StatusCode == HttpStatusCode.OK)
                     {
-                        using (StreamReader sr = new StreamReader(wres.GetResponseStream()))
+                        using (XmlTextReader xml = new XmlTextReader(wres.GetResponseStream()))
                         {
-                            text = sr.ReadToEnd();
+                            while (xml.Read())
+                            {
+                                if (xml.NodeType == XmlNodeType.Element)
+                                {
+                                    if (xml.LocalName == "GetGenericPortMappingEntryResponse")
+                                    {
+                                        using (var xmlSubtree = xml.ReadSubtree())
+                                        {
+                                            while (xmlSubtree.Read())
+                                            {
+                                                if (xmlSubtree.NodeType == XmlNodeType.Element)
+                                                {
+                                                    contexts.Add(new InformationContext(xmlSubtree.LocalName, xml.ReadString()));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                return text;
+                return new Information(contexts);
             }
             catch (Exception)
             {
@@ -579,7 +600,7 @@ namespace Library.Net.Upnp
             return false;
         }
 
-        public string GetPortEntry(int index, TimeSpan timeout)
+        public Information GetPortEntry(int index, TimeSpan timeout)
         {
             if (_services == null) throw new UpnpClientException();
 

@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 using System.Windows.Forms;
 using System.Xml;
 using Library.Security;
@@ -138,7 +136,7 @@ namespace Library.Tools
                                 {
                                     var path = xml.GetAttribute("Include");
                                     string dependentUponBaseDirectory = Path.GetDirectoryName(path);
-                                    filePaths.Add(HttpUtility.UrlDecode(Path.Combine(baseDirectory, path)));
+                                    filePaths.Add(Path.Combine(baseDirectory, path));
 
                                     using (var xmlSubtree = xml.ReadSubtree())
                                     {
@@ -148,7 +146,7 @@ namespace Library.Tools
                                             {
                                                 if (xmlSubtree.LocalName == "DependentUpon")
                                                 {
-                                                    filePaths.Add(HttpUtility.UrlDecode(Path.Combine(Path.Combine(baseDirectory, dependentUponBaseDirectory), xml.ReadString())));
+                                                    filePaths.Add(Path.Combine(Path.Combine(baseDirectory, dependentUponBaseDirectory), xml.ReadString()));
                                                 }
                                             }
                                         }
