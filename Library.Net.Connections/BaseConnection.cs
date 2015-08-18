@@ -9,7 +9,7 @@ namespace Library.Net.Connections
 {
     public class BaseConnection : Connection, IThisLock
     {
-        private CapBase _cap;
+        private Cap _cap;
         private BandwidthLimit _bandwidthLimit;
         private int _maxReceiveCount;
         private BufferManager _bufferManager;
@@ -35,7 +35,7 @@ namespace Library.Net.Connections
 
         private volatile bool _disposed;
 
-        public BaseConnection(CapBase cap, BandwidthLimit bandwidthLimit, int maxReceiveCount, BufferManager bufferManager)
+        public BaseConnection(Cap cap, BandwidthLimit bandwidthLimit, int maxReceiveCount, BufferManager bufferManager)
         {
             _cap = cap;
             _bandwidthLimit = bandwidthLimit;

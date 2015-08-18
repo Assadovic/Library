@@ -10,7 +10,7 @@ using Library.Net.Connections;
 
 namespace Library.Net.Outopos
 {
-    public delegate CapBase AcceptCapEventHandler(object sender, out string uri);
+    public delegate Cap AcceptCapEventHandler(object sender, out string uri);
 
     class ServerManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
@@ -97,7 +97,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        protected virtual CapBase OnAcceptCapEvent(out string uri)
+        protected virtual Cap OnAcceptCapEvent(out string uri)
         {
             uri = null;
 

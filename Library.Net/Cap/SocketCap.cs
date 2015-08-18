@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace Library.Net
 {
-    public class SocketCap : CapBase
+    public class SocketCap : Cap
     {
         private Socket _socket;
 

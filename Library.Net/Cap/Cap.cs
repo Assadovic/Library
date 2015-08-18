@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Library.Net
 {
-    public abstract class CapBase : ManagerBase
+    public abstract class Cap : ManagerBase
     {
         protected static TimeSpan CheckTimeout(TimeSpan elapsedTime, TimeSpan timeout)
         {

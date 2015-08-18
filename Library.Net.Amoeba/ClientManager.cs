@@ -11,7 +11,7 @@ using Library.Net.Proxy;
 
 namespace Library.Net.Amoeba
 {
-    public delegate CapBase CreateCapEventHandler(object sender, string uri);
+    public delegate Cap CreateCapEventHandler(object sender, string uri);
 
     class ClientManager : ManagerBase, Library.Configuration.ISettings, IThisLock
     {
@@ -70,7 +70,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        protected virtual CapBase OnCreateCapEvent(string uri)
+        protected virtual Cap OnCreateCapEvent(string uri)
         {
             if (_createCapEvent != null)
             {
