@@ -18,31 +18,27 @@ namespace Library.Net.Outopos
             CreationTime = 1,
 
             Comment = 2,
-            Anchor = 3,
 
-            Certificate = 4,
+            Certificate = 3,
         }
 
         private volatile Chat _tag;
         private DateTime _creationTime;
 
         private volatile string _comment;
-        private volatile AnchorCollection _anchors;
 
         private volatile Certificate _certificate;
 
         private volatile object _thisLock;
 
         public static readonly int MaxCommentLength = 1024 * 4;
-        public static readonly int MaxAnchorCount = 32;
 
-        internal ChatMessage(Chat tag, DateTime creationTime, string comment, IEnumerable<Anchor> anchors, DigitalSignature digitalSignature)
+        internal ChatMessage(Chat tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {
             this.Tag = tag;
             this.CreationTime = creationTime;
 
             this.Comment = comment;
-            if (anchors != null) this.ProtectedAnchors.AddRange(anchors);
 
             this.CreateCertificate(digitalSignature);
         }
@@ -85,10 +81,6 @@ namespace Library.Net.Outopos
                     {
                         this.Comment = ItemUtilities.GetString(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.Anchor)
-                    {
-                        this.ProtectedAnchors.Add(Anchor.Import(rangeStream, bufferManager));
-                    }
 
                     else if (id == (byte)SerializeId.Certificate)
                     {
@@ -120,14 +112,6 @@ namespace Library.Net.Outopos
             if (this.Comment != null)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
-            }
-            // Anchors
-            foreach (var value in this.Anchors)
-            {
-                using (var stream = value.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Anchor, stream);
-                }
             }
 
             // Certificate
@@ -164,16 +148,10 @@ namespace Library.Net.Outopos
                 || this.CreationTime != other.CreationTime
 
                 || this.Comment != other.Comment
-                || (this.Anchors == null) != (other.Anchors == null)
 
                 || this.Certificate != other.Certificate)
             {
                 return false;
-            }
-
-            if (this.Anchors != null && other.Anchors != null)
-            {
-                if (!CollectionUtilities.Equals(this.Anchors, other.Anchors)) return false;
             }
 
             return true;
@@ -272,31 +250,6 @@ namespace Library.Net.Outopos
                 {
                     _comment = value;
                 }
-            }
-        }
-
-        private volatile ReadOnlyCollection<Anchor> _readOnlyAnchors;
-
-        public IEnumerable<Anchor> Anchors
-        {
-            get
-            {
-                if (_readOnlyAnchors == null)
-                    _readOnlyAnchors = new ReadOnlyCollection<Anchor>(this.ProtectedAnchors.ToArray());
-
-                return _readOnlyAnchors;
-            }
-        }
-
-        [DataMember(Name = "Anchors")]
-        private AnchorCollection ProtectedAnchors
-        {
-            get
-            {
-                if (_anchors == null)
-                    _anchors = new AnchorCollection(ChatMessage.MaxAnchorCount);
-
-                return _anchors;
             }
         }
 

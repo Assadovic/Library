@@ -19,9 +19,6 @@ namespace Library.Net.Outopos
         [DataMember(Name = "WikiDocument")]
         public WikiDocument WikiDocument { get; set; }
 
-        [DataMember(Name = "ChatTopic")]
-        public ChatTopic ChatTopic { get; set; }
-
         [DataMember(Name = "ChatMessage")]
         public ChatMessage ChatMessage { get; set; }
 

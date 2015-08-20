@@ -614,42 +614,6 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static ArraySegment<byte> ToChatTopicBlock(ChatTopic package)
-        {
-            if (package == null) throw new ArgumentNullException("package");
-
-            ArraySegment<byte> value;
-
-            using (Stream packageStream = package.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(packageStream))
-            using (Stream typeStream = ContentConverter.AddType(compressStream, "ChatTopic"))
-            {
-                value = new ArraySegment<byte>(_bufferManager.TakeBuffer((int)typeStream.Length), 0, (int)typeStream.Length);
-                typeStream.Read(value.Array, value.Offset, value.Count);
-            }
-
-            return value;
-        }
-
-        public static ChatTopic FromChatTopicBlock(ArraySegment<byte> package)
-        {
-            if (package.Array == null) throw new ArgumentNullException("package.Array");
-
-            try
-            {
-                using (Stream typeStream = new MemoryStream(package.Array, package.Offset, package.Count))
-                using (Stream compressStream = ContentConverter.RemoveType(typeStream, "ChatTopic"))
-                using (Stream packageStream = ContentConverter.Decompress(compressStream))
-                {
-                    return ChatTopic.Import(packageStream, _bufferManager);
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
         public static ArraySegment<byte> ToChatMessageBlock(ChatMessage package)
         {
             if (package == null) throw new ArgumentNullException("package");

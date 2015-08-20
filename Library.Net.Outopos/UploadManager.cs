@@ -66,10 +66,6 @@ namespace Library.Net.Outopos
                         {
                             contexts.Add(new InformationContext("Package", item.WikiDocument));
                         }
-                        else if (item.Type == "ChatTopic")
-                        {
-                            contexts.Add(new InformationContext("Package", item.ChatTopic));
-                        }
                         else if (item.Type == "ChatMessage")
                         {
                             contexts.Add(new InformationContext("Package", item.ChatMessage));
@@ -142,10 +138,6 @@ namespace Library.Net.Outopos
                                 {
                                     buffer = ContentConverter.ToWikiDocumentBlock(item.WikiDocument);
                                 }
-                                else if (item.Type == "ChatTopic")
-                                {
-                                    buffer = ContentConverter.ToChatTopicBlock(item.ChatTopic);
-                                }
                                 else if (item.Type == "ChatMessage")
                                 {
                                     buffer = ContentConverter.ToChatMessageBlock(item.ChatMessage);
@@ -182,11 +174,6 @@ namespace Library.Net.Outopos
                                     else if (item.Type == "WikiDocument")
                                     {
                                         var metadata = new WikiDocumentMetadata(item.WikiDocument.Tag, item.WikiDocument.CreationTime, key, miner, item.DigitalSignature);
-                                        _connectionsManager.Upload(metadata);
-                                    }
-                                    else if (item.Type == "ChatTopic")
-                                    {
-                                        var metadata = new ChatTopicMetadata(item.ChatTopic.Tag, item.ChatTopic.CreationTime, key, miner, item.DigitalSignature);
                                         _connectionsManager.Upload(metadata);
                                     }
                                     else if (item.Type == "ChatMessage")
@@ -330,39 +317,8 @@ namespace Library.Net.Outopos
             }
         }
 
-        public ChatTopic UploadChatTopic(Chat tag,
-            HypertextFormatType formatType,
-            string hypertext,
-
-            int miningLimit,
-            TimeSpan miningTime,
-            DigitalSignature digitalSignature)
-        {
-            lock (this.ThisLock)
-            {
-                var uploadItem = new UploadItem();
-                uploadItem.Type = "ChatTopic";
-                uploadItem.ChatTopic = new ChatTopic(tag, DateTime.UtcNow, formatType, hypertext, digitalSignature);
-                uploadItem.MiningLimit = miningLimit;
-                uploadItem.MiningTime = miningTime;
-                uploadItem.DigitalSignature = digitalSignature;
-
-                _settings.UploadItems.RemoveAll((target) =>
-                {
-                    return target.Type == uploadItem.Type
-                        && target.ChatTopic.Tag == uploadItem.ChatTopic.Tag
-                        && target.DigitalSignature == digitalSignature;
-                });
-
-                _settings.UploadItems.Add(uploadItem);
-
-                return uploadItem.ChatTopic;
-            }
-        }
-
         public ChatMessage UploadChatMessage(Chat tag,
             string comment,
-            IEnumerable<Anchor> anchors,
 
             int miningLimit,
             TimeSpan miningTime,
@@ -372,7 +328,7 @@ namespace Library.Net.Outopos
             {
                 var uploadItem = new UploadItem();
                 uploadItem.Type = "ChatMessage";
-                uploadItem.ChatMessage = new ChatMessage(tag, DateTime.UtcNow, comment, anchors, digitalSignature);
+                uploadItem.ChatMessage = new ChatMessage(tag, DateTime.UtcNow, comment, digitalSignature);
                 uploadItem.MiningLimit = miningLimit;
                 uploadItem.MiningTime = miningTime;
                 uploadItem.DigitalSignature = digitalSignature;

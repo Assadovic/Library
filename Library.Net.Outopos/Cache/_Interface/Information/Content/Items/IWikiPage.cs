@@ -7,7 +7,7 @@ namespace Library.Net.Outopos
 {
     public interface IWikiPage : IHypertext
     {
-        string Path { get; }
+        string Name { get; }
         DateTime CreationTime { get; }
     }
 }

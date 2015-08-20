@@ -384,7 +384,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public IEnumerable<string> SearchSignatures
+        public IEnumerable<string> TrustSignatures
         {
             get
             {
@@ -393,35 +393,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    return _downloadManager.SearchSignatures;
-                }
-            }
-        }
-
-        public IEnumerable<Wiki> SearchWikis
-        {
-            get
-            {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
-
-                lock (this.ThisLock)
-                {
-                    return _downloadManager.SearchWikis;
-                }
-            }
-        }
-
-        public IEnumerable<Chat> SearchChats
-        {
-            get
-            {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
-
-                lock (this.ThisLock)
-                {
-                    return _downloadManager.SearchChats;
+                    return _downloadManager.TrustSignatures;
                 }
             }
         }
@@ -459,36 +431,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public void SetSearchSignatures(IEnumerable<string> signatures)
+        public void SetTrustSignatures(IEnumerable<string> signatures)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
 
             lock (this.ThisLock)
             {
-                _downloadManager.SetSearchSignatures(signatures);
-            }
-        }
-
-        public void SetSearchWikis(IEnumerable<Wiki> wikis)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
-
-            lock (this.ThisLock)
-            {
-                _downloadManager.SetSearchWikis(wikis);
-            }
-        }
-
-        public void SetSearchChats(IEnumerable<Chat> chats)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
-
-            lock (this.ThisLock)
-            {
-                _downloadManager.SetSearchChats(chats);
+                _downloadManager.SetTrustSignatures(signatures);
             }
         }
 
@@ -513,14 +463,6 @@ namespace Library.Net.Outopos
             lock (this.ThisLock)
             {
                 return _downloadManager.GetWikiDocuments(tag, limit);
-            }
-        }
-
-        public IEnumerable<ChatTopic> GetChatTopics(Chat tag, int limit)
-        {
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetChatTopics(tag, limit);
             }
         }
 
@@ -581,25 +523,9 @@ namespace Library.Net.Outopos
             }
         }
 
-        public ChatTopic UploadChatTopic(Chat tag,
-            HypertextFormatType formatType,
-            string hypertext,
-
-            int miningLimit,
-            TimeSpan miningTime,
-            DigitalSignature digitalSignature)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _uploadManager.UploadChatTopic(tag, formatType, hypertext, miningLimit, miningTime, digitalSignature);
-            }
-        }
 
         public ChatMessage UploadChatMessage(Chat tag,
             string comment,
-            IEnumerable<Anchor> anchors,
 
             int miningLimit,
             TimeSpan miningTime,
@@ -609,7 +535,7 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadChatMessage(tag, comment, anchors, miningLimit, miningTime, digitalSignature);
+                return _uploadManager.UploadChatMessage(tag, comment, miningLimit, miningTime, digitalSignature);
             }
         }
 

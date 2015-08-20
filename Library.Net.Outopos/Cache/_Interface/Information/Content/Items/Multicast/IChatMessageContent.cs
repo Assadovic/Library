@@ -9,6 +9,5 @@ namespace Library.Net.Outopos
     public interface IChatMessageContent : IComputeHash
     {
         string Comment { get; }
-        IEnumerable<Anchor> Anchors { get; }
     }
 }

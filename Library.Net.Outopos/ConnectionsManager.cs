@@ -902,7 +902,7 @@ namespace Library.Net.Outopos
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveProfileSignatures(sortList.Take(sortList.Count - 1024));
+                                    _settings.MetadataManager.RemoveBroadcastSignatures(sortList.Take(sortList.Count - 1024));
 
                                     var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetBroadcastSignatures());
 
@@ -962,7 +962,7 @@ namespace Library.Net.Outopos
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveMulticastTags(sortList.Take(sortList.Count - 1024));
+                                    _settings.MetadataManager.RemoveMulticastWikis(sortList.Take(sortList.Count - 1024));
 
                                     var liveWikis = new HashSet<Wiki>(_settings.MetadataManager.GetMulticastWikis());
 
@@ -989,7 +989,7 @@ namespace Library.Net.Outopos
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveMulticastTags(sortList.Take(sortList.Count - 1024));
+                                    _settings.MetadataManager.RemoveMulticastChats(sortList.Take(sortList.Count - 1024));
 
                                     var liveChats = new HashSet<Chat>(_settings.MetadataManager.GetMulticastChats());
 
@@ -1134,28 +1134,10 @@ namespace Library.Net.Outopos
                                 {
                                     var now = DateTime.UtcNow;
 
-                                    var removeChatTopicMetadatas = new HashSet<ChatTopicMetadata>();
                                     var removeChatMessageMetadatas = new HashSet<ChatMessageMetadata>();
 
                                     foreach (var chat in _settings.MetadataManager.GetMulticastChats())
                                     {
-                                        // ChatTopic
-                                        {
-                                            var untrustMetadatas = new List<ChatTopicMetadata>();
-
-                                            foreach (var metadata in _settings.MetadataManager.GetChatTopicMetadatas(chat))
-                                            {
-                                                var signature = metadata.Certificate.ToString();
-
-                                                if (!trustSignature.Contains(signature))
-                                                {
-                                                    untrustMetadatas.Add(metadata);
-                                                }
-                                            }
-
-                                            removeChatTopicMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(32));
-                                        }
-
                                         // ChatMessage
                                         {
                                             var trustMetadatas = new Dictionary<string, List<ChatMessageMetadata>>();
@@ -1201,11 +1183,6 @@ namespace Library.Net.Outopos
                                                 removeChatMessageMetadatas.UnionWith(list.Take(list.Count - 32));
                                             }
                                         }
-                                    }
-
-                                    foreach (var metadata in removeChatTopicMetadatas)
-                                    {
-                                        _settings.MetadataManager.RemoveMetadata(metadata);
                                     }
 
                                     foreach (var metadata in removeChatMessageMetadatas)
@@ -2691,7 +2668,6 @@ namespace Library.Net.Outopos
                                 var chats = messageManager.PullMulticastChatsRequest.ToArray();
 
                                 var wikiDocumentMetadatas = new List<WikiDocumentMetadata>();
-                                var chatTopicMetadatas = new List<ChatTopicMetadata>();
                                 var chatMessageMetadatas = new List<ChatMessageMetadata>();
 
                                 _random.Shuffle(wikis);
@@ -2713,16 +2689,6 @@ namespace Library.Net.Outopos
                                 _random.Shuffle(chats);
                                 foreach (var tag in chats)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetChatTopicMetadatas(tag))
-                                    {
-                                        if (!messageManager.StockChatTopicMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
-                                        {
-                                            chatTopicMetadatas.Add(metadata);
-
-                                            if (chatTopicMetadatas.Count >= _maxMetadataCount) break;
-                                        }
-                                    }
-
                                     foreach (var metadata in _settings.MetadataManager.GetChatMessageMetadatas(tag))
                                     {
                                         if (!messageManager.StockChatMessageMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
@@ -2733,22 +2699,18 @@ namespace Library.Net.Outopos
                                         }
                                     }
 
-                                    if (chatTopicMetadatas.Count >= _maxMetadataCount) break;
                                     if (chatMessageMetadatas.Count >= _maxMetadataCount) break;
                                 }
 
                                 if (wikiDocumentMetadatas.Count > 0
-                                    || chatTopicMetadatas.Count > 0
                                     || chatMessageMetadatas.Count > 0)
                                 {
                                     connectionManager.PushMulticastMetadatas(
                                         wikiDocumentMetadatas,
-                                        chatTopicMetadatas,
                                         chatMessageMetadatas);
 
                                     var metadataCount =
                                         wikiDocumentMetadatas.Count
-                                        + chatTopicMetadatas.Count
                                         + chatMessageMetadatas.Count;
 
                                     Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatas ({0})", metadataCount));
@@ -2757,11 +2719,6 @@ namespace Library.Net.Outopos
                                     foreach (var metadata in wikiDocumentMetadatas)
                                     {
                                         messageManager.StockWikiDocumentMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-                                    }
-
-                                    foreach (var metadata in chatTopicMetadatas)
-                                    {
-                                        messageManager.StockChatTopicMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
                                     }
 
                                     foreach (var metadata in chatMessageMetadatas)
@@ -3028,12 +2985,10 @@ namespace Library.Net.Outopos
             var messageManager = _messagesManager[connectionManager.Node];
 
             if (messageManager.StockWikiDocumentMetadatas.Count > _maxMetadataCount * messageManager.StockWikiDocumentMetadatas.SurvivalTime.TotalMinutes) return;
-            if (messageManager.StockChatTopicMetadatas.Count > _maxMetadataCount * messageManager.StockChatTopicMetadatas.SurvivalTime.TotalMinutes) return;
             if (messageManager.StockChatMessageMetadatas.Count > _maxMetadataCount * messageManager.StockChatMessageMetadatas.SurvivalTime.TotalMinutes) return;
 
             Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatas ({0})",
                 e.WikiDocumentMetadatas.Count()
-                + e.ChatTopicMetadatas.Count()
                 + e.ChatMessageMetadatas.Count()));
 
             foreach (var metadata in e.WikiDocumentMetadatas.Take(_maxMetadataCount))
@@ -3043,18 +2998,6 @@ namespace Library.Net.Outopos
                     messageManager.StockWikiDocumentMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
                     _multicastWikiLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
-                }
-
-                _pullMetadataCount.Increment();
-            }
-
-            foreach (var metadata in e.ChatTopicMetadatas.Take(_maxMetadataCount))
-            {
-                if (_settings.MetadataManager.SetMetadata(metadata))
-                {
-                    messageManager.StockChatTopicMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
-                    _multicastChatLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -3229,18 +3172,6 @@ namespace Library.Net.Outopos
             }
         }
 
-        public IEnumerable<ChatTopicMetadata> GetChatTopicMetadatas(Chat tag)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _pushMulticastChatsRequestList.Add(tag);
-
-                return _settings.MetadataManager.GetChatTopicMetadatas(tag);
-            }
-        }
-
         public IEnumerable<ChatMessageMetadata> GetChatMessageMetadatas(Chat tag)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -3274,16 +3205,6 @@ namespace Library.Net.Outopos
         }
 
         public void Upload(WikiDocumentMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _settings.MetadataManager.SetMetadata(metadata);
-            }
-        }
-
-        public void Upload(ChatTopicMetadata metadata)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -3469,7 +3390,6 @@ namespace Library.Net.Outopos
                     new Library.Configuration.SettingContent<List<ProfileMetadata>>() { Name = "ProfileMetadatas", Value = new List<ProfileMetadata>() },
                     new Library.Configuration.SettingContent<List<SignatureMessageMetadata>>() { Name = "SignatureMessageMetadatas", Value = new List<SignatureMessageMetadata>() },
                     new Library.Configuration.SettingContent<List<WikiDocumentMetadata>>() { Name = "WikiDocumentMetadatas", Value = new List<WikiDocumentMetadata>() },
-                    new Library.Configuration.SettingContent<List<ChatTopicMetadata>>() { Name = "ChatTopicMetadatas", Value = new List<ChatTopicMetadata>() },
                     new Library.Configuration.SettingContent<List<ChatMessageMetadata>>() { Name = "ChatMessageMetadatas", Value = new List<ChatMessageMetadata>() },
                 })
             {
@@ -3497,11 +3417,6 @@ namespace Library.Net.Outopos
                         _metadataManager.SetMetadata(metadata);
                     }
 
-                    foreach (var metadata in this.ChatTopicMetadatas)
-                    {
-                        _metadataManager.SetMetadata(metadata);
-                    }
-
                     foreach (var metadata in this.ChatMessageMetadatas)
                     {
                         _metadataManager.SetMetadata(metadata);
@@ -3510,7 +3425,6 @@ namespace Library.Net.Outopos
                     this.ProfileMetadatas.Clear();
                     this.SignatureMessageMetadatas.Clear();
                     this.WikiDocumentMetadatas.Clear();
-                    this.ChatTopicMetadatas.Clear();
                     this.ChatMessageMetadatas.Clear();
                 }
             }
@@ -3522,7 +3436,6 @@ namespace Library.Net.Outopos
                     this.ProfileMetadatas.AddRange(_metadataManager.GetProfileMetadatas());
                     this.SignatureMessageMetadatas.AddRange(_metadataManager.GetSignatureMessageMetadatas());
                     this.WikiDocumentMetadatas.AddRange(_metadataManager.GetWikiDocumentMetadatas());
-                    this.ChatTopicMetadatas.AddRange(_metadataManager.GetChatTopicMetadatas());
                     this.ChatMessageMetadatas.AddRange(_metadataManager.GetChatMessageMetadatas());
 
                     base.Save(directoryPath);
@@ -3530,7 +3443,6 @@ namespace Library.Net.Outopos
                     this.ProfileMetadatas.Clear();
                     this.SignatureMessageMetadatas.Clear();
                     this.WikiDocumentMetadatas.Clear();
-                    this.ChatTopicMetadatas.Clear();
                     this.ChatMessageMetadatas.Clear();
                 }
             }
@@ -3657,14 +3569,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            private List<ChatTopicMetadata> ChatTopicMetadatas
-            {
-                get
-                {
-                    return (List<ChatTopicMetadata>)this["ChatTopicMetadatas"];
-                }
-            }
-
             private List<ChatMessageMetadata> ChatMessageMetadatas
             {
                 get
@@ -3679,7 +3583,6 @@ namespace Library.Net.Outopos
             private Dictionary<string, ProfileMetadata> _profileMetadatas = new Dictionary<string, ProfileMetadata>();
             private Dictionary<string, HashSet<SignatureMessageMetadata>> _signatureMessageMetadatas = new Dictionary<string, HashSet<SignatureMessageMetadata>>();
             private Dictionary<Wiki, Dictionary<string, HashSet<WikiDocumentMetadata>>> _wikiDocumentMetadatas = new Dictionary<Wiki, Dictionary<string, HashSet<WikiDocumentMetadata>>>();
-            private Dictionary<Chat, Dictionary<string, ChatTopicMetadata>> _chatTopicMetadatas = new Dictionary<Chat, Dictionary<string, ChatTopicMetadata>>();
             private Dictionary<Chat, Dictionary<string, HashSet<ChatMessageMetadata>>> _chatMessageMetadatas = new Dictionary<Chat, Dictionary<string, HashSet<ChatMessageMetadata>>>();
 
             private readonly object _thisLock = new object();
@@ -3700,7 +3603,6 @@ namespace Library.Net.Outopos
                         count += _profileMetadatas.Count;
                         count += _signatureMessageMetadatas.Values.Sum(n => n.Count);
                         count += _wikiDocumentMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
-                        count += _chatTopicMetadatas.Values.Sum(n => n.Values.Count);
                         count += _chatMessageMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
 
                         return count;
@@ -3750,14 +3652,13 @@ namespace Library.Net.Outopos
                 {
                     var hashset = new HashSet<Chat>();
 
-                    hashset.UnionWith(_chatTopicMetadatas.Keys);
                     hashset.UnionWith(_chatMessageMetadatas.Keys);
 
                     return hashset;
                 }
             }
 
-            public void RemoveProfileSignatures(IEnumerable<string> signatures)
+            public void RemoveBroadcastSignatures(IEnumerable<string> signatures)
             {
                 lock (_thisLock)
                 {
@@ -3779,7 +3680,7 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public void RemoveMulticastTags(IEnumerable<Wiki> tags)
+            public void RemoveMulticastWikis(IEnumerable<Wiki> tags)
             {
                 lock (_thisLock)
                 {
@@ -3790,13 +3691,12 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public void RemoveMulticastTags(IEnumerable<Chat> tags)
+            public void RemoveMulticastChats(IEnumerable<Chat> tags)
             {
                 lock (_thisLock)
                 {
                     foreach (var chat in tags)
                     {
-                        _chatTopicMetadatas.Remove(chat);
                         _chatMessageMetadatas.Remove(chat);
                     }
                 }
@@ -3868,29 +3768,6 @@ namespace Library.Net.Outopos
                     }
 
                     return new WikiDocumentMetadata[0];
-                }
-            }
-
-            public IEnumerable<ChatTopicMetadata> GetChatTopicMetadatas()
-            {
-                lock (_thisLock)
-                {
-                    return _chatTopicMetadatas.Values.SelectMany(n => n.Values).ToArray();
-                }
-            }
-
-            public IEnumerable<ChatTopicMetadata> GetChatTopicMetadatas(Chat chat)
-            {
-                lock (_thisLock)
-                {
-                    Dictionary<string, ChatTopicMetadata> dic = null;
-
-                    if (_chatTopicMetadatas.TryGetValue(chat, out dic))
-                    {
-                        return dic.Values.ToArray();
-                    }
-
-                    return new ChatTopicMetadata[0];
                 }
             }
 
@@ -4015,43 +3892,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public bool SetMetadata(ChatTopicMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return false;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, ChatTopicMetadata> dic;
-
-                    if (!_chatTopicMetadatas.TryGetValue(metadata.Tag, out dic))
-                    {
-                        dic = new Dictionary<string, ChatTopicMetadata>();
-                        _chatTopicMetadatas[metadata.Tag] = dic;
-                    }
-
-                    ChatTopicMetadata tempMetadata;
-
-                    if (!dic.TryGetValue(signature, out tempMetadata)
-                        || metadata.CreationTime > tempMetadata.CreationTime)
-                    {
-                        if (!metadata.VerifyCertificate()) throw new CertificateException();
-
-                        dic[signature] = metadata;
-                    }
-
-                    return (tempMetadata == null || metadata.CreationTime >= tempMetadata.CreationTime);
-                }
-            }
-
             public bool SetMetadata(ChatMessageMetadata metadata)
             {
                 lock (_thisLock)
@@ -4163,39 +4003,6 @@ namespace Library.Net.Outopos
                         if (dic.Count == 0)
                         {
                             _wikiDocumentMetadatas.Remove(metadata.Tag);
-                        }
-                    }
-                }
-            }
-
-            public void RemoveMetadata(ChatTopicMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, ChatTopicMetadata> dic;
-                    if (!_chatTopicMetadatas.TryGetValue(metadata.Tag, out dic)) return;
-
-                    ChatTopicMetadata tempMetadata;
-                    if (!dic.TryGetValue(signature, out tempMetadata)) return;
-
-                    if (metadata == tempMetadata)
-                    {
-                        dic.Remove(signature);
-
-                        if (dic.Count == 0)
-                        {
-                            _chatTopicMetadatas.Remove(metadata.Tag);
                         }
                     }
                 }

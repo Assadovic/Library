@@ -11,14 +11,14 @@ namespace Library.Net.Outopos
     {
         private enum SerializeId : byte
         {
-            Path = 0,
+            Name = 0,
             CreationTime = 1,
 
             FormatType = 2,
             Hypertext = 3,
         }
 
-        private volatile string _path;
+        private volatile string _name;
         private DateTime _creationTime;
 
         private volatile HypertextFormatType _formatType;
@@ -26,13 +26,13 @@ namespace Library.Net.Outopos
 
         private volatile object _thisLock;
 
-        public static readonly int MaxPathLength = 256;
+        public static readonly int MaxNameLength = 256;
 
         public static readonly int MaxHypertextLength = 1024 * 32;
 
-        public WikiPage(string path, DateTime creationTime, HypertextFormatType formatType, string hypertext)
+        public WikiPage(string name, DateTime creationTime, HypertextFormatType formatType, string hypertext)
         {
-            this.Path = path;
+            this.Name = name;
             this.CreationTime = creationTime;
 
             this.FormatType = formatType;
@@ -64,9 +64,9 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Path)
+                    if (id == (byte)SerializeId.Name)
                     {
-                        this.Path = ItemUtilities.GetString(rangeStream);
+                        this.Name = ItemUtilities.GetString(rangeStream);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
@@ -90,9 +90,9 @@ namespace Library.Net.Outopos
             BufferStream bufferStream = new BufferStream(bufferManager);
 
             // Path
-            if (this.Path != null)
+            if (this.Name != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Path, this.Path);
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
@@ -133,7 +133,7 @@ namespace Library.Net.Outopos
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Path != other.Path
+            if (this.Name != other.Name
                 || this.CreationTime != other.CreationTime
 
                 || this.FormatType != other.FormatType
@@ -147,22 +147,22 @@ namespace Library.Net.Outopos
 
         #region IWikiPage
 
-        [DataMember(Name = "Path")]
-        public string Path
+        [DataMember(Name = "Name")]
+        public string Name
         {
             get
             {
-                return _path;
+                return _name;
             }
             private set
             {
-                if (value != null && value.Length > WikiPage.MaxPathLength)
+                if (value != null && value.Length > WikiPage.MaxNameLength)
                 {
                     throw new ArgumentException();
                 }
                 else
                 {
-                    _path = value;
+                    _name = value;
                 }
             }
         }

@@ -37,7 +37,6 @@ namespace Library.Net.Outopos
                     messageManager.StockProfileMetadatas.TrimExcess();
                     messageManager.StockSignatureMessageMetadatas.TrimExcess();
                     messageManager.StockWikiDocumentMetadatas.TrimExcess();
-                    messageManager.StockChatTopicMetadatas.TrimExcess();
                     messageManager.StockChatMessageMetadatas.TrimExcess();
 
                     messageManager.PushBlocksLink.TrimExcess();
@@ -190,7 +189,6 @@ namespace Library.Net.Outopos
         private VolatileHashSet<byte[]> _stockProfileMetadatas;
         private VolatileHashSet<byte[]> _stockSignatureMessageMetadatas;
         private VolatileHashSet<byte[]> _stockWikiDocumentMetadatas;
-        private VolatileHashSet<byte[]> _stockChatTopicMetadatas;
         private VolatileHashSet<byte[]> _stockChatMessageMetadatas;
 
         private VolatileHashSet<Key> _pushBlocksLink;
@@ -226,7 +224,6 @@ namespace Library.Net.Outopos
             _stockProfileMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockSignatureMessageMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockWikiDocumentMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
-            _stockChatTopicMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockChatMessageMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
 
             _pushBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
@@ -359,17 +356,6 @@ namespace Library.Net.Outopos
                 lock (this.ThisLock)
                 {
                     return _stockWikiDocumentMetadatas;
-                }
-            }
-        }
-
-        public VolatileHashSet<byte[]> StockChatTopicMetadatas
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _stockChatTopicMetadatas;
                 }
             }
         }

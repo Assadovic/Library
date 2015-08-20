@@ -65,7 +65,6 @@ namespace Library.Net.Outopos
     class PullMulticastMetadatasEventArgs : EventArgs
     {
         public IEnumerable<WikiDocumentMetadata> WikiDocumentMetadatas { get; set; }
-        public IEnumerable<ChatTopicMetadata> ChatTopicMetadatas { get; set; }
         public IEnumerable<ChatMessageMetadata> ChatMessageMetadatas { get; set; }
     }
 
@@ -657,7 +656,6 @@ namespace Library.Net.Outopos
                                         this.OnPullMulticastMetadatas(new PullMulticastMetadatasEventArgs()
                                         {
                                             WikiDocumentMetadatas = message.WikiDocumentMetadatas,
-                                            ChatTopicMetadatas = message.ChatTopicMetadatas,
                                             ChatMessageMetadatas = message.ChatMessageMetadatas,
                                         });
                                     }
@@ -1135,7 +1133,6 @@ namespace Library.Net.Outopos
 
         public void PushMulticastMetadatas(
             IEnumerable<WikiDocumentMetadata> wikiDocumentMetadatas,
-            IEnumerable<ChatTopicMetadata> chatTopicMetadatas,
             IEnumerable<ChatMessageMetadata> chatMessageMetadatas)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -1151,7 +1148,6 @@ namespace Library.Net.Outopos
 
                     var message = new MulticastMetadatasMessage(
                         wikiDocumentMetadatas,
-                        chatTopicMetadatas,
                         chatMessageMetadatas);
 
                     stream = new UniteStream(stream, message.Export(_bufferManager));
@@ -2097,21 +2093,17 @@ namespace Library.Net.Outopos
             private enum SerializeId : byte
             {
                 WikiDocumentMetadata = 0,
-                ChatTopicMetadata = 1,
-                ChatMessageMetadata = 2,
+                ChatMessageMetadata = 1,
             }
 
             private LockedList<WikiDocumentMetadata> _wikiDocumentMetadatas;
-            private LockedList<ChatTopicMetadata> _chatTopicMetadatas;
             private LockedList<ChatMessageMetadata> _chatMessageMetadatas;
 
             public MulticastMetadatasMessage(
                 IEnumerable<WikiDocumentMetadata> wikiDocumentMetadatas,
-                IEnumerable<ChatTopicMetadata> chatTopicMetadatas,
                 IEnumerable<ChatMessageMetadata> chatMessageMetadatas)
             {
                 if (wikiDocumentMetadatas != null) this.ProtectedWikiDocumentMetadatas.AddRange(wikiDocumentMetadatas);
-                if (chatTopicMetadatas != null) this.ProtectedChatTopicMetadatas.AddRange(chatTopicMetadatas);
                 if (chatMessageMetadatas != null) this.ProtectedChatMessageMetadatas.AddRange(chatMessageMetadatas);
             }
 
@@ -2144,10 +2136,6 @@ namespace Library.Net.Outopos
                         {
                             this.ProtectedWikiDocumentMetadatas.Add(WikiDocumentMetadata.Import(rangeStream, bufferManager));
                         }
-                        else if (id == (byte)SerializeId.ChatTopicMetadata)
-                        {
-                            this.ProtectedChatTopicMetadatas.Add(ChatTopicMetadata.Import(rangeStream, bufferManager));
-                        }
                         else if (id == (byte)SerializeId.ChatMessageMetadata)
                         {
                             this.ProtectedChatMessageMetadatas.Add(ChatMessageMetadata.Import(rangeStream, bufferManager));
@@ -2166,14 +2154,6 @@ namespace Library.Net.Outopos
                     using (var stream = value.Export(bufferManager))
                     {
                         ItemUtilities.Write(bufferStream, (byte)SerializeId.WikiDocumentMetadata, stream);
-                    }
-                }
-                // ChatTopicMetadatas
-                foreach (var value in this.ChatTopicMetadatas)
-                {
-                    using (var stream = value.Export(bufferManager))
-                    {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.ChatTopicMetadata, stream);
                     }
                 }
                 // ChatMessageMetadatas
@@ -2211,31 +2191,6 @@ namespace Library.Net.Outopos
                         _wikiDocumentMetadatas = new LockedList<WikiDocumentMetadata>(_maxMetadataCount);
 
                     return _wikiDocumentMetadatas;
-                }
-            }
-
-            private volatile ReadOnlyCollection<ChatTopicMetadata> _readOnlyChatTopicMetadatas;
-
-            public IEnumerable<ChatTopicMetadata> ChatTopicMetadatas
-            {
-                get
-                {
-                    if (_readOnlyChatTopicMetadatas == null)
-                        _readOnlyChatTopicMetadatas = new ReadOnlyCollection<ChatTopicMetadata>(this.ProtectedChatTopicMetadatas.ToArray());
-
-                    return _readOnlyChatTopicMetadatas;
-                }
-            }
-
-            [DataMember(Name = "ChatTopicMetadatas")]
-            private LockedList<ChatTopicMetadata> ProtectedChatTopicMetadatas
-            {
-                get
-                {
-                    if (_chatTopicMetadatas == null)
-                        _chatTopicMetadatas = new LockedList<ChatTopicMetadata>(_maxMetadataCount);
-
-                    return _chatTopicMetadatas;
                 }
             }
 
