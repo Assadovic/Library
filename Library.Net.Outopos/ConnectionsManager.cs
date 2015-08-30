@@ -805,7 +805,7 @@ namespace Library.Net.Outopos
                 }
 
                 if (connectionCount > ((this.ConnectionCountLimit / 3) * 1)
-                    && connectionCheckStopwatch.Elapsed.TotalMinutes >= 30)
+                    && connectionCheckStopwatch.Elapsed.TotalMinutes >= 5)
                 {
                     connectionCheckStopwatch.Restart();
 

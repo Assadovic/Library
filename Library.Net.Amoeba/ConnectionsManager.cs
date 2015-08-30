@@ -40,6 +40,7 @@ namespace Library.Net.Amoeba
         private LockedHashDictionary<Node, Queue<Key>> _uploadBlocksDictionary = new LockedHashDictionary<Node, Queue<Key>>();
 
         private WatchTimer _refreshTimer;
+        private WatchTimer _mediateTimer;
 
         private LockedList<Node> _creatingNodes;
 
@@ -156,6 +157,7 @@ namespace Library.Net.Amoeba
             _relayBlocks = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
 
             _refreshTimer = new WatchTimer(this.RefreshTimer, new TimeSpan(0, 0, 5));
+            _mediateTimer = new WatchTimer(this.MediateTimer, new TimeSpan(0, 5, 0));
         }
 
         private void RefreshTimer()
@@ -170,6 +172,35 @@ namespace Library.Net.Amoeba
             _pushSeedsRequestList.TrimExcess();
 
             _relayBlocks.TrimExcess();
+        }
+
+        private void MediateTimer()
+        {
+            var otherNodes = new List<Node>();
+
+            lock (this.ThisLock)
+            {
+                otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+            }
+
+            var messageManagers = new List<MessageManager>();
+
+            foreach (var node in otherNodes)
+            {
+                messageManagers.Add(_messagesManager[node]);
+            }
+
+            foreach (var messageManager in messageManagers)
+            {
+                if (messageManager.Priority > 32)
+                {
+                    messageManager.Priority.Subtract(1);
+                }
+                else if (messageManager.Priority < -32)
+                {
+                    messageManager.Priority.Add(1);
+                }
+            }
         }
 
         public GetSignaturesEventHandler GetLockSignaturesEvent
@@ -783,7 +814,7 @@ namespace Library.Net.Amoeba
                 }
 
                 if (connectionCount > ((this.ConnectionCountLimit / 3) * 1)
-                    && connectionCheckStopwatch.Elapsed.TotalMinutes >= 30)
+                    && connectionCheckStopwatch.Elapsed.TotalMinutes >= 5)
                 {
                     connectionCheckStopwatch.Restart();
 
@@ -1507,7 +1538,7 @@ namespace Library.Net.Amoeba
                     {
                         checkTime.Restart();
 
-                        if ((DateTime.UtcNow - messageManager.LastPullTime).TotalMinutes >= 10)
+                        if ((DateTime.UtcNow - messageManager.LastPullTime).TotalMinutes >= 5)
                         {
                             lock (this.ThisLock)
                             {
