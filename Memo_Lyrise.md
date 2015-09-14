@@ -1,17 +1,12 @@
 ## Todo
 
-### Library
-
-* NetworkConverter‚ÌÅ“K‰»B
-
 ###  Library.Collections
 
-* LockedStack‚ÌÀ‘•B
-* WaitStack‚ÌÀ‘•B
-* VolatileHashSet‚ÌISet‚ÌÀ‘•B
-* VolatileSortedSet‚ÌISet‚ÌÀ‘•B
-* SmallLinkedList‚ÌÀ‘•B
+* LockedStackã®å®Ÿè£…ã€‚
+* WaitStackã®å®Ÿè£…ã€‚
+* VolatileHashSetã®ISetã®å®Ÿè£…ã€‚
+* VolatileSortedSetã®ISetã®å®Ÿè£…ã€‚
 
 ###  Library.Net.I2p
 
-* d—l‚ğ’m‚ç‚È‚¢‚Ì‚Å‰ºè‚Éè‚ª•t‚¯‚ç‚ê‚È‚¢‚ªAƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒO‚µ‚½‚¢B
+* ä»•æ§˜ã‚’çŸ¥ã‚‰ãªã„ã®ã§ä¸‹æ‰‹ã«æ‰‹ãŒä»˜ã‘ã‚‰ã‚Œãªã„ãŒã€ãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°ã—ãŸã„ã€‚
