@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Library.Net.Proxy")]
-[assembly: AssemblyCopyright("Copyright © Lyrise, alrde 2009-2014")]
+[assembly: AssemblyCopyright("Copyright © Lyrise, alrde 2009-2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
