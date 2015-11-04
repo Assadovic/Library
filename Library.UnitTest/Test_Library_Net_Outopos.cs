@@ -667,8 +667,7 @@ namespace Library.UnitTest
                     var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
 
                     var metadatas1 = new List<WikiDocumentMetadata>();
-                    var metadatas2 = new List<ChatTopicMetadata>();
-                    var metadatas3 = new List<ChatMessageMetadata>();
+                    var metadatas2 = new List<ChatMessageMetadata>();
 
                     for (int j = 0; j < 4; j++)
                     {
@@ -689,29 +688,16 @@ namespace Library.UnitTest
                         var key = new Key(id, HashAlgorithm.Sha256);
                         var tag = new Chat("oooo", new byte[32]);
                         var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new ChatTopicMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
+                        var metadata = new ChatMessageMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
 
                         metadatas2.Add(metadata);
                     }
 
-                    for (int j = 0; j < 4; j++)
-                    {
-                        var id = new byte[32];
-                        _random.NextBytes(id);
-                        var key = new Key(id, HashAlgorithm.Sha256);
-                        var tag = new Chat("oooo", new byte[32]);
-                        var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new ChatMessageMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
-
-                        metadatas3.Add(metadata);
-                    }
-
-                    senderConnection.PushMulticastMetadatas(metadatas1, metadatas2, metadatas3);
+                    senderConnection.PushMulticastMetadatas(metadatas1, metadatas2);
 
                     var item = queue.Dequeue();
                     Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.WikiDocumentMetadatas), "ConnectionManager #10.1");
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas2, item.ChatTopicMetadatas), "ConnectionManager #10.2");
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas3, item.ChatMessageMetadatas), "ConnectionManager #10.3");
+                    Assert.IsTrue(CollectionUtilities.Equals(metadatas2, item.ChatMessageMetadatas), "ConnectionManager #10.2");
                 }
 
                 foreach (var connectionManager in connectionManagers)
