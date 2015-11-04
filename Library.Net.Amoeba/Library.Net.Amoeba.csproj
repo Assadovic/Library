@@ -161,6 +161,10 @@
       <Project>{38994E3C-0699-4D6C-AD02-F9F657340347}</Project>
       <Name>Library.Net.Connections</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Library.Net.Proxy\Library.Net.Proxy.csproj">
+      <Project>{56eb350e-089e-40bb-97cb-f2745a4251ae}</Project>
+      <Name>Library.Net.Proxy</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Library\Library.csproj">
       <Project>{63EADC1F-9A8A-4945-A562-DA666D0BCB7B}</Project>
       <Name>Library</Name>
@@ -188,10 +192,6 @@
     <ProjectReference Include="..\Library.Security\Library.Security.csproj">
       <Project>{D314C626-A6FC-4FD5-BE3C-9D36C2738418}</Project>
       <Name>Library.Security</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Library.Net.Proxy\Library.Net.Proxy.csproj">
-      <Project>{56EB350E-089E-40BB-97CB-F2745A4251AE}</Project>
-      <Name>Library.Net.Proxy</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Compression\Library.Compression.csproj">
       <Project>{51ECCC57-56CB-44A0-9A43-DB596F982FC8}</Project>
