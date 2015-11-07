@@ -37,18 +37,13 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
         byte finalResult[hashSize];
 
         memcpy(currentState + hashSize, value, hashSize);
-        memcpy(finalState + hashSize, value, hashSize);
 
         // Initialize
         {
-            ((uint32_t*)currentState)[0] = xorshift.next();
-            ((uint32_t*)currentState)[1] = xorshift.next();
-            ((uint32_t*)currentState)[2] = xorshift.next();
-            ((uint32_t*)currentState)[3] = xorshift.next();
-            ((uint32_t*)currentState)[4] = xorshift.next();
-            ((uint32_t*)currentState)[5] = xorshift.next();
-            ((uint32_t*)currentState)[6] = xorshift.next();
-            ((uint32_t*)currentState)[7] = xorshift.next();
+            ((uint64_t*)currentState)[0] = xorshift.next();
+            ((uint64_t*)currentState)[1] = xorshift.next();
+            ((uint64_t*)currentState)[2] = xorshift.next();
+            ((uint64_t*)currentState)[3] = xorshift.next();
 
             hash.CalculateDigest(currentResult, currentState, hashSize * 2);
         }
@@ -76,14 +71,10 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
 
         for (;;)
         {
-            ((uint32_t*)currentState)[0] = xorshift.next();
-            ((uint32_t*)currentState)[1] = xorshift.next();
-            ((uint32_t*)currentState)[2] = xorshift.next();
-            ((uint32_t*)currentState)[3] = xorshift.next();
-            ((uint32_t*)currentState)[4] = xorshift.next();
-            ((uint32_t*)currentState)[5] = xorshift.next();
-            ((uint32_t*)currentState)[6] = xorshift.next();
-            ((uint32_t*)currentState)[7] = xorshift.next();
+            ((uint64_t*)currentState)[0] = xorshift.next();
+            ((uint64_t*)currentState)[1] = xorshift.next();
+            ((uint64_t*)currentState)[2] = xorshift.next();
+            ((uint64_t*)currentState)[3] = xorshift.next();
 
             hash.CalculateDigest(currentResult, currentState, hashSize * 2);
 

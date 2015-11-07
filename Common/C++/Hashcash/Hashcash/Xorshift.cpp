@@ -5,13 +5,10 @@
 
 Xorshift::Xorshift()
 {
-    x = 123456789;
-    y = 362436069;
-    z = 521288629;
-    w = 88675123; 
+    p = 0;
 
     CryptoPP::AutoSeededRandomPool rng;
-    w ^= (uint32_t)rng.GenerateWord32();
+    rng.GenerateBlock((byte*)s, sizeof(uint64_t) * 64);
 }
 
 Xorshift::~Xorshift()
@@ -19,10 +16,14 @@ Xorshift::~Xorshift()
 
 }
 
-uint32_t Xorshift::next()
+uint64_t Xorshift::next()
 {
-    uint32_t t = x ^ (x << 11);
-    x = y; y = z; z = w;
+    uint64_t s0 = s[p];
+    uint64_t s1 = s[p = (p + 1) & 63];
 
-    return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8)); 
+    s1 ^= s1 << 25; // a
+    s1 ^= s1 >> 3;  // b
+    s0 ^= s0 >> 49; // c
+    
+    return (s[p] = s0 ^ s1) * 8372773778140471301LL;
 }
