@@ -53,7 +53,7 @@ namespace Library.Compression
 
                     Exception threadException = null;
 
-                    var thread = new Thread(new ThreadStart(() =>
+                    var thread = new Thread(() =>
                     {
                         try
                         {
@@ -80,7 +80,7 @@ namespace Library.Compression
                         {
                             threadException = e;
                         }
-                    }));
+                    });
                     thread.IsBackground = true;
                     thread.Start();
 
@@ -143,7 +143,7 @@ namespace Library.Compression
 
                     Exception threadException = null;
 
-                    var thread = new Thread(new ThreadStart(() =>
+                    var thread = new Thread(() =>
                     {
                         try
                         {
@@ -170,7 +170,7 @@ namespace Library.Compression
                         {
                             threadException = e;
                         }
-                    }));
+                    });
                     thread.IsBackground = true;
                     thread.Start();
 
