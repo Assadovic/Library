@@ -17,10 +17,9 @@ namespace Library.Net.Outopos
         private CacheManager _cacheManager;
         private BufferManager _bufferManager;
 
-        public VolatileHashDictionary<ProfileMetadata, Profile> _cache_Metadata_Profile_Pairs;
-        public VolatileHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>> _cache_Metadata_SignatureMessage_Pairs_Dictionary;
-        public VolatileHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>> _cache_Metadata_WikiDocument_Pairs_Dictionary;
-        public VolatileHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>> _cache_Metadata_ChatMessage_Pairs_Dictionary;
+        public VolatileHashDictionary<BroadcastMetadata, BroadcastMessage> _cache_Metadata_BroadcastMessage_Pairs;
+        public VolatileHashDictionary<string, Dictionary<UnicastMetadata, UnicastMessage>> _cache_Metadata_UnicastMessage_Pairs_Dictionary;
+        public VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, MulticastMessage>> _cache_Metadata_MulticastMessage_Pairs_Dictionary;
 
         private WatchTimer _watchTimer;
 
@@ -39,39 +38,30 @@ namespace Library.Net.Outopos
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _cache_Metadata_Profile_Pairs = new VolatileHashDictionary<ProfileMetadata, Profile>(new TimeSpan(0, 30, 0));
-            _cache_Metadata_SignatureMessage_Pairs_Dictionary = new VolatileHashDictionary<string, Dictionary<SignatureMessageMetadata, SignatureMessage>>(new TimeSpan(0, 30, 0));
-            _cache_Metadata_WikiDocument_Pairs_Dictionary = new VolatileHashDictionary<Wiki, Dictionary<WikiDocumentMetadata, WikiDocument>>(new TimeSpan(0, 30, 0));
-            _cache_Metadata_ChatMessage_Pairs_Dictionary = new VolatileHashDictionary<Chat, Dictionary<ChatMessageMetadata, ChatMessage>>(new TimeSpan(0, 30, 0));
+            _cache_Metadata_BroadcastMessage_Pairs = new VolatileHashDictionary<BroadcastMetadata, BroadcastMessage>(new TimeSpan(0, 30, 0));
+            _cache_Metadata_UnicastMessage_Pairs_Dictionary = new VolatileHashDictionary<string, Dictionary<UnicastMetadata, UnicastMessage>>(new TimeSpan(0, 30, 0));
+            _cache_Metadata_MulticastMessage_Pairs_Dictionary = new VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, MulticastMessage>>(new TimeSpan(0, 30, 0));
 
             _watchTimer = new WatchTimer(this.WatchTimer, new TimeSpan(0, 0, 30));
 
             _settings = new Settings(this.ThisLock);
-            
+
             _connectionsManager.GetLockSignaturesEvent = (object sender) =>
             {
                 var signatures = new HashSet<string>();
                 signatures.UnionWith(_settings.TrustSignatures);
-                signatures.UnionWith(_cache_Metadata_Profile_Pairs.Keys.Select(n => n.Certificate.ToString()));
-                signatures.UnionWith(_cache_Metadata_SignatureMessage_Pairs_Dictionary.Keys);
+                signatures.UnionWith(_cache_Metadata_BroadcastMessage_Pairs.Keys.Select(n => n.Certificate.ToString()));
+                signatures.UnionWith(_cache_Metadata_UnicastMessage_Pairs_Dictionary.Keys);
 
                 return signatures;
             };
 
-            _connectionsManager.GetLockWikisEvent = (object sender) =>
+            _connectionsManager.GetLockTagsEvent = (object sender) =>
             {
-                var wikis = new HashSet<Wiki>();
-                wikis.UnionWith(_cache_Metadata_WikiDocument_Pairs_Dictionary.Keys);
+                var tags = new HashSet<Tag>();
+                tags.UnionWith(_cache_Metadata_MulticastMessage_Pairs_Dictionary.Keys);
 
-                return wikis;
-            };
-
-            _connectionsManager.GetLockChatsEvent = (object sender) =>
-            {
-                var chats = new HashSet<Chat>();
-                chats.UnionWith(_cache_Metadata_ChatMessage_Pairs_Dictionary.Keys);
-
-                return chats;
+                return tags;
             };
         }
 
@@ -79,10 +69,9 @@ namespace Library.Net.Outopos
         {
             lock (this.ThisLock)
             {
-                _cache_Metadata_Profile_Pairs.TrimExcess();
-                _cache_Metadata_SignatureMessage_Pairs_Dictionary.TrimExcess();
-                _cache_Metadata_WikiDocument_Pairs_Dictionary.TrimExcess();
-                _cache_Metadata_ChatMessage_Pairs_Dictionary.TrimExcess();
+                _cache_Metadata_BroadcastMessage_Pairs.TrimExcess();
+                _cache_Metadata_UnicastMessage_Pairs_Dictionary.TrimExcess();
+                _cache_Metadata_MulticastMessage_Pairs_Dictionary.TrimExcess();
             }
         }
 
@@ -109,14 +98,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public Profile GetProfile(string signature)
+        public BroadcastMessage GetBroadcastMessage(string signature)
         {
             lock (this.ThisLock)
             {
-                Profile profile = null;
+                BroadcastMessage broadcastMessage = null;
 
                 {
-                    var metadata = _connectionsManager.GetProfileMetadata(signature);
+                    var metadata = _connectionsManager.GetBroadcastMetadata(signature);
                     if (metadata == null) goto End;
 
                     if (!_cacheManager.Contains(metadata.Key))
@@ -124,7 +113,7 @@ namespace Library.Net.Outopos
                         _connectionsManager.Download(metadata.Key);
                     }
 
-                    if (!_cache_Metadata_Profile_Pairs.TryGetValue(metadata, out profile))
+                    if (!_cache_Metadata_BroadcastMessage_Pairs.TryGetValue(metadata, out broadcastMessage))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -132,14 +121,14 @@ namespace Library.Net.Outopos
                         {
                             buffer = _cacheManager[metadata.Key];
 
-                            var package = ContentConverter.FromProfileBlock(buffer);
+                            var message = ContentConverter.FromBroadcastMessageBlock(buffer);
 
-                            if (metadata.CreationTime != package.CreationTime
-                                || metadata.Certificate.ToString() != package.Certificate.ToString()) goto End;
+                            if (metadata.CreationTime != message.CreationTime
+                                || metadata.Certificate.ToString() != message.Certificate.ToString()) goto End;
 
-                            _cache_Metadata_Profile_Pairs[metadata] = package;
+                            _cache_Metadata_BroadcastMessage_Pairs[metadata] = message;
 
-                            profile = package;
+                            broadcastMessage = message;
                         }
                         catch (Exception)
                         {
@@ -157,35 +146,35 @@ namespace Library.Net.Outopos
                 End: ;
                 }
 
-                return profile;
+                return broadcastMessage;
             }
         }
 
-        public IEnumerable<SignatureMessage> GetSignatureMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
+        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
         {
             if (signature == null) throw new ArgumentNullException("signature");
             if (exchangePrivateKey == null) throw new ArgumentNullException("exchangePrivateKey");
 
             lock (this.ThisLock)
             {
-                Dictionary<SignatureMessageMetadata, SignatureMessage> dic;
+                Dictionary<UnicastMetadata, UnicastMessage> dic;
 
-                if (!_cache_Metadata_SignatureMessage_Pairs_Dictionary.TryGetValue(signature, out dic))
+                if (!_cache_Metadata_UnicastMessage_Pairs_Dictionary.TryGetValue(signature, out dic))
                 {
-                    dic = new Dictionary<SignatureMessageMetadata, SignatureMessage>();
-                    _cache_Metadata_SignatureMessage_Pairs_Dictionary[signature] = dic;
+                    dic = new Dictionary<UnicastMetadata, UnicastMessage>();
+                    _cache_Metadata_UnicastMessage_Pairs_Dictionary[signature] = dic;
                 }
 
-                var metadatas = new HashSet<SignatureMessageMetadata>(_connectionsManager.GetSignatureMessageMetadatas(signature));
+                var metadatas = new HashSet<UnicastMetadata>(_connectionsManager.GetUnicastMetadatas(signature));
 
                 foreach (var metadata in dic.Keys.ToArray())
                 {
-                    if (!metadatas.Contains(metadata)) continue;
+                    if (metadatas.Contains(metadata)) continue;
 
                     dic.Remove(metadata);
                 }
 
-                var signatureMessages = new List<SignatureMessage>();
+                var unicastMessages = new List<UnicastMessage>();
 
                 foreach (var metadata in metadatas)
                 {
@@ -203,9 +192,9 @@ namespace Library.Net.Outopos
                         _connectionsManager.Download(metadata.Key);
                     }
 
-                    SignatureMessage signatureMessage;
+                    UnicastMessage unicastMessage;
 
-                    if (!dic.TryGetValue(metadata, out signatureMessage))
+                    if (!dic.TryGetValue(metadata, out unicastMessage))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -213,15 +202,15 @@ namespace Library.Net.Outopos
                         {
                             buffer = _cacheManager[metadata.Key];
 
-                            var package = ContentConverter.FromSignatureMessageBlock(buffer, exchangePrivateKey);
+                            var message = ContentConverter.FromUnicastMessageBlock(buffer, exchangePrivateKey);
 
-                            if (metadata.Signature != package.Signature
-                                || metadata.CreationTime != package.CreationTime
-                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+                            if (metadata.Signature != message.Signature
+                                || metadata.CreationTime != message.CreationTime
+                                || metadata.Certificate.ToString() != message.Certificate.ToString()) continue;
 
-                            dic[metadata] = package;
+                            dic[metadata] = message;
 
-                            signatureMessage = package;
+                            unicastMessage = message;
                         }
                         catch (Exception)
                         {
@@ -236,37 +225,37 @@ namespace Library.Net.Outopos
                         }
                     }
 
-                    if (signatureMessage != null) signatureMessages.Add(signatureMessage);
+                    if (unicastMessage != null) unicastMessages.Add(unicastMessage);
                 }
 
-                return signatureMessages;
+                return unicastMessages;
             }
         }
 
-        public IEnumerable<WikiDocument> GetWikiDocuments(Wiki tag, int limit)
+        public IEnumerable<MulticastMessage> GetMulticastMessages(Tag tag, int limit)
         {
             if (tag == null) throw new ArgumentNullException("tag");
 
             lock (this.ThisLock)
             {
-                Dictionary<WikiDocumentMetadata, WikiDocument> dic;
+                Dictionary<MulticastMetadata, MulticastMessage> dic;
 
-                if (!_cache_Metadata_WikiDocument_Pairs_Dictionary.TryGetValue(tag, out dic))
+                if (!_cache_Metadata_MulticastMessage_Pairs_Dictionary.TryGetValue(tag, out dic))
                 {
-                    dic = new Dictionary<WikiDocumentMetadata, WikiDocument>();
-                    _cache_Metadata_WikiDocument_Pairs_Dictionary[tag] = dic;
+                    dic = new Dictionary<MulticastMetadata, MulticastMessage>();
+                    _cache_Metadata_MulticastMessage_Pairs_Dictionary[tag] = dic;
                 }
 
-                var metadatas = new HashSet<WikiDocumentMetadata>(_connectionsManager.GetWikiDocumentMetadatas(tag));
+                var metadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag));
 
                 foreach (var metadata in dic.Keys.ToArray())
                 {
-                    if (!metadatas.Contains(metadata)) continue;
+                    if (metadatas.Contains(metadata)) continue;
 
                     dic.Remove(metadata);
                 }
 
-                var wikiDocuments = new List<WikiDocument>();
+                var multicastMessages = new List<MulticastMessage>();
 
                 foreach (var metadata in metadatas)
                 {
@@ -284,9 +273,9 @@ namespace Library.Net.Outopos
                         _connectionsManager.Download(metadata.Key);
                     }
 
-                    WikiDocument wikiDocument;
+                    MulticastMessage multicastMessage;
 
-                    if (!dic.TryGetValue(metadata, out wikiDocument))
+                    if (!dic.TryGetValue(metadata, out multicastMessage))
                     {
                         ArraySegment<byte> buffer = new ArraySegment<byte>();
 
@@ -294,15 +283,15 @@ namespace Library.Net.Outopos
                         {
                             buffer = _cacheManager[metadata.Key];
 
-                            var package = ContentConverter.FromWikiDocumentBlock(buffer);
+                            var message = ContentConverter.FromMulticastMessageBlock(buffer);
 
-                            if (metadata.Tag != package.Tag
-                                || metadata.CreationTime != package.CreationTime
-                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
+                            if (metadata.Tag != message.Tag
+                                || metadata.CreationTime != message.CreationTime
+                                || metadata.Certificate.ToString() != message.Certificate.ToString()) continue;
 
-                            dic[metadata] = package;
+                            dic[metadata] = message;
 
-                            wikiDocument = package;
+                            multicastMessage = message;
                         }
                         catch (Exception)
                         {
@@ -317,91 +306,10 @@ namespace Library.Net.Outopos
                         }
                     }
 
-                    if (wikiDocument != null) wikiDocuments.Add(wikiDocument);
+                    if (multicastMessage != null) multicastMessages.Add(multicastMessage);
                 }
 
-                return wikiDocuments;
-            }
-        }
-
-        public IEnumerable<ChatMessage> GetChatMessages(Chat tag, int limit)
-        {
-            if (tag == null) throw new ArgumentNullException("tag");
-
-            lock (this.ThisLock)
-            {
-                Dictionary<ChatMessageMetadata, ChatMessage> dic;
-
-                if (!_cache_Metadata_ChatMessage_Pairs_Dictionary.TryGetValue(tag, out dic))
-                {
-                    dic = new Dictionary<ChatMessageMetadata, ChatMessage>();
-                    _cache_Metadata_ChatMessage_Pairs_Dictionary[tag] = dic;
-                }
-
-                var metadatas = new HashSet<ChatMessageMetadata>(_connectionsManager.GetChatMessageMetadatas(tag));
-
-                foreach (var metadata in dic.Keys.ToArray())
-                {
-                    if (!metadatas.Contains(metadata)) continue;
-
-                    dic.Remove(metadata);
-                }
-
-                var chatMessages = new List<ChatMessage>();
-
-                foreach (var metadata in metadatas)
-                {
-                    if (limit < 0)
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString())) continue;
-                    }
-                    else
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
-                    }
-
-                    if (!_cacheManager.Contains(metadata.Key))
-                    {
-                        _connectionsManager.Download(metadata.Key);
-                    }
-
-                    ChatMessage chatMessage;
-
-                    if (!dic.TryGetValue(metadata, out chatMessage))
-                    {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
-
-                        try
-                        {
-                            buffer = _cacheManager[metadata.Key];
-
-                            var package = ContentConverter.FromChatMessageBlock(buffer);
-
-                            if (metadata.Tag != package.Tag
-                                || metadata.CreationTime != package.CreationTime
-                                || metadata.Certificate.ToString() != package.Certificate.ToString()) continue;
-
-                            dic[metadata] = package;
-
-                            chatMessage = package;
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                        finally
-                        {
-                            if (buffer.Array != null)
-                            {
-                                _bufferManager.ReturnBuffer(buffer.Array);
-                            }
-                        }
-                    }
-
-                    if (chatMessage != null) chatMessages.Add(chatMessage);
-                }
-
-                return chatMessages;
+                return multicastMessages;
             }
         }
 

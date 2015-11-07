@@ -43,25 +43,13 @@ namespace Library.UnitTest
         }
 
         [Test]
-        public void Test_OutoposConverter_Wiki()
+        public void Test_OutoposConverter_Tag()
         {
-            Wiki tag1 = new Wiki("oooo", new byte[32]);
-            Wiki tag2;
+            Tag tag1 = new Tag("oooo", new byte[32]);
+            Tag tag2;
 
-            var stringTagAndOption = OutoposConverter.ToWikiString(tag1);
-            tag2 = OutoposConverter.FromWikiString(stringTagAndOption);
-
-            Assert.AreEqual(tag1, tag2, "OutoposConverter #2");
-        }
-
-        [Test]
-        public void Test_OutoposConverter_Chat()
-        {
-            Chat tag1 = new Chat("oooo", new byte[32]);
-            Chat tag2;
-
-            var stringTagAndOption = OutoposConverter.ToChatString(tag1);
-            tag2 = OutoposConverter.FromChatString(stringTagAndOption);
+            var stringTagAndOption = OutoposConverter.ToTagString(tag1);
+            tag2 = OutoposConverter.FromTagString(stringTagAndOption);
 
             Assert.AreEqual(tag1, tag2, "OutoposConverter #3ll");
         }
@@ -114,11 +102,11 @@ namespace Library.UnitTest
         [Test]
         public void Test_Tag()
         {
-            var tag = new Chat("oooo", new byte[32]);
+            var tag = new Tag("oooo", new byte[32]);
 
-            Chat tag2;
+            Tag tag2;
             {
-                var ds = new DataContractSerializer(typeof(Chat));
+                var ds = new DataContractSerializer(typeof(Tag));
 
                 using (BufferStream stream = new BufferStream(BufferManager.Instance))
                 {
@@ -132,18 +120,18 @@ namespace Library.UnitTest
 
                     using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                     {
-                        tag2 = (Chat)ds.ReadObject(xmlDictionaryReader);
+                        tag2 = (Tag)ds.ReadObject(xmlDictionaryReader);
                     }
                 }
             }
 
             Assert.AreEqual(tag, tag2, "Tag #1");
 
-            Chat tag3;
+            Tag tag3;
 
             using (var tagStream = tag.Export(_bufferManager))
             {
-                tag3 = Chat.Import(tagStream, _bufferManager);
+                tag3 = Tag.Import(tagStream, _bufferManager);
             }
 
             Assert.AreEqual(tag, tag3, "Tag #2");
@@ -157,14 +145,14 @@ namespace Library.UnitTest
                 var id = new byte[32];
                 _random.NextBytes(id);
                 var key = new Key(id, HashAlgorithm.Sha256);
-                var tag = new Chat("oooo", new byte[32]);
+                var tag = new Tag("oooo", new byte[32]);
                 var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
                 var digitalSignature = new DigitalSignature("123", a);
-                var metadata = new ChatMessageMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
+                var metadata = new MulticastMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
 
-                ChatMessageMetadata metadata2;
+                MulticastMetadata metadata2;
                 {
-                    var ds = new DataContractSerializer(typeof(ChatMessageMetadata));
+                    var ds = new DataContractSerializer(typeof(MulticastMetadata));
 
                     using (BufferStream stream = new BufferStream(BufferManager.Instance))
                     {
@@ -178,18 +166,18 @@ namespace Library.UnitTest
 
                         using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                         {
-                            metadata2 = (ChatMessageMetadata)ds.ReadObject(xmlDictionaryReader);
+                            metadata2 = (MulticastMetadata)ds.ReadObject(xmlDictionaryReader);
                         }
                     }
                 }
 
                 Assert.AreEqual(metadata, metadata2, "Metadata #1");
 
-                ChatMessageMetadata metadata3;
+                MulticastMetadata metadata3;
 
                 using (var metadataStream = metadata.Export(_bufferManager))
                 {
-                    metadata3 = ChatMessageMetadata.Import(metadataStream, _bufferManager);
+                    metadata3 = MulticastMetadata.Import(metadataStream, _bufferManager);
                 }
 
                 Assert.AreEqual(metadata, metadata3, "Metadata #2");
@@ -530,14 +518,14 @@ namespace Library.UnitTest
 
                     var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
 
-                    var metadatas1 = new List<ProfileMetadata>();
+                    var metadatas1 = new List<BroadcastMetadata>();
 
                     for (int j = 0; j < 4; j++)
                     {
                         var id = new byte[32];
                         _random.NextBytes(id);
                         var key = new Key(id, HashAlgorithm.Sha256);
-                        var metadata = new ProfileMetadata(DateTime.UtcNow, key, digitalSignature);
+                        var metadata = new BroadcastMetadata(DateTime.UtcNow, key, digitalSignature);
 
                         metadatas1.Add(metadata);
                     }
@@ -545,7 +533,7 @@ namespace Library.UnitTest
                     senderConnection.PushBroadcastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.ProfileMetadatas), "ConnectionManager #6.1");
+                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.BroadcastMetadatas), "ConnectionManager #6.1");
                 }
 
                 connectionManagers.Randomize();
@@ -591,7 +579,7 @@ namespace Library.UnitTest
 
                     var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
 
-                    var metadatas1 = new List<SignatureMessageMetadata>();
+                    var metadatas1 = new List<UnicastMetadata>();
 
                     for (int j = 0; j < 4; j++)
                     {
@@ -599,7 +587,7 @@ namespace Library.UnitTest
                         _random.NextBytes(id);
                         var key = new Key(id, HashAlgorithm.Sha256);
                         var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new SignatureMessageMetadata(digitalSignature.ToString(), DateTime.UtcNow, key, miner, digitalSignature);
+                        var metadata = new UnicastMetadata(digitalSignature.ToString(), DateTime.UtcNow, key, miner, digitalSignature);
 
                         metadatas1.Add(metadata);
                     }
@@ -607,7 +595,7 @@ namespace Library.UnitTest
                     senderConnection.PushUnicastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.SignatureMessageMetadatas), "ConnectionManager #8.1");
+                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.UnicastMetadatas), "ConnectionManager #8.1");
                 }
 
                 connectionManagers.Randomize();
@@ -623,8 +611,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var wikis = new WikiCollection();
-                    var chats = new ChatCollection();
+                    var tags = new TagCollection();
 
                     for (int j = 0; j < 32; j++)
                     {
@@ -632,23 +619,13 @@ namespace Library.UnitTest
                         _random.NextBytes(id);
                         var key = new Key(id, HashAlgorithm.Sha256);
 
-                        wikis.Add(new Wiki(RandomString.GetValue(256), id));
+                        tags.Add(new Tag(RandomString.GetValue(256), id));
                     }
 
-                    for (int j = 0; j < 32; j++)
-                    {
-                        var id = new byte[32];
-                        _random.NextBytes(id);
-                        var key = new Key(id, HashAlgorithm.Sha256);
-
-                        chats.Add(new Chat(RandomString.GetValue(256), id));
-                    }
-
-                    senderConnection.PushMulticastMetadatasRequest(wikis, chats);
+                    senderConnection.PushMulticastMetadatasRequest(tags);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(wikis, item.Wikis), "ConnectionManager #9.1");
-                    Assert.IsTrue(CollectionUtilities.Equals(chats, item.Chats), "ConnectionManager #9.2");
+                    Assert.IsTrue(CollectionUtilities.Equals(tags, item.Tags), "ConnectionManager #9.1");
                 }
 
                 connectionManagers.Randomize();
@@ -666,38 +643,24 @@ namespace Library.UnitTest
 
                     var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
 
-                    var metadatas1 = new List<WikiDocumentMetadata>();
-                    var metadatas2 = new List<ChatMessageMetadata>();
+                    var metadatas1 = new List<MulticastMetadata>();
 
                     for (int j = 0; j < 4; j++)
                     {
                         var id = new byte[32];
                         _random.NextBytes(id);
                         var key = new Key(id, HashAlgorithm.Sha256);
-                        var tag = new Wiki("oooo", new byte[32]);
+                        var tag = new Tag("oooo", new byte[32]);
                         var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new WikiDocumentMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
+                        var metadata = new MulticastMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
 
                         metadatas1.Add(metadata);
                     }
 
-                    for (int j = 0; j < 4; j++)
-                    {
-                        var id = new byte[32];
-                        _random.NextBytes(id);
-                        var key = new Key(id, HashAlgorithm.Sha256);
-                        var tag = new Chat("oooo", new byte[32]);
-                        var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new ChatMessageMetadata(tag, DateTime.UtcNow, key, miner, digitalSignature);
-
-                        metadatas2.Add(metadata);
-                    }
-
-                    senderConnection.PushMulticastMetadatas(metadatas1, metadatas2);
+                    senderConnection.PushMulticastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.WikiDocumentMetadatas), "ConnectionManager #10.1");
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas2, item.ChatMessageMetadatas), "ConnectionManager #10.2");
+                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.MulticastMetadatas), "ConnectionManager #10.1");
                 }
 
                 foreach (var connectionManager in connectionManagers)

@@ -280,15 +280,15 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static string ToWikiString(Wiki item)
+        public static string ToTagString(Tag item)
         {
-            if (item == null) throw new ArgumentNullException("Wiki");
+            if (item == null) throw new ArgumentNullException("Tag");
 
             try
             {
-                using (Stream stream = OutoposConverter.ToStream<Wiki>(item))
+                using (Stream stream = OutoposConverter.ToStream<Tag>(item))
                 {
-                    return "Wiki:" + OutoposConverter.ToBase64String(stream);
+                    return "Tag:" + OutoposConverter.ToBase64String(stream);
                 }
             }
             catch (Exception)
@@ -297,51 +297,16 @@ namespace Library.Net.Outopos
             }
         }
 
-        public static Wiki FromWikiString(string item)
+        public static Tag FromTagString(string item)
         {
             if (item == null) throw new ArgumentNullException("item");
-            if (!item.StartsWith("Wiki:")) throw new ArgumentException("item");
+            if (!item.StartsWith("Tag:")) throw new ArgumentException("item");
 
             try
             {
-                using (Stream stream = OutoposConverter.FromBase64String(item.Remove(0, "Wiki:".Length)))
+                using (Stream stream = OutoposConverter.FromBase64String(item.Remove(0, "Tag:".Length)))
                 {
-                    return OutoposConverter.FromStream<Wiki>(stream);
-                }
-            }
-            catch (Exception)
-            {
-                throw new FormatException();
-            }
-        }
-
-        public static string ToChatString(Chat item)
-        {
-            if (item == null) throw new ArgumentNullException("Chat");
-
-            try
-            {
-                using (Stream stream = OutoposConverter.ToStream<Chat>(item))
-                {
-                    return "Chat:" + OutoposConverter.ToBase64String(stream);
-                }
-            }
-            catch (Exception)
-            {
-                throw new FormatException();
-            }
-        }
-
-        public static Chat FromChatString(string item)
-        {
-            if (item == null) throw new ArgumentNullException("item");
-            if (!item.StartsWith("Chat:")) throw new ArgumentException("item");
-
-            try
-            {
-                using (Stream stream = OutoposConverter.FromBase64String(item.Remove(0, "Chat:".Length)))
-                {
-                    return OutoposConverter.FromStream<Chat>(stream);
+                    return OutoposConverter.FromStream<Tag>(stream);
                 }
             }
             catch (Exception)

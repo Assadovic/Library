@@ -10,8 +10,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
-    public abstract class BroadcastMetadata<TMetadata> : ImmutableCertificateItemBase<TMetadata>, IBroadcastHeader, IBroadcastOptions
-        where TMetadata : BroadcastMetadata<TMetadata>
+    public class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
     {
         private enum SerializeId : byte
         {
@@ -121,12 +120,12 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is TMetadata)) return false;
+            if ((object)obj == null || !(obj is BroadcastMetadata)) return false;
 
-            return this.Equals((TMetadata)obj);
+            return this.Equals((BroadcastMetadata)obj);
         }
 
-        public override bool Equals(TMetadata other)
+        public override bool Equals(BroadcastMetadata other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;

@@ -30,8 +30,7 @@ namespace Library.Net.Outopos
         private AcceptCapEventHandler _acceptCapEvent;
         private CheckUriEventHandler _checkUriEvent;
         private GetSignaturesEventHandler _getLockSignaturesEvent;
-        private GetWikisEventHandler _getLockWikisEvent;
-        private GetChatsEventHandler _getLockChatsEvent;
+        private GetTagsEventHandler _getLockTagsEvent;
 
         private volatile bool _isLoaded;
 
@@ -104,21 +103,11 @@ namespace Library.Net.Outopos
                 return null;
             };
 
-            _connectionsManager.GetLockWikisEvent = (object sender) =>
+            _connectionsManager.GetLockTagsEvent = (object sender) =>
             {
-                if (_getLockWikisEvent != null)
+                if (_getLockTagsEvent != null)
                 {
-                    return _getLockWikisEvent(this);
-                }
-
-                return null;
-            };
-
-            _connectionsManager.GetLockChatsEvent = (object sender) =>
-            {
-                if (_getLockChatsEvent != null)
-                {
-                    return _getLockChatsEvent(this);
+                    return _getLockTagsEvent(this);
                 }
 
                 return null;
@@ -169,24 +158,13 @@ namespace Library.Net.Outopos
             }
         }
 
-        public GetWikisEventHandler GetLockWikisEvent
+        public GetTagsEventHandler GetLockTagsEvent
         {
             set
             {
                 lock (this.ThisLock)
                 {
-                    _getLockWikisEvent = value;
-                }
-            }
-        }
-
-        public GetChatsEventHandler GetLockChatsEvent
-        {
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _getLockChatsEvent = value;
+                    _getLockTagsEvent = value;
                 }
             }
         }
@@ -442,45 +420,36 @@ namespace Library.Net.Outopos
             }
         }
 
-        public Profile GetProfile(string signature)
+        public BroadcastMessage GetBroadcastMessage(string signature)
         {
             lock (this.ThisLock)
             {
-                return _downloadManager.GetProfile(signature);
+                return _downloadManager.GetBroadcastMessage(signature);
             }
         }
 
-        public IEnumerable<SignatureMessage> GetSignatureMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
+        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
         {
             lock (this.ThisLock)
             {
-                return _downloadManager.GetSignatureMessages(signature, exchangePrivateKey, limit);
+                return _downloadManager.GetUnicastMessages(signature, exchangePrivateKey, limit);
             }
         }
 
-        public IEnumerable<WikiDocument> GetWikiDocuments(Wiki tag, int limit)
+        public IEnumerable<MulticastMessage> GetMulticastMessages(Tag tag, int limit)
         {
             lock (this.ThisLock)
             {
-                return _downloadManager.GetWikiDocuments(tag, limit);
+                return _downloadManager.GetMulticastMessages(tag, limit);
             }
         }
 
-        public IEnumerable<ChatMessage> GetChatMessages(Chat tag, int limit)
-        {
-            lock (this.ThisLock)
-            {
-                return _downloadManager.GetChatMessages(tag, limit);
-            }
-        }
-
-        public Profile UploadProfile(
+        public BroadcastMessage UploadBroadcastMessage(
             int cost,
             ExchangePublicKey exchangePublicKey,
             IEnumerable<string> trustSignatures,
             IEnumerable<string> deleteSignatures,
-            IEnumerable<Wiki> wikis,
-            IEnumerable<Chat> chats,
+            IEnumerable<Tag> tags,
 
             DigitalSignature digitalSignature)
         {
@@ -488,11 +457,11 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadProfile(cost, exchangePublicKey, trustSignatures, deleteSignatures, wikis, chats, digitalSignature);
+                return _uploadManager.UploadBroadcastMessage(cost, exchangePublicKey, trustSignatures, deleteSignatures, tags, digitalSignature);
             }
         }
 
-        public SignatureMessage UploadSignatureMessage(string signature,
+        public UnicastMessage UploadUnicastMessage(string signature,
             string comment,
 
             ExchangePublicKey exchangePublicKey,
@@ -504,27 +473,11 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadSignatureMessage(signature, comment, exchangePublicKey, miningLimit, miningTime, digitalSignature);
+                return _uploadManager.UploadUnicastMessage(signature, comment, exchangePublicKey, miningLimit, miningTime, digitalSignature);
             }
         }
 
-        public WikiDocument UploadWikiDocument(Wiki tag,
-            IEnumerable<WikiPage> wikiPages,
-
-            int miningLimit,
-            TimeSpan miningTime,
-            DigitalSignature digitalSignature)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                return _uploadManager.UploadWikiDocument(tag, wikiPages, miningLimit, miningTime, digitalSignature);
-            }
-        }
-
-
-        public ChatMessage UploadChatMessage(Chat tag,
+        public MulticastMessage UploadMulticastMessage(Tag tag,
             string comment,
 
             int miningLimit,
@@ -535,7 +488,7 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadChatMessage(tag, comment, miningLimit, miningTime, digitalSignature);
+                return _uploadManager.UploadMulticastMessage(tag, comment, miningLimit, miningTime, digitalSignature);
             }
         }
 

@@ -12,8 +12,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     public delegate IEnumerable<string> GetSignaturesEventHandler(object sender);
-    public delegate IEnumerable<Wiki> GetWikisEventHandler(object sender);
-    public delegate IEnumerable<Chat> GetChatsEventHandler(object sender);
+    public delegate IEnumerable<Tag> GetTagsEventHandler(object sender);
 
     class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
@@ -35,10 +34,9 @@ namespace Library.Net.Outopos
 
         private LockedHashDictionary<Node, List<Key>> _pushBlocksLinkDictionary = new LockedHashDictionary<Node, List<Key>>();
         private LockedHashDictionary<Node, List<Key>> _pushBlocksRequestDictionary = new LockedHashDictionary<Node, List<Key>>();
-        private LockedHashDictionary<Node, List<string>> _pushBroadcastSignaturesRequestDictionary = new LockedHashDictionary<Node, List<string>>();
-        private LockedHashDictionary<Node, List<string>> _pushUnicastSignaturesRequestDictionary = new LockedHashDictionary<Node, List<string>>();
-        private LockedHashDictionary<Node, List<Wiki>> _pushMulticastWikisRequestDictionary = new LockedHashDictionary<Node, List<Wiki>>();
-        private LockedHashDictionary<Node, List<Chat>> _pushMulticastChatsRequestDictionary = new LockedHashDictionary<Node, List<Chat>>();
+        private LockedHashDictionary<Node, List<string>> _pushBroadcastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
+        private LockedHashDictionary<Node, List<string>> _pushUnicastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
+        private LockedHashDictionary<Node, List<Tag>> _pushMulticastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<Tag>>();
 
         private LockedHashDictionary<Node, Queue<Key>> _diffusionBlocksDictionary = new LockedHashDictionary<Node, Queue<Key>>();
         private LockedHashDictionary<Node, Queue<Key>> _uploadBlocksDictionary = new LockedHashDictionary<Node, Queue<Key>>();
@@ -54,15 +52,13 @@ namespace Library.Net.Outopos
         private VolatileHashSet<string> _succeededUris;
 
         private VolatileHashSet<Key> _downloadBlocks;
-        private VolatileHashSet<string> _pushBroadcastSignaturesRequestList;
-        private VolatileHashSet<string> _pushUnicastSignaturesRequestList;
-        private VolatileHashSet<Wiki> _pushMulticastWikisRequestList;
-        private VolatileHashSet<Chat> _pushMulticastChatsRequestList;
+        private VolatileHashSet<string> _pushBroadcastMetadatasRequestList;
+        private VolatileHashSet<string> _pushUnicastMetadatasRequestList;
+        private VolatileHashSet<Tag> _pushMulticastMetadatasRequestList;
 
-        private LockedHashDictionary<string, DateTime> _broadcastSignatureLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<string, DateTime> _unicastSignatureLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<Wiki, DateTime> _multicastWikiLastAccessTimes = new LockedHashDictionary<Wiki, DateTime>();
-        private LockedHashDictionary<Chat, DateTime> _multicastChatLastAccessTimes = new LockedHashDictionary<Chat, DateTime>();
+        private LockedHashDictionary<string, DateTime> _broadcastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
+        private LockedHashDictionary<string, DateTime> _unicastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
+        private LockedHashDictionary<Tag, DateTime> _multicastMetadatasLastAccessTimes = new LockedHashDictionary<Tag, DateTime>();
 
         private Thread _connectionsManagerThread;
         private Thread _createConnection1Thread;
@@ -102,8 +98,7 @@ namespace Library.Net.Outopos
         private readonly SafeInteger _acceptConnectionCount = new SafeInteger();
 
         private GetSignaturesEventHandler _getLockSignaturesEvent;
-        private GetWikisEventHandler _getLockWikisEvent;
-        private GetChatsEventHandler _getLockChatsEvent;
+        private GetTagsEventHandler _getLockTagsEvent;
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
@@ -159,10 +154,9 @@ namespace Library.Net.Outopos
             _succeededUris = new VolatileHashSet<string>(new TimeSpan(1, 0, 0));
 
             _downloadBlocks = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-            _pushBroadcastSignaturesRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
-            _pushUnicastSignaturesRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
-            _pushMulticastWikisRequestList = new VolatileHashSet<Wiki>(new TimeSpan(0, 3, 0));
-            _pushMulticastChatsRequestList = new VolatileHashSet<Chat>(new TimeSpan(0, 3, 0));
+            _pushBroadcastMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
+            _pushUnicastMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
+            _pushMulticastMetadatasRequestList = new VolatileHashSet<Tag>(new TimeSpan(0, 3, 0));
 
             _relayBlocks = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
 
@@ -178,10 +172,9 @@ namespace Library.Net.Outopos
             _succeededUris.TrimExcess();
 
             _downloadBlocks.TrimExcess();
-            _pushBroadcastSignaturesRequestList.TrimExcess();
-            _pushUnicastSignaturesRequestList.TrimExcess();
-            _pushMulticastWikisRequestList.TrimExcess();
-            _pushMulticastChatsRequestList.TrimExcess();
+            _pushBroadcastMetadatasRequestList.TrimExcess();
+            _pushUnicastMetadatasRequestList.TrimExcess();
+            _pushMulticastMetadatasRequestList.TrimExcess();
 
             _relayBlocks.TrimExcess();
         }
@@ -197,24 +190,13 @@ namespace Library.Net.Outopos
             }
         }
 
-        public GetWikisEventHandler GetLockWikisEvent
+        public GetTagsEventHandler GetLockTagsEvent
         {
             set
             {
                 lock (this.ThisLock)
                 {
-                    _getLockWikisEvent = value;
-                }
-            }
-        }
-
-        public GetChatsEventHandler GetLockChatsEvent
-        {
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _getLockChatsEvent = value;
+                    _getLockTagsEvent = value;
                 }
             }
         }
@@ -409,21 +391,11 @@ namespace Library.Net.Outopos
             return null;
         }
 
-        protected virtual IEnumerable<Wiki> OnLockWikisEvent()
+        protected virtual IEnumerable<Tag> OnLockTagsEvent()
         {
-            if (_getLockWikisEvent != null)
+            if (_getLockTagsEvent != null)
             {
-                return _getLockWikisEvent(this);
-            }
-
-            return null;
-        }
-
-        protected virtual IEnumerable<Chat> OnLockChatsEvent()
-        {
-            if (_getLockChatsEvent != null)
-            {
-                return _getLockChatsEvent(this);
+                return _getLockTagsEvent(this);
             }
 
             return null;
@@ -442,18 +414,11 @@ namespace Library.Net.Outopos
                 || key.HashAlgorithm != HashAlgorithm.Sha256);
         }
 
-        private static bool Check(Wiki wiki)
+        private static bool Check(Tag tag)
         {
-            return !(wiki == null
-                || wiki.Name == null
-                || wiki.Id == null || wiki.Id.Length == 0);
-        }
-
-        private static bool Check(Chat chat)
-        {
-            return !(chat == null
-                || chat.Name == null
-                || chat.Id == null || chat.Id.Length == 0);
+            return !(tag == null
+                || tag.Name == null
+                || tag.Id == null || tag.Id.Length == 0);
         }
 
         private void UpdateSessionId()
@@ -879,11 +844,8 @@ namespace Library.Net.Outopos
                             var lockSignatures = this.OnLockSignaturesEvent();
                             if (lockSignatures == null) return;
 
-                            var lockWikis = this.OnLockWikisEvent();
-                            if (lockWikis == null) return;
-
-                            var lockChats = this.OnLockChatsEvent();
-                            if (lockChats == null) return;
+                            var lockTags = this.OnLockTagsEvent();
+                            if (lockTags == null) return;
 
                             // Broadcast
                             {
@@ -897,7 +859,7 @@ namespace Library.Net.Outopos
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _broadcastSignatureLastAccessTimes.TryGetValue(n, out t);
+                                            _broadcastMetadatasLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
@@ -906,11 +868,11 @@ namespace Library.Net.Outopos
 
                                     var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetBroadcastSignatures());
 
-                                    foreach (var signature in _broadcastSignatureLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _broadcastMetadatasLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _broadcastSignatureLastAccessTimes.Remove(signature);
+                                        _broadcastMetadatasLastAccessTimes.Remove(signature);
                                     }
                                 }
                             }
@@ -927,7 +889,7 @@ namespace Library.Net.Outopos
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _unicastSignatureLastAccessTimes.TryGetValue(n, out t);
+                                            _unicastMetadatasLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
@@ -936,68 +898,41 @@ namespace Library.Net.Outopos
 
                                     var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetUnicastSignatures());
 
-                                    foreach (var signature in _unicastSignatureLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _unicastMetadatasLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _unicastSignatureLastAccessTimes.Remove(signature);
+                                        _unicastMetadatasLastAccessTimes.Remove(signature);
                                     }
                                 }
                             }
 
                             // Multicast
                             {
-                                // Wiki
+                                // Tag
                                 {
-                                    var removeWikis = new HashSet<Wiki>();
-                                    removeWikis.UnionWith(_settings.MetadataManager.GetMulticastWikis());
-                                    removeWikis.ExceptWith(lockWikis);
+                                    var removeTags = new HashSet<Tag>();
+                                    removeTags.UnionWith(_settings.MetadataManager.GetMulticastTags());
+                                    removeTags.ExceptWith(lockTags);
 
-                                    var sortList = removeWikis
+                                    var sortList = removeTags
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _multicastWikiLastAccessTimes.TryGetValue(n, out t);
+                                            _multicastMetadatasLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveMulticastWikis(sortList.Take(sortList.Count - 1024));
+                                    _settings.MetadataManager.RemoveMulticastTags(sortList.Take(sortList.Count - 1024));
 
-                                    var liveWikis = new HashSet<Wiki>(_settings.MetadataManager.GetMulticastWikis());
+                                    var liveTags = new HashSet<Tag>(_settings.MetadataManager.GetMulticastTags());
 
-                                    foreach (var tag in _multicastWikiLastAccessTimes.Keys.ToArray())
+                                    foreach (var tag in _multicastMetadatasLastAccessTimes.Keys.ToArray())
                                     {
-                                        if (liveWikis.Contains(tag)) continue;
+                                        if (liveTags.Contains(tag)) continue;
 
-                                        _multicastWikiLastAccessTimes.Remove(tag);
-                                    }
-                                }
-
-                                // Chat
-                                {
-                                    var removeChats = new HashSet<Chat>();
-                                    removeChats.UnionWith(_settings.MetadataManager.GetMulticastChats());
-                                    removeChats.ExceptWith(lockChats);
-
-                                    var sortList = removeChats
-                                        .OrderBy(n =>
-                                        {
-                                            DateTime t;
-                                            _multicastChatLastAccessTimes.TryGetValue(n, out t);
-
-                                            return t;
-                                        }).ToList();
-
-                                    _settings.MetadataManager.RemoveMulticastChats(sortList.Take(sortList.Count - 1024));
-
-                                    var liveChats = new HashSet<Chat>(_settings.MetadataManager.GetMulticastChats());
-
-                                    foreach (var tag in _multicastChatLastAccessTimes.Keys.ToArray())
-                                    {
-                                        if (liveChats.Contains(tag)) continue;
-
-                                        _multicastChatLastAccessTimes.Remove(tag);
+                                        _multicastMetadatasLastAccessTimes.Remove(tag);
                                     }
                                 }
                             }
@@ -1009,58 +944,55 @@ namespace Library.Net.Outopos
                                 {
                                     var now = DateTime.UtcNow;
 
-                                    var removeSignatureMessageMetadatas = new HashSet<SignatureMessageMetadata>();
+                                    var removeUnicastMetadatas = new HashSet<UnicastMetadata>();
 
                                     foreach (var targetSignature in _settings.MetadataManager.GetUnicastSignatures())
                                     {
-                                        // SignatureMessage
+                                        var trustMetadatas = new Dictionary<string, List<UnicastMetadata>>();
+                                        var untrustMetadatas = new Dictionary<string, List<UnicastMetadata>>();
+
+                                        foreach (var metadata in _settings.MetadataManager.GetUnicastMetadatas(targetSignature))
                                         {
-                                            var trustMetadatas = new Dictionary<string, List<SignatureMessageMetadata>>();
-                                            var untrustMetadatas = new Dictionary<string, List<SignatureMessageMetadata>>();
+                                            var signature = metadata.Certificate.ToString();
 
-                                            foreach (var metadata in _settings.MetadataManager.GetSignatureMessageMetadatas(targetSignature))
+                                            if (trustSignature.Contains(signature))
                                             {
-                                                var signature = metadata.Certificate.ToString();
+                                                List<UnicastMetadata> list;
 
-                                                if (trustSignature.Contains(signature))
+                                                if (!trustMetadatas.TryGetValue(signature, out list))
                                                 {
-                                                    List<SignatureMessageMetadata> list;
-
-                                                    if (!trustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<SignatureMessageMetadata>();
-                                                        trustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
+                                                    list = new List<UnicastMetadata>();
+                                                    trustMetadatas[signature] = list;
                                                 }
-                                                else
-                                                {
-                                                    List<SignatureMessageMetadata> list;
 
-                                                    if (!untrustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<SignatureMessageMetadata>();
-                                                        untrustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
-                                                }
+                                                list.Add(metadata);
                                             }
-
-                                            removeSignatureMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
-
-                                            foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                            else
                                             {
-                                                if (list.Count <= 32) continue;
+                                                List<UnicastMetadata> list;
 
-                                                list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
-                                                removeSignatureMessageMetadatas.UnionWith(list.Take(list.Count - 32));
+                                                if (!untrustMetadatas.TryGetValue(signature, out list))
+                                                {
+                                                    list = new List<UnicastMetadata>();
+                                                    untrustMetadatas[signature] = list;
+                                                }
+
+                                                list.Add(metadata);
                                             }
+                                        }
+
+                                        removeUnicastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
+
+                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                        {
+                                            if (list.Count <= 32) continue;
+
+                                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+                                            removeUnicastMetadatas.UnionWith(list.Take(list.Count - 32));
                                         }
                                     }
 
-                                    foreach (var metadata in removeSignatureMessageMetadatas)
+                                    foreach (var metadata in removeUnicastMetadatas)
                                     {
                                         _settings.MetadataManager.RemoveMetadata(metadata);
                                     }
@@ -1074,118 +1006,55 @@ namespace Library.Net.Outopos
                                 {
                                     var now = DateTime.UtcNow;
 
-                                    var removeWikiDocumentMetadatas = new HashSet<WikiDocumentMetadata>();
+                                    var removeMulticastMetadatas = new HashSet<MulticastMetadata>();
 
-                                    foreach (var wiki in _settings.MetadataManager.GetMulticastWikis())
+                                    foreach (var tag in _settings.MetadataManager.GetMulticastTags())
                                     {
-                                        // WikiDocument
+                                        var trustMetadatas = new Dictionary<string, List<MulticastMetadata>>();
+                                        var untrustMetadatas = new Dictionary<string, List<MulticastMetadata>>();
+
+                                        foreach (var metadata in _settings.MetadataManager.GetMulticastMetadatas(tag))
                                         {
-                                            var trustMetadatas = new Dictionary<string, List<WikiDocumentMetadata>>();
-                                            var untrustMetadatas = new Dictionary<string, List<WikiDocumentMetadata>>();
+                                            var signature = metadata.Certificate.ToString();
 
-                                            foreach (var metadata in _settings.MetadataManager.GetWikiDocumentMetadatas(wiki))
+                                            if (trustSignature.Contains(signature))
                                             {
-                                                var signature = metadata.Certificate.ToString();
+                                                List<MulticastMetadata> list;
 
-                                                if (trustSignature.Contains(signature))
+                                                if (!trustMetadatas.TryGetValue(signature, out list))
                                                 {
-                                                    List<WikiDocumentMetadata> list;
-
-                                                    if (!trustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<WikiDocumentMetadata>();
-                                                        trustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
+                                                    list = new List<MulticastMetadata>();
+                                                    trustMetadatas[signature] = list;
                                                 }
-                                                else
-                                                {
-                                                    List<WikiDocumentMetadata> list;
 
-                                                    if (!untrustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<WikiDocumentMetadata>();
-                                                        untrustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
-                                                }
+                                                list.Add(metadata);
                                             }
-
-                                            removeWikiDocumentMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
-
-                                            foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                            else
                                             {
-                                                if (list.Count <= 32) continue;
+                                                List<MulticastMetadata> list;
 
-                                                list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
-                                                removeWikiDocumentMetadatas.UnionWith(list.Take(list.Count - 32));
+                                                if (!untrustMetadatas.TryGetValue(signature, out list))
+                                                {
+                                                    list = new List<MulticastMetadata>();
+                                                    untrustMetadatas[signature] = list;
+                                                }
+
+                                                list.Add(metadata);
                                             }
+                                        }
+
+                                        removeMulticastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
+
+                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                        {
+                                            if (list.Count <= 32) continue;
+
+                                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+                                            removeMulticastMetadatas.UnionWith(list.Take(list.Count - 32));
                                         }
                                     }
 
-                                    foreach (var metadata in removeWikiDocumentMetadatas)
-                                    {
-                                        _settings.MetadataManager.RemoveMetadata(metadata);
-                                    }
-                                }
-
-                                {
-                                    var now = DateTime.UtcNow;
-
-                                    var removeChatMessageMetadatas = new HashSet<ChatMessageMetadata>();
-
-                                    foreach (var chat in _settings.MetadataManager.GetMulticastChats())
-                                    {
-                                        // ChatMessage
-                                        {
-                                            var trustMetadatas = new Dictionary<string, List<ChatMessageMetadata>>();
-                                            var untrustMetadatas = new Dictionary<string, List<ChatMessageMetadata>>();
-
-                                            foreach (var metadata in _settings.MetadataManager.GetChatMessageMetadatas(chat))
-                                            {
-                                                var signature = metadata.Certificate.ToString();
-
-                                                if (trustSignature.Contains(signature))
-                                                {
-                                                    List<ChatMessageMetadata> list;
-
-                                                    if (!trustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<ChatMessageMetadata>();
-                                                        trustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
-                                                }
-                                                else
-                                                {
-                                                    List<ChatMessageMetadata> list;
-
-                                                    if (!untrustMetadatas.TryGetValue(signature, out list))
-                                                    {
-                                                        list = new List<ChatMessageMetadata>();
-                                                        untrustMetadatas[signature] = list;
-                                                    }
-
-                                                    list.Add(metadata);
-                                                }
-                                            }
-
-                                            removeChatMessageMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
-
-                                            foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
-                                            {
-                                                if (list.Count <= 32) continue;
-
-                                                list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
-                                                removeChatMessageMetadatas.UnionWith(list.Take(list.Count - 32));
-                                            }
-                                        }
-                                    }
-
-                                    foreach (var metadata in removeChatMessageMetadatas)
+                                    foreach (var metadata in removeMulticastMetadatas)
                                     {
                                         _settings.MetadataManager.RemoveMetadata(metadata);
                                     }
@@ -1688,7 +1557,7 @@ namespace Library.Net.Outopos
 
                     // Multicast
                     {
-                        foreach (var tag in _settings.MetadataManager.GetMulticastWikis())
+                        foreach (var tag in _settings.MetadataManager.GetMulticastTags())
                         {
                             try
                             {
@@ -1701,29 +1570,7 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; i < requestNodes.Count; i++)
                                 {
-                                    messageManagers[requestNodes[i]].PullMulticastWikisRequest.Add(tag);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        foreach (var tag in _settings.MetadataManager.GetMulticastChats())
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, baseNode.Id, otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    messageManagers[requestNodes[i]].PullMulticastChatsRequest.Add(tag);
+                                    messageManagers[requestNodes[i]].PullMulticastTagsRequest.Add(tag);
                                 }
                             }
                             catch (Exception e)
@@ -1758,13 +1605,12 @@ namespace Library.Net.Outopos
 
                     var pushBroadcastSignaturesRequestList = new List<string>();
                     var pushUnicastSignaturesRequestList = new List<string>();
-                    var pushMulticastWikisRequestList = new List<Wiki>();
-                    var pushMulticastChatsRequestList = new List<Chat>();
+                    var pushMulticastTagsRequestList = new List<Tag>();
 
                     // Broadcast
                     {
                         {
-                            var array = _pushBroadcastSignaturesRequestList.ToArray();
+                            var array = _pushBroadcastMetadatasRequestList.ToArray();
                             _random.Shuffle(array);
 
                             int count = _maxMetadataRequestCount;
@@ -1807,7 +1653,7 @@ namespace Library.Net.Outopos
                     // Unicast
                     {
                         {
-                            var array = _pushUnicastSignaturesRequestList.ToArray();
+                            var array = _pushUnicastMetadatasRequestList.ToArray();
                             _random.Shuffle(array);
 
                             int count = _maxMetadataRequestCount;
@@ -1850,37 +1696,18 @@ namespace Library.Net.Outopos
                     // Multicast
                     {
                         {
+                            var array = _pushMulticastMetadatasRequestList.ToArray();
+                            _random.Shuffle(array);
+
+                            int count = _maxMetadataRequestCount;
+
+                            for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                var array = _pushMulticastWikisRequestList.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = _maxMetadataRequestCount;
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
+                                if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastWikisRequest.Contains(array[i])))
-                                    {
-                                        pushMulticastWikisRequestList.Add(array[i]);
+                                    pushMulticastTagsRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
-                                }
-                            }
-
-                            {
-                                var array = _pushMulticastChatsRequestList.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = _maxMetadataRequestCount;
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastChatsRequest.Contains(array[i])))
-                                    {
-                                        pushMulticastChatsRequestList.Add(array[i]);
-
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1891,33 +1718,16 @@ namespace Library.Net.Outopos
                             var messageManager = pair.Value;
 
                             {
-                                var array = messageManager.PullMulticastWikisRequest.ToArray();
+                                var array = messageManager.PullMulticastTagsRequest.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastWikisRequest.Contains(array[i])))
+                                    if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
                                     {
-                                        pushMulticastWikisRequestList.Add(array[i]);
-
-                                        count--;
-                                    }
-                                }
-                            }
-
-                            {
-                                var array = messageManager.PullMulticastChatsRequest.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = _maxMetadataRequestCount;
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastChatsRequest.Contains(array[i])))
-                                    {
-                                        pushMulticastChatsRequestList.Add(array[i]);
+                                        pushMulticastTagsRequestList.Add(array[i]);
 
                                         count--;
                                     }
@@ -1928,8 +1738,7 @@ namespace Library.Net.Outopos
 
                     _random.Shuffle(pushBroadcastSignaturesRequestList);
                     _random.Shuffle(pushUnicastSignaturesRequestList);
-                    _random.Shuffle(pushMulticastWikisRequestList);
-                    _random.Shuffle(pushMulticastChatsRequestList);
+                    _random.Shuffle(pushMulticastTagsRequestList);
 
                     // Broadcast
                     {
@@ -1968,16 +1777,16 @@ namespace Library.Net.Outopos
                             }
                         }
 
-                        lock (_pushBroadcastSignaturesRequestDictionary.ThisLock)
+                        lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
                         {
-                            _pushBroadcastSignaturesRequestDictionary.Clear();
+                            _pushBroadcastMetadatasRequestDictionary.Clear();
 
                             foreach (var pair in pushBroadcastSignaturesRequestDictionary)
                             {
                                 var node = pair.Key;
                                 var targets = pair.Value;
 
-                                _pushBroadcastSignaturesRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                _pushBroadcastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
                             }
                         }
                     }
@@ -2019,26 +1828,25 @@ namespace Library.Net.Outopos
                             }
                         }
 
-                        lock (_pushUnicastSignaturesRequestDictionary.ThisLock)
+                        lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
                         {
-                            _pushUnicastSignaturesRequestDictionary.Clear();
+                            _pushUnicastMetadatasRequestDictionary.Clear();
 
                             foreach (var pair in pushUnicastSignaturesRequestDictionary)
                             {
                                 var node = pair.Key;
                                 var targets = pair.Value;
 
-                                _pushUnicastSignaturesRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                _pushUnicastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
                             }
                         }
                     }
 
                     // Multicast
                     {
-                        var pushMulticastWikisRequestDictionary = new Dictionary<Node, HashSet<Wiki>>();
-                        var pushMulticastChatsRequestDictionary = new Dictionary<Node, HashSet<Chat>>();
+                        var pushMulticastTagsRequestDictionary = new Dictionary<Node, HashSet<Tag>>();
 
-                        foreach (var tag in pushMulticastWikisRequestList)
+                        foreach (var tag in pushMulticastTagsRequestList)
                         {
                             try
                             {
@@ -2051,12 +1859,12 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; i < requestNodes.Count; i++)
                                 {
-                                    HashSet<Wiki> collection;
+                                    HashSet<Tag> collection;
 
-                                    if (!pushMulticastWikisRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                    if (!pushMulticastTagsRequestDictionary.TryGetValue(requestNodes[i], out collection))
                                     {
-                                        collection = new HashSet<Wiki>();
-                                        pushMulticastWikisRequestDictionary[requestNodes[i]] = collection;
+                                        collection = new HashSet<Tag>();
+                                        pushMulticastTagsRequestDictionary[requestNodes[i]] = collection;
                                     }
 
                                     if (collection.Count < _maxMetadataRequestCount)
@@ -2071,62 +1879,16 @@ namespace Library.Net.Outopos
                             }
                         }
 
-                        foreach (var tag in pushMulticastChatsRequestList)
+                        lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
                         {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
+                            _pushMulticastMetadatasRequestDictionary.Clear();
 
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, baseNode.Id, otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Chat> collection;
-
-                                    if (!pushMulticastChatsRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<Chat>();
-                                        pushMulticastChatsRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(tag);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushMulticastWikisRequestDictionary.ThisLock)
-                        {
-                            _pushMulticastWikisRequestDictionary.Clear();
-
-                            foreach (var pair in pushMulticastWikisRequestDictionary)
+                            foreach (var pair in pushMulticastTagsRequestDictionary)
                             {
                                 var node = pair.Key;
                                 var targets = pair.Value;
 
-                                _pushMulticastWikisRequestDictionary.Add(node, new List<Wiki>(targets.Randomize()));
-                            }
-                        }
-
-                        lock (_pushMulticastChatsRequestDictionary.ThisLock)
-                        {
-                            _pushMulticastChatsRequestDictionary.Clear();
-
-                            foreach (var pair in pushMulticastChatsRequestDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushMulticastChatsRequestDictionary.Add(node, new List<Chat>(targets.Randomize()));
+                                _pushMulticastMetadatasRequestDictionary.Add(node, new List<Tag>(targets.Randomize()));
                             }
                         }
                     }
@@ -2282,11 +2044,11 @@ namespace Library.Net.Outopos
                         {
                             List<string> targetList = null;
 
-                            lock (_pushBroadcastSignaturesRequestDictionary.ThisLock)
+                            lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
                             {
-                                if (_pushBroadcastSignaturesRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                if (_pushBroadcastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
-                                    _pushBroadcastSignaturesRequestDictionary.Remove(connectionManager.Node);
+                                    _pushBroadcastMetadatasRequestDictionary.Remove(connectionManager.Node);
                                     messageManager.PushBroadcastSignaturesRequest.AddRange(targetList);
                                 }
                             }
@@ -2299,7 +2061,7 @@ namespace Library.Net.Outopos
 
                                     foreach (var item in targetList)
                                     {
-                                        _pushBroadcastSignaturesRequestList.Remove(item);
+                                        _pushBroadcastMetadatasRequestList.Remove(item);
                                     }
 
                                     Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatasRequest ({0})", targetList.Count));
@@ -2322,11 +2084,11 @@ namespace Library.Net.Outopos
                         {
                             List<string> targetList = null;
 
-                            lock (_pushUnicastSignaturesRequestDictionary.ThisLock)
+                            lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
                             {
-                                if (_pushUnicastSignaturesRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                if (_pushUnicastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
-                                    _pushUnicastSignaturesRequestDictionary.Remove(connectionManager.Node);
+                                    _pushUnicastMetadatasRequestDictionary.Remove(connectionManager.Node);
                                     messageManager.PushUnicastSignaturesRequest.AddRange(targetList);
                                 }
                             }
@@ -2339,7 +2101,7 @@ namespace Library.Net.Outopos
 
                                     foreach (var item in targetList)
                                     {
-                                        _pushUnicastSignaturesRequestList.Remove(item);
+                                        _pushUnicastMetadatasRequestList.Remove(item);
                                     }
 
                                     Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatasRequest ({0})", targetList.Count));
@@ -2360,79 +2122,39 @@ namespace Library.Net.Outopos
                         // PushMulticastMetadatasRequest
                         if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
+                            List<Tag> targetList = null;
+
+                            lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
                             {
-                                List<Wiki> wikiList = null;
-                                List<Chat> chatList = null;
-
-                                lock (_pushMulticastWikisRequestDictionary.ThisLock)
+                                if (_pushMulticastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
-                                    if (_pushMulticastWikisRequestDictionary.TryGetValue(connectionManager.Node, out wikiList))
-                                    {
-                                        _pushMulticastWikisRequestDictionary.Remove(connectionManager.Node);
-                                        messageManager.PushMulticastWikisRequest.AddRange(wikiList);
-                                    }
+                                    _pushMulticastMetadatasRequestDictionary.Remove(connectionManager.Node);
+                                    messageManager.PushMulticastTagsRequest.AddRange(targetList);
                                 }
+                            }
 
-                                lock (_pushMulticastChatsRequestDictionary.ThisLock)
+                            if (targetList != null)
+                            {
+                                try
                                 {
-                                    if (_pushMulticastChatsRequestDictionary.TryGetValue(connectionManager.Node, out chatList))
+                                    connectionManager.PushMulticastMetadatasRequest(targetList);
+
+                                    foreach (var item in targetList)
                                     {
-                                        _pushMulticastChatsRequestDictionary.Remove(connectionManager.Node);
-                                        messageManager.PushMulticastChatsRequest.AddRange(chatList);
+                                        _pushMulticastMetadatasRequestList.Remove(item);
                                     }
+
+                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatasRequest ({0})", targetList.Count));
+                                    _pushMetadataRequestCount.Add(targetList.Count);
                                 }
-
-                                if (wikiList != null || chatList != null)
+                                catch (Exception e)
                                 {
-                                    try
+                                    foreach (var item in targetList)
                                     {
-                                        connectionManager.PushMulticastMetadatasRequest(wikiList, chatList);
-
-                                        int tagCount = 0;
-
-                                        if (wikiList != null)
-                                        {
-                                            foreach (var item in wikiList)
-                                            {
-                                                _pushMulticastWikisRequestList.Remove(item);
-                                            }
-
-                                            tagCount += wikiList.Count;
-                                        }
-
-                                        if (chatList != null)
-                                        {
-                                            foreach (var item in chatList)
-                                            {
-                                                _pushMulticastChatsRequestList.Remove(item);
-                                            }
-
-                                            tagCount += chatList.Count;
-                                        }
-
-                                        Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatasRequest ({0})", tagCount));
-                                        _pushMetadataRequestCount.Add(tagCount);
+                                        messageManager.PushMulticastTagsRequest.Remove(item);
                                     }
-                                    catch (Exception e)
-                                    {
-                                        if (wikiList != null)
-                                        {
-                                            foreach (var item in wikiList)
-                                            {
-                                                messageManager.PushMulticastWikisRequest.Remove(item);
-                                            }
-                                        }
 
-                                        if (chatList != null)
-                                        {
-                                            foreach (var item in chatList)
-                                            {
-                                                messageManager.PushMulticastChatsRequest.Remove(item);
-                                            }
-                                        }
-
-                                        throw e;
-                                    }
+                                    throw e;
                                 }
                             }
                         }
@@ -2580,38 +2302,34 @@ namespace Library.Net.Outopos
                             {
                                 var signatures = messageManager.PullBroadcastSignaturesRequest.ToArray();
 
-                                var profileMetadatas = new List<ProfileMetadata>();
+                                var broadcastMetadats = new List<BroadcastMetadata>();
 
                                 _random.Shuffle(signatures);
                                 foreach (var signature in signatures)
                                 {
-                                    var metadata = _settings.MetadataManager.GetProfileMetadata(signature);
+                                    var metadata = _settings.MetadataManager.GetBroadcastMetadata(signature);
                                     if (metadata == null) continue;
 
-                                    if (!messageManager.StockProfileMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
+                                    if (!messageManager.StockBroadcastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
                                     {
-                                        profileMetadatas.Add(metadata);
+                                        broadcastMetadats.Add(metadata);
 
-                                        if (profileMetadatas.Count >= _maxMetadataCount) break;
+                                        if (broadcastMetadats.Count >= _maxMetadataCount) break;
                                     }
 
-                                    if (profileMetadatas.Count >= _maxMetadataCount) break;
+                                    if (broadcastMetadats.Count >= _maxMetadataCount) break;
                                 }
 
-                                if (profileMetadatas.Count > 0)
+                                if (broadcastMetadats.Count > 0)
                                 {
-                                    connectionManager.PushBroadcastMetadatas(
-                                        profileMetadatas);
+                                    connectionManager.PushBroadcastMetadatas(broadcastMetadats);
 
-                                    var metadataCount =
-                                        profileMetadatas.Count;
+                                    Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatas ({0})", broadcastMetadats.Count));
+                                    _pushMetadataCount.Add(broadcastMetadats.Count);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatas ({0})", metadataCount));
-                                    _pushMetadataCount.Add(metadataCount);
-
-                                    foreach (var metadata in profileMetadatas)
+                                    foreach (var metadata in broadcastMetadats)
                                     {
-                                        messageManager.StockProfileMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                                        messageManager.StockBroadcastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
                                     }
                                 }
                             }
@@ -2623,38 +2341,34 @@ namespace Library.Net.Outopos
                             {
                                 var signatures = messageManager.PullUnicastSignaturesRequest.ToArray();
 
-                                var signatureMessageMetadatas = new List<SignatureMessageMetadata>();
+                                var unicastMetadata = new List<UnicastMetadata>();
 
                                 _random.Shuffle(signatures);
                                 foreach (var signature in signatures)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetSignatureMessageMetadatas(signature))
+                                    foreach (var metadata in _settings.MetadataManager.GetUnicastMetadatas(signature))
                                     {
-                                        if (!messageManager.StockSignatureMessageMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
+                                        if (!messageManager.StockUnicastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
                                         {
-                                            signatureMessageMetadatas.Add(metadata);
+                                            unicastMetadata.Add(metadata);
 
-                                            if (signatureMessageMetadatas.Count >= _maxMetadataCount) break;
+                                            if (unicastMetadata.Count >= _maxMetadataCount) break;
                                         }
                                     }
 
-                                    if (signatureMessageMetadatas.Count >= _maxMetadataCount) break;
+                                    if (unicastMetadata.Count >= _maxMetadataCount) break;
                                 }
 
-                                if (signatureMessageMetadatas.Count > 0)
+                                if (unicastMetadata.Count > 0)
                                 {
-                                    connectionManager.PushUnicastMetadatas(
-                                        signatureMessageMetadatas);
+                                    connectionManager.PushUnicastMetadatas(unicastMetadata);
 
-                                    var metadataCount =
-                                        signatureMessageMetadatas.Count;
+                                    Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatas ({0})", unicastMetadata.Count));
+                                    _pushMetadataCount.Add(unicastMetadata.Count);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatas ({0})", metadataCount));
-                                    _pushMetadataCount.Add(metadataCount);
-
-                                    foreach (var metadata in signatureMessageMetadatas)
+                                    foreach (var metadata in unicastMetadata)
                                     {
-                                        messageManager.StockSignatureMessageMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                                        messageManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
                                     }
                                 }
                             }
@@ -2664,66 +2378,36 @@ namespace Library.Net.Outopos
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             {
-                                var wikis = messageManager.PullMulticastWikisRequest.ToArray();
-                                var chats = messageManager.PullMulticastChatsRequest.ToArray();
+                                var tags = messageManager.PullMulticastTagsRequest.ToArray();
 
-                                var wikiDocumentMetadatas = new List<WikiDocumentMetadata>();
-                                var chatMessageMetadatas = new List<ChatMessageMetadata>();
+                                var multicastMetadatas = new List<MulticastMetadata>();
 
-                                _random.Shuffle(wikis);
-                                foreach (var tag in wikis)
+                                _random.Shuffle(tags);
+                                foreach (var tag in tags)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetWikiDocumentMetadatas(tag))
+                                    foreach (var metadata in _settings.MetadataManager.GetMulticastMetadatas(tag))
                                     {
-                                        if (!messageManager.StockWikiDocumentMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
+                                        if (!messageManager.StockMulticastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
                                         {
-                                            wikiDocumentMetadatas.Add(metadata);
+                                            multicastMetadatas.Add(metadata);
 
-                                            if (wikiDocumentMetadatas.Count >= _maxMetadataCount) break;
+                                            if (multicastMetadatas.Count >= _maxMetadataCount) break;
                                         }
                                     }
 
-                                    if (wikiDocumentMetadatas.Count >= _maxMetadataCount) break;
+                                    if (multicastMetadatas.Count >= _maxMetadataCount) break;
                                 }
 
-                                _random.Shuffle(chats);
-                                foreach (var tag in chats)
+                                if (multicastMetadatas.Count > 0)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetChatMessageMetadatas(tag))
+                                    connectionManager.PushMulticastMetadatas(multicastMetadatas);
+
+                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatas ({0})", multicastMetadatas.Count));
+                                    _pushMetadataCount.Add(multicastMetadatas.Count);
+
+                                    foreach (var metadata in multicastMetadatas)
                                     {
-                                        if (!messageManager.StockChatMessageMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
-                                        {
-                                            chatMessageMetadatas.Add(metadata);
-
-                                            if (chatMessageMetadatas.Count >= _maxMetadataCount) break;
-                                        }
-                                    }
-
-                                    if (chatMessageMetadatas.Count >= _maxMetadataCount) break;
-                                }
-
-                                if (wikiDocumentMetadatas.Count > 0
-                                    || chatMessageMetadatas.Count > 0)
-                                {
-                                    connectionManager.PushMulticastMetadatas(
-                                        wikiDocumentMetadatas,
-                                        chatMessageMetadatas);
-
-                                    var metadataCount =
-                                        wikiDocumentMetadatas.Count
-                                        + chatMessageMetadatas.Count;
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatas ({0})", metadataCount));
-                                    _pushMetadataCount.Add(metadataCount);
-
-                                    foreach (var metadata in wikiDocumentMetadatas)
-                                    {
-                                        messageManager.StockWikiDocumentMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-                                    }
-
-                                    foreach (var metadata in chatMessageMetadatas)
-                                    {
-                                        messageManager.StockChatMessageMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                                        messageManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
                                     }
                                 }
                             }
@@ -2853,8 +2537,7 @@ namespace Library.Net.Outopos
 
             if (messageManager.PullBroadcastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullBroadcastSignaturesRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatasRequest ({0})",
-                e.Signatures.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatasRequest ({0})", e.Signatures.Count()));
 
             foreach (var signature in e.Signatures.Take(_maxMetadataRequestCount))
             {
@@ -2863,7 +2546,7 @@ namespace Library.Net.Outopos
                 messageManager.PullBroadcastSignaturesRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
-                _broadcastSignatureLastAccessTimes[signature] = DateTime.UtcNow;
+                _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2874,20 +2557,19 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.StockProfileMetadatas.Count > _maxMetadataCount * messageManager.StockProfileMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.StockBroadcastMetadatas.Count > _maxMetadataCount * messageManager.StockBroadcastMetadatas.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatas ({0})",
-                e.ProfileMetadatas.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatas ({0})", e.BroadcastMetadatas.Count()));
 
-            foreach (var metadata in e.ProfileMetadatas.Take(_maxMetadataCount))
+            foreach (var metadata in e.BroadcastMetadatas.Take(_maxMetadataCount))
             {
                 if (_settings.MetadataManager.SetMetadata(metadata))
                 {
-                    messageManager.StockProfileMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                    messageManager.StockBroadcastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
                     var signature = metadata.Certificate.ToString();
 
-                    _broadcastSignatureLastAccessTimes[signature] = DateTime.UtcNow;
+                    _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2903,8 +2585,7 @@ namespace Library.Net.Outopos
 
             if (messageManager.PullUnicastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullUnicastSignaturesRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatasRequest ({0})",
-                e.Signatures.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatasRequest ({0})", e.Signatures.Count()));
 
             foreach (var signature in e.Signatures.Take(_maxMetadataRequestCount))
             {
@@ -2913,7 +2594,7 @@ namespace Library.Net.Outopos
                 messageManager.PullUnicastSignaturesRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
-                _unicastSignatureLastAccessTimes[signature] = DateTime.UtcNow;
+                _unicastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2924,18 +2605,17 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.StockSignatureMessageMetadatas.Count > _maxMetadataCount * messageManager.StockSignatureMessageMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.StockUnicastMetadatas.Count > _maxMetadataCount * messageManager.StockUnicastMetadatas.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatas ({0})",
-                e.SignatureMessageMetadatas.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatas ({0})", e.UnicastMetadatas.Count()));
 
-            foreach (var metadata in e.SignatureMessageMetadatas.Take(_maxMetadataCount))
+            foreach (var metadata in e.UnicastMetadatas.Take(_maxMetadataCount))
             {
                 if (_settings.MetadataManager.SetMetadata(metadata))
                 {
-                    messageManager.StockSignatureMessageMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                    messageManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
-                    _unicastSignatureLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
+                    _unicastMetadatasLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2949,31 +2629,18 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullMulticastWikisRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastWikisRequest.SurvivalTime.TotalMinutes) return;
-            if (messageManager.PullMulticastChatsRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastChatsRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullMulticastTagsRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastTagsRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatasRequest ({0})",
-                e.Wikis.Count()
-                + e.Chats.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatasRequest ({0})", e.Tags.Count()));
 
-            foreach (var tag in e.Wikis.Take(_maxMetadataRequestCount))
+            foreach (var tag in e.Tags.Take(_maxMetadataRequestCount))
             {
                 if (!ConnectionsManager.Check(tag)) continue;
 
-                messageManager.PullMulticastWikisRequest.Add(tag);
+                messageManager.PullMulticastTagsRequest.Add(tag);
                 _pullMetadataRequestCount.Increment();
 
-                _multicastWikiLastAccessTimes[tag] = DateTime.UtcNow;
-            }
-
-            foreach (var tag in e.Chats.Take(_maxMetadataRequestCount))
-            {
-                if (!ConnectionsManager.Check(tag)) continue;
-
-                messageManager.PullMulticastChatsRequest.Add(tag);
-                _pullMetadataRequestCount.Increment();
-
-                _multicastChatLastAccessTimes[tag] = DateTime.UtcNow;
+                _multicastMetadatasLastAccessTimes[tag] = DateTime.UtcNow;
             }
         }
 
@@ -2984,32 +2651,17 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.StockWikiDocumentMetadatas.Count > _maxMetadataCount * messageManager.StockWikiDocumentMetadatas.SurvivalTime.TotalMinutes) return;
-            if (messageManager.StockChatMessageMetadatas.Count > _maxMetadataCount * messageManager.StockChatMessageMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.StockMulticastMetadatas.Count > _maxMetadataCount * messageManager.StockMulticastMetadatas.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatas ({0})",
-                e.WikiDocumentMetadatas.Count()
-                + e.ChatMessageMetadatas.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatas ({0})", e.MulticastMetadatas.Count()));
 
-            foreach (var metadata in e.WikiDocumentMetadatas.Take(_maxMetadataCount))
+            foreach (var metadata in e.MulticastMetadatas.Take(_maxMetadataCount))
             {
                 if (_settings.MetadataManager.SetMetadata(metadata))
                 {
-                    messageManager.StockWikiDocumentMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                    messageManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
-                    _multicastWikiLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
-                }
-
-                _pullMetadataCount.Increment();
-            }
-
-            foreach (var metadata in e.ChatMessageMetadatas.Take(_maxMetadataCount))
-            {
-                if (_settings.MetadataManager.SetMetadata(metadata))
-                {
-                    messageManager.StockChatMessageMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
-                    _multicastChatLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
+                    _multicastMetadatasLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -3136,55 +2788,43 @@ namespace Library.Net.Outopos
             }
         }
 
-        public ProfileMetadata GetProfileMetadata(string signature)
+        public BroadcastMetadata GetBroadcastMetadata(string signature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _pushBroadcastSignaturesRequestList.Add(signature);
+                _pushBroadcastMetadatasRequestList.Add(signature);
 
-                return _settings.MetadataManager.GetProfileMetadata(signature);
+                return _settings.MetadataManager.GetBroadcastMetadata(signature);
             }
         }
 
-        public IEnumerable<SignatureMessageMetadata> GetSignatureMessageMetadatas(string signature)
+        public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _pushUnicastSignaturesRequestList.Add(signature);
+                _pushUnicastMetadatasRequestList.Add(signature);
 
-                return _settings.MetadataManager.GetSignatureMessageMetadatas(signature);
+                return _settings.MetadataManager.GetUnicastMetadatas(signature);
             }
         }
 
-        public IEnumerable<WikiDocumentMetadata> GetWikiDocumentMetadatas(Wiki tag)
+        public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _pushMulticastWikisRequestList.Add(tag);
+                _pushMulticastMetadatasRequestList.Add(tag);
 
-                return _settings.MetadataManager.GetWikiDocumentMetadatas(tag);
+                return _settings.MetadataManager.GetMulticastMetadatas(tag);
             }
         }
 
-        public IEnumerable<ChatMessageMetadata> GetChatMessageMetadatas(Chat tag)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _pushMulticastChatsRequestList.Add(tag);
-
-                return _settings.MetadataManager.GetChatMessageMetadatas(tag);
-            }
-        }
-
-        public void Upload(ProfileMetadata metadata)
+        public void Upload(BroadcastMetadata metadata)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -3194,7 +2834,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public void Upload(SignatureMessageMetadata metadata)
+        public void Upload(UnicastMetadata metadata)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -3204,17 +2844,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public void Upload(WikiDocumentMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _settings.MetadataManager.SetMetadata(metadata);
-            }
-        }
-
-        public void Upload(ChatMessageMetadata metadata)
+        public void Upload(MulticastMetadata metadata)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -3387,10 +3017,9 @@ namespace Library.Net.Outopos
                     new Library.Configuration.SettingContent<int>() { Name = "BandwidthLimit", Value = 0 },
                     new Library.Configuration.SettingContent<LockedHashSet<Key>>() { Name = "DiffusionBlocksRequest", Value = new LockedHashSet<Key>() },
                     new Library.Configuration.SettingContent<LockedHashSet<Key>>() { Name = "UploadBlocksRequest", Value = new LockedHashSet<Key>() },
-                    new Library.Configuration.SettingContent<List<ProfileMetadata>>() { Name = "ProfileMetadatas", Value = new List<ProfileMetadata>() },
-                    new Library.Configuration.SettingContent<List<SignatureMessageMetadata>>() { Name = "SignatureMessageMetadatas", Value = new List<SignatureMessageMetadata>() },
-                    new Library.Configuration.SettingContent<List<WikiDocumentMetadata>>() { Name = "WikiDocumentMetadatas", Value = new List<WikiDocumentMetadata>() },
-                    new Library.Configuration.SettingContent<List<ChatMessageMetadata>>() { Name = "ChatMessageMetadatas", Value = new List<ChatMessageMetadata>() },
+                    new Library.Configuration.SettingContent<List<BroadcastMetadata>>() { Name = "BroadcastMetadatas", Value = new List<BroadcastMetadata>() },
+                    new Library.Configuration.SettingContent<List<UnicastMetadata>>() { Name = "UnicastMetadatas", Value = new List<UnicastMetadata>() },
+                    new Library.Configuration.SettingContent<List<MulticastMetadata>>() { Name = "MulticastMetadatas", Value = new List<MulticastMetadata>() },
                 })
             {
                 _thisLock = lockObject;
@@ -3402,30 +3031,24 @@ namespace Library.Net.Outopos
                 {
                     base.Load(directoryPath);
 
-                    foreach (var metadata in this.ProfileMetadatas)
+                    foreach (var metadata in this.BroadcastMetadatas)
                     {
                         _metadataManager.SetMetadata(metadata);
                     }
 
-                    foreach (var metadata in this.SignatureMessageMetadatas)
+                    foreach (var metadata in this.UnicastMetadatas)
                     {
                         _metadataManager.SetMetadata(metadata);
                     }
 
-                    foreach (var metadata in this.WikiDocumentMetadatas)
+                    foreach (var metadata in this.MulticastMetadatas)
                     {
                         _metadataManager.SetMetadata(metadata);
                     }
 
-                    foreach (var metadata in this.ChatMessageMetadatas)
-                    {
-                        _metadataManager.SetMetadata(metadata);
-                    }
-
-                    this.ProfileMetadatas.Clear();
-                    this.SignatureMessageMetadatas.Clear();
-                    this.WikiDocumentMetadatas.Clear();
-                    this.ChatMessageMetadatas.Clear();
+                    this.BroadcastMetadatas.Clear();
+                    this.UnicastMetadatas.Clear();
+                    this.MulticastMetadatas.Clear();
                 }
             }
 
@@ -3433,17 +3056,15 @@ namespace Library.Net.Outopos
             {
                 lock (_thisLock)
                 {
-                    this.ProfileMetadatas.AddRange(_metadataManager.GetProfileMetadatas());
-                    this.SignatureMessageMetadatas.AddRange(_metadataManager.GetSignatureMessageMetadatas());
-                    this.WikiDocumentMetadatas.AddRange(_metadataManager.GetWikiDocumentMetadatas());
-                    this.ChatMessageMetadatas.AddRange(_metadataManager.GetChatMessageMetadatas());
+                    this.BroadcastMetadatas.AddRange(_metadataManager.GetBroadcastMetadatas());
+                    this.UnicastMetadatas.AddRange(_metadataManager.GetUnicastMetadatas());
+                    this.MulticastMetadatas.AddRange(_metadataManager.GetMulticastMetadatas());
 
                     base.Save(directoryPath);
 
-                    this.ProfileMetadatas.Clear();
-                    this.SignatureMessageMetadatas.Clear();
-                    this.WikiDocumentMetadatas.Clear();
-                    this.ChatMessageMetadatas.Clear();
+                    this.BroadcastMetadatas.Clear();
+                    this.UnicastMetadatas.Clear();
+                    this.MulticastMetadatas.Clear();
                 }
             }
 
@@ -3545,45 +3166,36 @@ namespace Library.Net.Outopos
                 }
             }
 
-            private List<ProfileMetadata> ProfileMetadatas
+            private List<BroadcastMetadata> BroadcastMetadatas
             {
                 get
                 {
-                    return (List<ProfileMetadata>)this["ProfileMetadatas"];
+                    return (List<BroadcastMetadata>)this["BroadcastMetadatas"];
                 }
             }
 
-            private List<SignatureMessageMetadata> SignatureMessageMetadatas
+            private List<UnicastMetadata> UnicastMetadatas
             {
                 get
                 {
-                    return (List<SignatureMessageMetadata>)this["SignatureMessageMetadatas"];
+                    return (List<UnicastMetadata>)this["UnicastMetadatas"];
                 }
             }
 
-            private List<WikiDocumentMetadata> WikiDocumentMetadatas
+            private List<MulticastMetadata> MulticastMetadatas
             {
                 get
                 {
-                    return (List<WikiDocumentMetadata>)this["WikiDocumentMetadatas"];
-                }
-            }
-
-            private List<ChatMessageMetadata> ChatMessageMetadatas
-            {
-                get
-                {
-                    return (List<ChatMessageMetadata>)this["ChatMessageMetadatas"];
+                    return (List<MulticastMetadata>)this["MulticastMetadatas"];
                 }
             }
         }
 
         public class MetadataManager
         {
-            private Dictionary<string, ProfileMetadata> _profileMetadatas = new Dictionary<string, ProfileMetadata>();
-            private Dictionary<string, HashSet<SignatureMessageMetadata>> _signatureMessageMetadatas = new Dictionary<string, HashSet<SignatureMessageMetadata>>();
-            private Dictionary<Wiki, Dictionary<string, HashSet<WikiDocumentMetadata>>> _wikiDocumentMetadatas = new Dictionary<Wiki, Dictionary<string, HashSet<WikiDocumentMetadata>>>();
-            private Dictionary<Chat, Dictionary<string, HashSet<ChatMessageMetadata>>> _chatMessageMetadatas = new Dictionary<Chat, Dictionary<string, HashSet<ChatMessageMetadata>>>();
+            private Dictionary<string, BroadcastMetadata> _broadcastMetadats = new Dictionary<string, BroadcastMetadata>();
+            private Dictionary<string, HashSet<UnicastMetadata>> _unicastMetadata = new Dictionary<string, HashSet<UnicastMetadata>>();
+            private Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>> _multicastMetadatas = new Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>();
 
             private readonly object _thisLock = new object();
 
@@ -3600,10 +3212,9 @@ namespace Library.Net.Outopos
                     {
                         int count = 0;
 
-                        count += _profileMetadatas.Count;
-                        count += _signatureMessageMetadatas.Values.Sum(n => n.Count);
-                        count += _wikiDocumentMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
-                        count += _chatMessageMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
+                        count += _broadcastMetadats.Count;
+                        count += _unicastMetadata.Values.Sum(n => n.Count);
+                        count += _multicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
 
                         return count;
                     }
@@ -3616,7 +3227,7 @@ namespace Library.Net.Outopos
                 {
                     var hashset = new HashSet<string>();
 
-                    hashset.UnionWith(_profileMetadatas.Keys);
+                    hashset.UnionWith(_broadcastMetadats.Keys);
 
                     return hashset;
                 }
@@ -3628,31 +3239,19 @@ namespace Library.Net.Outopos
                 {
                     var hashset = new HashSet<string>();
 
-                    hashset.UnionWith(_signatureMessageMetadatas.Keys);
+                    hashset.UnionWith(_unicastMetadata.Keys);
 
                     return hashset;
                 }
             }
 
-            public IEnumerable<Wiki> GetMulticastWikis()
+            public IEnumerable<Tag> GetMulticastTags()
             {
                 lock (_thisLock)
                 {
-                    var hashset = new HashSet<Wiki>();
+                    var hashset = new HashSet<Tag>();
 
-                    hashset.UnionWith(_wikiDocumentMetadatas.Keys);
-
-                    return hashset;
-                }
-            }
-
-            public IEnumerable<Chat> GetMulticastChats()
-            {
-                lock (_thisLock)
-                {
-                    var hashset = new HashSet<Chat>();
-
-                    hashset.UnionWith(_chatMessageMetadatas.Keys);
+                    hashset.UnionWith(_multicastMetadatas.Keys);
 
                     return hashset;
                 }
@@ -3664,7 +3263,7 @@ namespace Library.Net.Outopos
                 {
                     foreach (var signature in signatures)
                     {
-                        _profileMetadatas.Remove(signature);
+                        _broadcastMetadats.Remove(signature);
                     }
                 }
             }
@@ -3675,48 +3274,37 @@ namespace Library.Net.Outopos
                 {
                     foreach (var signature in signatures)
                     {
-                        _signatureMessageMetadatas.Remove(signature);
+                        _unicastMetadata.Remove(signature);
                     }
                 }
             }
 
-            public void RemoveMulticastWikis(IEnumerable<Wiki> tags)
+            public void RemoveMulticastTags(IEnumerable<Tag> tags)
             {
                 lock (_thisLock)
                 {
-                    foreach (var wiki in tags)
+                    foreach (var tag in tags)
                     {
-                        _wikiDocumentMetadatas.Remove(wiki);
+                        _multicastMetadatas.Remove(tag);
                     }
                 }
             }
 
-            public void RemoveMulticastChats(IEnumerable<Chat> tags)
+            public IEnumerable<BroadcastMetadata> GetBroadcastMetadatas()
             {
                 lock (_thisLock)
                 {
-                    foreach (var chat in tags)
-                    {
-                        _chatMessageMetadatas.Remove(chat);
-                    }
+                    return _broadcastMetadats.Values.ToArray();
                 }
             }
 
-            public IEnumerable<ProfileMetadata> GetProfileMetadatas()
+            public BroadcastMetadata GetBroadcastMetadata(string signature)
             {
                 lock (_thisLock)
                 {
-                    return _profileMetadatas.Values.ToArray();
-                }
-            }
+                    BroadcastMetadata metadata;
 
-            public ProfileMetadata GetProfileMetadata(string signature)
-            {
-                lock (_thisLock)
-                {
-                    ProfileMetadata metadata;
-
-                    if (_profileMetadatas.TryGetValue(signature, out metadata))
+                    if (_broadcastMetadats.TryGetValue(signature, out metadata))
                     {
                         return metadata;
                     }
@@ -3725,76 +3313,53 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public IEnumerable<SignatureMessageMetadata> GetSignatureMessageMetadatas()
+            public IEnumerable<UnicastMetadata> GetUnicastMetadatas()
             {
                 lock (_thisLock)
                 {
-                    return _signatureMessageMetadatas.Values.Extract().ToArray();
+                    return _unicastMetadata.Values.Extract().ToArray();
                 }
             }
 
-            public IEnumerable<SignatureMessageMetadata> GetSignatureMessageMetadatas(string signature)
+            public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature)
             {
                 lock (_thisLock)
                 {
-                    HashSet<SignatureMessageMetadata> hashset;
+                    HashSet<UnicastMetadata> hashset;
 
-                    if (_signatureMessageMetadatas.TryGetValue(signature, out hashset))
+                    if (_unicastMetadata.TryGetValue(signature, out hashset))
                     {
                         return hashset.ToArray();
                     }
 
-                    return new SignatureMessageMetadata[0];
+                    return new UnicastMetadata[0];
                 }
             }
 
-            public IEnumerable<WikiDocumentMetadata> GetWikiDocumentMetadatas()
+            public IEnumerable<MulticastMetadata> GetMulticastMetadatas()
             {
                 lock (_thisLock)
                 {
-                    return _wikiDocumentMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
+                    return _multicastMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
                 }
             }
 
-            public IEnumerable<WikiDocumentMetadata> GetWikiDocumentMetadatas(Wiki tag)
+            public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag)
             {
                 lock (_thisLock)
                 {
-                    Dictionary<string, HashSet<WikiDocumentMetadata>> dic = null;
+                    Dictionary<string, HashSet<MulticastMetadata>> dic = null;
 
-                    if (_wikiDocumentMetadatas.TryGetValue(tag, out dic))
+                    if (_multicastMetadatas.TryGetValue(tag, out dic))
                     {
                         return dic.Values.Extract().ToArray();
                     }
 
-                    return new WikiDocumentMetadata[0];
+                    return new MulticastMetadata[0];
                 }
             }
 
-            public IEnumerable<ChatMessageMetadata> GetChatMessageMetadatas()
-            {
-                lock (_thisLock)
-                {
-                    return _chatMessageMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
-                }
-            }
-
-            public IEnumerable<ChatMessageMetadata> GetChatMessageMetadatas(Chat tag)
-            {
-                lock (_thisLock)
-                {
-                    Dictionary<string, HashSet<ChatMessageMetadata>> dic = null;
-
-                    if (_chatMessageMetadatas.TryGetValue(tag, out dic))
-                    {
-                        return dic.Values.Extract().ToArray();
-                    }
-
-                    return new ChatMessageMetadata[0];
-                }
-            }
-
-            public bool SetMetadata(ProfileMetadata metadata)
+            public bool SetMetadata(BroadcastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3806,21 +3371,21 @@ namespace Library.Net.Outopos
 
                     var signature = metadata.Certificate.ToString();
 
-                    ProfileMetadata tempMetadata;
+                    BroadcastMetadata tempMetadata;
 
-                    if (!_profileMetadatas.TryGetValue(signature, out tempMetadata)
+                    if (!_broadcastMetadats.TryGetValue(signature, out tempMetadata)
                         || metadata.CreationTime > tempMetadata.CreationTime)
                     {
                         if (!metadata.VerifyCertificate()) throw new CertificateException();
 
-                        _profileMetadatas[signature] = metadata;
+                        _broadcastMetadats[signature] = metadata;
                     }
 
                     return (tempMetadata == null || metadata.CreationTime >= tempMetadata.CreationTime);
                 }
             }
 
-            public bool SetMetadata(SignatureMessageMetadata metadata)
+            public bool SetMetadata(UnicastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3831,12 +3396,12 @@ namespace Library.Net.Outopos
                         || (metadata.CreationTime - now).Minutes > 30
                         || metadata.Certificate == null) return false;
 
-                    HashSet<SignatureMessageMetadata> hashset;
+                    HashSet<UnicastMetadata> hashset;
 
-                    if (!_signatureMessageMetadatas.TryGetValue(metadata.Signature, out hashset))
+                    if (!_unicastMetadata.TryGetValue(metadata.Signature, out hashset))
                     {
-                        hashset = new HashSet<SignatureMessageMetadata>();
-                        _signatureMessageMetadatas[metadata.Signature] = hashset;
+                        hashset = new HashSet<UnicastMetadata>();
+                        _unicastMetadata[metadata.Signature] = hashset;
                     }
 
                     if (!hashset.Contains(metadata))
@@ -3850,7 +3415,7 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public bool SetMetadata(WikiDocumentMetadata metadata)
+            public bool SetMetadata(MulticastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3865,19 +3430,19 @@ namespace Library.Net.Outopos
 
                     var signature = metadata.Certificate.ToString();
 
-                    Dictionary<string, HashSet<WikiDocumentMetadata>> dic;
+                    Dictionary<string, HashSet<MulticastMetadata>> dic;
 
-                    if (!_wikiDocumentMetadatas.TryGetValue(metadata.Tag, out dic))
+                    if (!_multicastMetadatas.TryGetValue(metadata.Tag, out dic))
                     {
-                        dic = new Dictionary<string, HashSet<WikiDocumentMetadata>>();
-                        _wikiDocumentMetadatas[metadata.Tag] = dic;
+                        dic = new Dictionary<string, HashSet<MulticastMetadata>>();
+                        _multicastMetadatas[metadata.Tag] = dic;
                     }
 
-                    HashSet<WikiDocumentMetadata> hashset;
+                    HashSet<MulticastMetadata> hashset;
 
                     if (!dic.TryGetValue(signature, out hashset))
                     {
-                        hashset = new HashSet<WikiDocumentMetadata>();
+                        hashset = new HashSet<MulticastMetadata>();
                         dic[signature] = hashset;
                     }
 
@@ -3892,49 +3457,7 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public bool SetMetadata(ChatMessageMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return false;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, HashSet<ChatMessageMetadata>> dic;
-
-                    if (!_chatMessageMetadatas.TryGetValue(metadata.Tag, out dic))
-                    {
-                        dic = new Dictionary<string, HashSet<ChatMessageMetadata>>();
-                        _chatMessageMetadatas[metadata.Tag] = dic;
-                    }
-
-                    HashSet<ChatMessageMetadata> hashset;
-
-                    if (!dic.TryGetValue(signature, out hashset))
-                    {
-                        hashset = new HashSet<ChatMessageMetadata>();
-                        dic[signature] = hashset;
-                    }
-
-                    if (!hashset.Contains(metadata))
-                    {
-                        if (!metadata.VerifyCertificate()) throw new CertificateException();
-
-                        hashset.Add(metadata);
-                    }
-
-                    return true;
-                }
-            }
-
-            public void RemoveMetadata(ProfileMetadata metadata)
+            public void RemoveMetadata(BroadcastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3946,11 +3469,11 @@ namespace Library.Net.Outopos
 
                     var signature = metadata.Certificate.ToString();
 
-                    _profileMetadatas.Remove(signature);
+                    _broadcastMetadats.Remove(signature);
                 }
             }
 
-            public void RemoveMetadata(SignatureMessageMetadata metadata)
+            public void RemoveMetadata(UnicastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3961,19 +3484,19 @@ namespace Library.Net.Outopos
                         || (metadata.CreationTime - now).Minutes > 30
                         || metadata.Certificate == null) return;
 
-                    HashSet<SignatureMessageMetadata> hashset;
-                    if (!_signatureMessageMetadatas.TryGetValue(metadata.Signature, out hashset)) return;
+                    HashSet<UnicastMetadata> hashset;
+                    if (!_unicastMetadata.TryGetValue(metadata.Signature, out hashset)) return;
 
                     hashset.Remove(metadata);
 
                     if (hashset.Count == 0)
                     {
-                        _signatureMessageMetadatas.Remove(metadata.Signature);
+                        _unicastMetadata.Remove(metadata.Signature);
                     }
                 }
             }
 
-            public void RemoveMetadata(WikiDocumentMetadata metadata)
+            public void RemoveMetadata(MulticastMetadata metadata)
             {
                 lock (_thisLock)
                 {
@@ -3988,10 +3511,10 @@ namespace Library.Net.Outopos
 
                     var signature = metadata.Certificate.ToString();
 
-                    Dictionary<string, HashSet<WikiDocumentMetadata>> dic;
-                    if (!_wikiDocumentMetadatas.TryGetValue(metadata.Tag, out dic)) return;
+                    Dictionary<string, HashSet<MulticastMetadata>> dic;
+                    if (!_multicastMetadatas.TryGetValue(metadata.Tag, out dic)) return;
 
-                    HashSet<WikiDocumentMetadata> hashset;
+                    HashSet<MulticastMetadata> hashset;
                     if (!dic.TryGetValue(signature, out hashset)) return;
 
                     hashset.Remove(metadata);
@@ -4002,42 +3525,7 @@ namespace Library.Net.Outopos
 
                         if (dic.Count == 0)
                         {
-                            _wikiDocumentMetadatas.Remove(metadata.Tag);
-                        }
-                    }
-                }
-            }
-
-            public void RemoveMetadata(ChatMessageMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, HashSet<ChatMessageMetadata>> dic;
-                    if (!_chatMessageMetadatas.TryGetValue(metadata.Tag, out dic)) return;
-
-                    HashSet<ChatMessageMetadata> hashset;
-                    if (!dic.TryGetValue(signature, out hashset)) return;
-
-                    hashset.Remove(metadata);
-
-                    if (hashset.Count == 0)
-                    {
-                        dic.Remove(signature);
-
-                        if (dic.Count == 0)
-                        {
-                            _chatMessageMetadatas.Remove(metadata.Tag);
+                            _multicastMetadatas.Remove(metadata.Tag);
                         }
                     }
                 }

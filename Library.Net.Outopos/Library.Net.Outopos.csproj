@@ -98,53 +98,40 @@
   <ItemGroup>
     <Compile Include="Cache\BitmapManager.cs" />
     <Compile Include="Cache\CacheManager.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\Multicast\WikiDocumentMetadata.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\Unicast\SignatureMessageMetadata.cs" />
-    <Compile Include="Cache\Information\_Base\Metadata\Items\Unicast\UnicastMetadata.cs" />
-    <Compile Include="Cache\Information\_Base\Metadata\Items\Broadcast\BroadcastMetadata.cs" />
-    <Compile Include="Cache\Information\_Base\Common\Items\Tag.cs" />
-    <Compile Include="Cache\_Interface\Information\Common\Items\Broadcast\IBroadcastHeader.cs" />
-    <Compile Include="Cache\_Interface\Information\Common\Items\Multicast\IMulticastHeader.cs" />
-    <Compile Include="Cache\_Interface\Information\Common\Items\Unicast\IUnicastHeader.cs" />
-    <Compile Include="Cache\_Interface\Information\Options\Items\Unicast\IUnicastOptions.cs" />
-    <Compile Include="Cache\_Interface\Information\Options\Items\Broadcast\IBroadcastOptions.cs" />
-    <Compile Include="Cache\Information\Package\Items\Multicast\WikiDocument.cs" />
-    <Compile Include="Cache\Information\Package\Items\WikiPageCollection.cs" />
-    <Compile Include="Cache\_Interface\Information\Content\Items\Broadcast\IProfileContent.cs" />
-    <Compile Include="Cache\Information\Package\Items\Multicast\ChatMessage.cs" />
-    <Compile Include="Cache\Information\Package\Items\WikiPage.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\Multicast\ChatMessageMetadata.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\Broadcast\ProfileMetadata.cs" />
-    <Compile Include="Cache\Information\Common\Items\Chat.cs" />
-    <Compile Include="Cache\Information\Common\Items\ChatCollection.cs" />
-    <Compile Include="Cache\Information\Common\Items\Wiki.cs" />
-    <Compile Include="Cache\Information\Common\Items\WikiCollection.cs" />
-    <Compile Include="Cache\Information\_Base\Metadata\Items\Multicast\MulticastMetadata.cs" />
-    <Compile Include="Cache\_Interface\Information\Content\Items\IWikiPage.cs" />
-    <Compile Include="Cache\_Interface\Information\Content\Items\Multicast\IWikiDocumentContent.cs" />
-    <Compile Include="Cache\_Interface\Information\Content\Items\Multicast\IChatMessageContent.cs" />
-    <Compile Include="Cache\_Interface\Information\Content\Items\Unicast\ISignatureMessageContent.cs" />
+    <Compile Include="Cache\Information\Common\TagCollection.cs" />
+    <Compile Include="Cache\Information\Metadata\Items\UnicastMetadata.cs" />
+    <Compile Include="Cache\Information\Metadata\Items\BroadcastMetadata.cs" />
+    <Compile Include="Cache\Information\Common\Tag.cs" />
+    <Compile Include="Cache\_Interface\Information\Common\Items\IBroadcastHeader.cs" />
+    <Compile Include="Cache\_Interface\Information\Common\Items\IMulticastHeader.cs" />
+    <Compile Include="Cache\_Interface\Information\Common\Items\IUnicastHeader.cs" />
+    <Compile Include="Cache\_Interface\Information\Options\Items\IUnicastOptions.cs" />
+    <Compile Include="Cache\_Interface\Information\Options\Items\IBroadcastOptions.cs" />
+    <Compile Include="Cache\_Interface\Information\Content\Items\IBroadcastContent.cs" />
+    <Compile Include="Cache\Information\Message\Items\MulticastMessage.cs" />
+    <Compile Include="Cache\Information\Metadata\Items\MulticastMetadata.cs" />
+    <Compile Include="Cache\_Interface\Information\Content\Items\IMulticastContent.cs" />
+    <Compile Include="Cache\_Interface\Information\Content\Items\IUnicastContent.cs" />
     <Compile Include="OutoposConverter.cs" />
-    <Compile Include="Cache\Information\Package\Items\Unicast\SignatureMessage.cs" />
-    <Compile Include="Cache\Information\Package\Items\Broadcast\Profile.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\Key.cs" />
-    <Compile Include="Cache\Information\Metadata\Items\KeyCollection.cs" />
+    <Compile Include="Cache\Information\Message\Items\SignatureMessage.cs" />
+    <Compile Include="Cache\Information\Message\Items\BroadcastMessage.cs" />
+    <Compile Include="Cache\Information\Metadata\Key.cs" />
+    <Compile Include="Cache\Information\Metadata\KeyCollection.cs" />
     <Compile Include="Cache\_Interface\IComputeHash.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cache\_Interface\IHashAlgorithm.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Cache\_Interface\Information\Options\Items\Multicast\IMulticastOptions.cs">
+    <Compile Include="Cache\_Interface\Information\Options\Items\IMulticastOptions.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Cache\_Interface\Information\Options\Items\IKey.cs">
+    <Compile Include="Cache\_Interface\Information\Options\IKey.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Cache\_Interface\Information\Common\Items\ITag.cs">
+    <Compile Include="Cache\_Interface\Information\Common\ITag.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Cache\_Interface\Information\Content\IHypertext.cs" />
     <Compile Include="Cache\ContentConverter.cs" />
     <Compile Include="OutoposManager.cs" />
     <Compile Include="DownloadManager.cs" />

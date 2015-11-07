@@ -34,10 +34,10 @@ namespace Library.Net.Outopos
                 foreach (var messageManager in _messageManagerDictionary.Values.ToArray())
                 {
                     messageManager.StockBlocks.TrimExcess();
-                    messageManager.StockProfileMetadatas.TrimExcess();
-                    messageManager.StockSignatureMessageMetadatas.TrimExcess();
+                    messageManager.StockBroadcastMetadatas.TrimExcess();
+                    messageManager.StockUnicastMetadatas.TrimExcess();
                     messageManager.StockWikiDocumentMetadatas.TrimExcess();
-                    messageManager.StockChatMessageMetadatas.TrimExcess();
+                    messageManager.StockMulticastMetadatas.TrimExcess();
 
                     messageManager.PushBlocksLink.TrimExcess();
                     messageManager.PullBlocksLink.TrimExcess();
@@ -51,11 +51,8 @@ namespace Library.Net.Outopos
                     messageManager.PushUnicastSignaturesRequest.TrimExcess();
                     messageManager.PullUnicastSignaturesRequest.TrimExcess();
 
-                    messageManager.PushMulticastWikisRequest.TrimExcess();
-                    messageManager.PullMulticastWikisRequest.TrimExcess();
-
-                    messageManager.PushMulticastChatsRequest.TrimExcess();
-                    messageManager.PullMulticastChatsRequest.TrimExcess();
+                    messageManager.PushMulticastTagsRequest.TrimExcess();
+                    messageManager.PullMulticastTagsRequest.TrimExcess();
                 }
 
                 if (_messageManagerDictionary.Count > 128)
@@ -186,10 +183,10 @@ namespace Library.Net.Outopos
         private DateTime _lastPullTime = DateTime.UtcNow;
 
         private VolatileHashSet<Key> _stockBlocks;
-        private VolatileHashSet<byte[]> _stockProfileMetadatas;
-        private VolatileHashSet<byte[]> _stockSignatureMessageMetadatas;
+        private VolatileHashSet<byte[]> _stockBroadcastMetadatas;
+        private VolatileHashSet<byte[]> _stockUnicastMetadatas;
         private VolatileHashSet<byte[]> _stockWikiDocumentMetadatas;
-        private VolatileHashSet<byte[]> _stockChatMessageMetadatas;
+        private VolatileHashSet<byte[]> _stockMulticastMetadatas;
 
         private VolatileHashSet<Key> _pushBlocksLink;
         private VolatileHashSet<Key> _pullBlocksLink;
@@ -203,11 +200,8 @@ namespace Library.Net.Outopos
         private VolatileHashSet<string> _pushUnicastSignaturesRequest;
         private VolatileHashSet<string> _pullUnicastSignaturesRequest;
 
-        private VolatileHashSet<Wiki> _pushMulticastWikisRequest;
-        private VolatileHashSet<Wiki> _pullMulticastWikisRequest;
-
-        private VolatileHashSet<Chat> _pushMulticastChatsRequest;
-        private VolatileHashSet<Chat> _pullMulticastChatsRequest;
+        private VolatileHashSet<Tag> _pushMulticastTagsRequest;
+        private VolatileHashSet<Tag> _pullMulticastTagsRequest;
 
         private readonly object _thisLock = new object();
 
@@ -221,10 +215,10 @@ namespace Library.Net.Outopos
             _sentByteCount = new SafeInteger();
 
             _stockBlocks = new VolatileHashSet<Key>(new TimeSpan(1, 0, 0, 0));
-            _stockProfileMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
-            _stockSignatureMessageMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
+            _stockBroadcastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
+            _stockUnicastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockWikiDocumentMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
-            _stockChatMessageMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
+            _stockMulticastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
 
             _pushBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
@@ -238,11 +232,8 @@ namespace Library.Net.Outopos
             _pushUnicastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
             _pullUnicastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
 
-            _pushMulticastWikisRequest = new VolatileHashSet<Wiki>(new TimeSpan(0, 30, 0));
-            _pullMulticastWikisRequest = new VolatileHashSet<Wiki>(new TimeSpan(0, 30, 0));
-
-            _pushMulticastChatsRequest = new VolatileHashSet<Chat>(new TimeSpan(0, 30, 0));
-            _pullMulticastChatsRequest = new VolatileHashSet<Chat>(new TimeSpan(0, 30, 0));
+            _pushMulticastTagsRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
+            _pullMulticastTagsRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
         }
 
         public int Id
@@ -327,24 +318,24 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<byte[]> StockProfileMetadatas
+        public VolatileHashSet<byte[]> StockBroadcastMetadatas
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _stockProfileMetadatas;
+                    return _stockBroadcastMetadatas;
                 }
             }
         }
 
-        public VolatileHashSet<byte[]> StockSignatureMessageMetadatas
+        public VolatileHashSet<byte[]> StockUnicastMetadatas
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _stockSignatureMessageMetadatas;
+                    return _stockUnicastMetadatas;
                 }
             }
         }
@@ -360,13 +351,13 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<byte[]> StockChatMessageMetadatas
+        public VolatileHashSet<byte[]> StockMulticastMetadatas
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _stockChatMessageMetadatas;
+                    return _stockMulticastMetadatas;
                 }
             }
         }
@@ -459,46 +450,24 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<Wiki> PushMulticastWikisRequest
+        public VolatileHashSet<Tag> PushMulticastTagsRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pushMulticastWikisRequest;
+                    return _pushMulticastTagsRequest;
                 }
             }
         }
 
-        public VolatileHashSet<Wiki> PullMulticastWikisRequest
+        public VolatileHashSet<Tag> PullMulticastTagsRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pullMulticastWikisRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<Chat> PushMulticastChatsRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushMulticastChatsRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<Chat> PullMulticastChatsRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pullMulticastChatsRequest;
+                    return _pullMulticastTagsRequest;
                 }
             }
         }

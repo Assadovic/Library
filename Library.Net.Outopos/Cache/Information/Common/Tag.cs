@@ -9,8 +9,7 @@ using Library.Io;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "Tag", Namespace = "http://Library/Net/Outopos")]
-    public abstract class Tag<TTag> : ItemBase<TTag>, ITag
-        where TTag : Tag<TTag>
+    public class Tag : ItemBase<Tag>, ITag
     {
         private enum SerializeId : byte
         {
@@ -97,12 +96,12 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is TTag)) return false;
+            if ((object)obj == null || !(obj is Tag)) return false;
 
-            return this.Equals((TTag)obj);
+            return this.Equals((Tag)obj);
         }
 
-        public override bool Equals(TTag other)
+        public override bool Equals(Tag other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
@@ -132,7 +131,7 @@ namespace Library.Net.Outopos
             }
             private set
             {
-                if (value != null && value.Length > Tag<TTag>.MaxNameLength)
+                if (value != null && value.Length > Tag.MaxNameLength)
                 {
                     throw new ArgumentException();
                 }
@@ -152,7 +151,7 @@ namespace Library.Net.Outopos
             }
             private set
             {
-                if (value != null && (value.Length > Tag<TTag>.MaxIdLength))
+                if (value != null && (value.Length > Tag.MaxIdLength))
                 {
                     throw new ArgumentException();
                 }

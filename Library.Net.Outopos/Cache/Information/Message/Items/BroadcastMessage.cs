@@ -9,8 +9,8 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "Profile", Namespace = "http://Library/Net/Outopos")]
-    public sealed class Profile : ImmutableCertificateItemBase<Profile>, IBroadcastHeader, IProfileContent
+    [DataContract(Name = "BroadcastMessage", Namespace = "http://Library/Net/Outopos")]
+    public sealed class BroadcastMessage : ImmutableCertificateItemBase<BroadcastMessage>, IBroadcastHeader, IBroadcastContent
     {
         private enum SerializeId : byte
         {
@@ -20,10 +20,9 @@ namespace Library.Net.Outopos
             ExchangePublicKey = 2,
             TrustSignature = 3,
             DeleteSignature = 4,
-            Wiki = 5,
-            Chat = 6,
+            Tag = 5,
 
-            Certificate = 7,
+            Certificate = 6,
         }
 
         private DateTime _creationTime;
@@ -32,8 +31,7 @@ namespace Library.Net.Outopos
         private volatile ExchangePublicKey _exchangePublicKey;
         private volatile SignatureCollection _trustSignatures;
         private volatile SignatureCollection _deleteSignatures;
-        private volatile WikiCollection _wikis;
-        private volatile ChatCollection _chats;
+        private volatile TagCollection _tags;
 
         private volatile Certificate _certificate;
 
@@ -41,10 +39,9 @@ namespace Library.Net.Outopos
 
         public static readonly int MaxTrustSignatureCount = 1024;
         public static readonly int MaxDeleteSignatureCount = 1024;
-        public static readonly int MaxWikiCount = 256;
-        public static readonly int MaxChatCount = 256;
+        public static readonly int MaxTagCount = 256;
 
-        internal Profile(DateTime creationTime, int cost, ExchangePublicKey exchangePublicKey, IEnumerable<string> trustSignatures, IEnumerable<string> deleteSignatures, IEnumerable<Wiki> wikis, IEnumerable<Chat> chats, DigitalSignature digitalSignature)
+        internal BroadcastMessage(DateTime creationTime, int cost, ExchangePublicKey exchangePublicKey, IEnumerable<string> trustSignatures, IEnumerable<string> deleteSignatures, IEnumerable<Tag> tags, DigitalSignature digitalSignature)
         {
             this.CreationTime = creationTime;
 
@@ -52,8 +49,7 @@ namespace Library.Net.Outopos
             this.ExchangePublicKey = exchangePublicKey;
             if (trustSignatures != null) this.ProtectedTrustSignatures.AddRange(trustSignatures);
             if (deleteSignatures != null) this.ProtectedDeleteSignatures.AddRange(deleteSignatures);
-            if (wikis != null) this.ProtectedWikis.AddRange(wikis);
-            if (chats != null) this.ProtectedChats.AddRange(chats);
+            if (tags != null) this.ProtectedTags.AddRange(tags);
 
             this.CreateCertificate(digitalSignature);
         }
@@ -104,13 +100,9 @@ namespace Library.Net.Outopos
                     {
                         this.ProtectedDeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.Wiki)
+                    else if (id == (byte)SerializeId.Tag)
                     {
-                        this.ProtectedWikis.Add(Wiki.Import(rangeStream, bufferManager));
-                    }
-                    else if (id == (byte)SerializeId.Chat)
-                    {
-                        this.ProtectedChats.Add(Chat.Import(rangeStream, bufferManager));
+                        this.ProtectedTags.Add(Tag.Import(rangeStream, bufferManager));
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -154,20 +146,12 @@ namespace Library.Net.Outopos
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.DeleteSignature, value);
             }
-            // Wikis
-            foreach (var value in this.Wikis)
+            // Tags
+            foreach (var value in this.Tags)
             {
                 using (var stream = value.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Wiki, stream);
-                }
-            }
-            // Chats
-            foreach (var value in this.Chats)
-            {
-                using (var stream = value.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Chat, stream);
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
                 }
             }
 
@@ -191,12 +175,12 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is Profile)) return false;
+            if ((object)obj == null || !(obj is BroadcastMessage)) return false;
 
-            return this.Equals((Profile)obj);
+            return this.Equals((BroadcastMessage)obj);
         }
 
-        public override bool Equals(Profile other)
+        public override bool Equals(BroadcastMessage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
@@ -207,8 +191,8 @@ namespace Library.Net.Outopos
                 || this.ExchangePublicKey != other.ExchangePublicKey
                 || (this.TrustSignatures == null) != (other.TrustSignatures == null)
                 || (this.DeleteSignatures == null) != (other.DeleteSignatures == null)
-                || (this.Wikis == null) != (other.Wikis == null)
-                || (this.Chats == null) != (other.Chats == null)
+                || (this.Tags == null) != (other.Tags == null)
+                || (this.Tags == null) != (other.Tags == null)
 
                 || this.Certificate != other.Certificate)
             {
@@ -225,14 +209,14 @@ namespace Library.Net.Outopos
                 if (!CollectionUtilities.Equals(this.DeleteSignatures, other.DeleteSignatures)) return false;
             }
 
-            if (this.Wikis != null && other.Wikis != null)
+            if (this.Tags != null && other.Tags != null)
             {
-                if (!CollectionUtilities.Equals(this.Wikis, other.Wikis)) return false;
+                if (!CollectionUtilities.Equals(this.Tags, other.Tags)) return false;
             }
 
-            if (this.Chats != null && other.Chats != null)
+            if (this.Tags != null && other.Tags != null)
             {
-                if (!CollectionUtilities.Equals(this.Chats, other.Chats)) return false;
+                if (!CollectionUtilities.Equals(this.Tags, other.Tags)) return false;
             }
 
             return true;
@@ -299,7 +283,7 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region IProfileContent
+        #region IBroadcastContent
 
         [DataMember(Name = "Cost")]
         public int Cost
@@ -346,7 +330,7 @@ namespace Library.Net.Outopos
             get
             {
                 if (_trustSignatures == null)
-                    _trustSignatures = new SignatureCollection(Profile.MaxTrustSignatureCount);
+                    _trustSignatures = new SignatureCollection(BroadcastMessage.MaxTrustSignatureCount);
 
                 return _trustSignatures;
             }
@@ -371,59 +355,34 @@ namespace Library.Net.Outopos
             get
             {
                 if (_deleteSignatures == null)
-                    _deleteSignatures = new SignatureCollection(Profile.MaxDeleteSignatureCount);
+                    _deleteSignatures = new SignatureCollection(BroadcastMessage.MaxDeleteSignatureCount);
 
                 return _deleteSignatures;
             }
         }
 
-        private volatile ReadOnlyCollection<Wiki> _readOnlyWikis;
+        private volatile ReadOnlyCollection<Tag> _readOnlyTags;
 
-        public IEnumerable<Wiki> Wikis
+        public IEnumerable<Tag> Tags
         {
             get
             {
-                if (_readOnlyWikis == null)
-                    _readOnlyWikis = new ReadOnlyCollection<Wiki>(this.ProtectedWikis.ToArray());
+                if (_readOnlyTags == null)
+                    _readOnlyTags = new ReadOnlyCollection<Tag>(this.ProtectedTags.ToArray());
 
-                return _readOnlyWikis;
+                return _readOnlyTags;
             }
         }
 
-        [DataMember(Name = "Wikis")]
-        private WikiCollection ProtectedWikis
+        [DataMember(Name = "Tags")]
+        private TagCollection ProtectedTags
         {
             get
             {
-                if (_wikis == null)
-                    _wikis = new WikiCollection(Profile.MaxWikiCount);
+                if (_tags == null)
+                    _tags = new TagCollection(BroadcastMessage.MaxTagCount);
 
-                return _wikis;
-            }
-        }
-
-        private volatile ReadOnlyCollection<Chat> _readOnlyChats;
-
-        public IEnumerable<Chat> Chats
-        {
-            get
-            {
-                if (_readOnlyChats == null)
-                    _readOnlyChats = new ReadOnlyCollection<Chat>(this.ProtectedChats.ToArray());
-
-                return _readOnlyChats;
-            }
-        }
-
-        [DataMember(Name = "Chats")]
-        private ChatCollection ProtectedChats
-        {
-            get
-            {
-                if (_chats == null)
-                    _chats = new ChatCollection(Profile.MaxChatCount);
-
-                return _chats;
+                return _tags;
             }
         }
 

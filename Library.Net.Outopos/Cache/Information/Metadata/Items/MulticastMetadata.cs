@@ -9,13 +9,12 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "UnicastMetadata", Namespace = "http://Library/Net/Outopos")]
-    public abstract class UnicastMetadata<TMetadata> : ImmutableCertificateItemBase<TMetadata>, IUnicastHeader, IUnicastOptions
-        where TMetadata : UnicastMetadata<TMetadata>
+    [DataContract(Name = "MulticastMetadata", Namespace = "http://Library/Net/Outopos")]
+    public class MulticastMetadata : ImmutableCertificateItemBase<MulticastMetadata>, IMulticastHeader, IMulticastOptions
     {
         private enum SerializeId : byte
         {
-            Signature = 0,
+            Tag = 0,
             CreationTime = 1,
 
             Key = 2,
@@ -24,7 +23,7 @@ namespace Library.Net.Outopos
             Certificate = 4,
         }
 
-        private volatile string _signature;
+        private volatile Tag _tag;
         private DateTime _creationTime;
 
         private volatile Key _key;
@@ -34,9 +33,9 @@ namespace Library.Net.Outopos
 
         private volatile object _thisLock;
 
-        internal UnicastMetadata(string signature, DateTime creationTime, Key key, Miner miner, DigitalSignature digitalSignature)
+        internal MulticastMetadata(Tag tag, DateTime creationTime, Key key, Miner miner, DigitalSignature digitalSignature)
         {
-            this.Signature = signature;
+            this.Tag = tag;
             this.CreationTime = creationTime;
 
             this.Key = key;
@@ -70,9 +69,9 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Signature)
+                    if (id == (byte)SerializeId.Tag)
                     {
-                        this.Signature = ItemUtilities.GetString(rangeStream);
+                        this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
@@ -100,10 +99,13 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Signature
-            if (this.Signature != null)
+            // Tag
+            if (this.Tag != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
+                using (var stream = this.Tag.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
+                }
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
@@ -149,17 +151,17 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is TMetadata)) return false;
+            if ((object)obj == null || !(obj is MulticastMetadata)) return false;
 
-            return this.Equals((TMetadata)obj);
+            return this.Equals((MulticastMetadata)obj);
         }
 
-        public override bool Equals(TMetadata other)
+        public override bool Equals(MulticastMetadata other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Signature != other.Signature
+            if (this.Tag != other.Tag
                 || this.CreationTime != other.CreationTime
 
                 || this.Key != other.Key
@@ -275,18 +277,18 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IUnicastHeader
+        #region IMulticastHeader<TTag>
 
-        [DataMember(Name = "Signature")]
-        public string Signature
+        [DataMember(Name = "Tag")]
+        public Tag Tag
         {
             get
             {
-                return _signature;
+                return _tag;
             }
             private set
             {
-                _signature = value;
+                _tag = value;
             }
         }
 
@@ -312,7 +314,7 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region IUnicastMetadata
+        #region IMulticastOptions
 
         [DataMember(Name = "Key")]
         public Key Key

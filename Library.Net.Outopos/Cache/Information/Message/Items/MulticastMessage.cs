@@ -9,8 +9,8 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "ChatMessage", Namespace = "http://Library/Net/Outopos")]
-    public sealed class ChatMessage : ImmutableCertificateItemBase<ChatMessage>, IMulticastHeader<Chat>, IChatMessageContent
+    [DataContract(Name = "MulticastMessage", Namespace = "http://Library/Net/Outopos")]
+    public sealed class MulticastMessage : ImmutableCertificateItemBase<MulticastMessage>, IMulticastHeader, IMulticastContent
     {
         private enum SerializeId : byte
         {
@@ -22,7 +22,7 @@ namespace Library.Net.Outopos
             Certificate = 3,
         }
 
-        private volatile Chat _tag;
+        private volatile Tag _tag;
         private DateTime _creationTime;
 
         private volatile string _comment;
@@ -33,7 +33,7 @@ namespace Library.Net.Outopos
 
         public static readonly int MaxCommentLength = 1024 * 4;
 
-        internal ChatMessage(Chat tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
+        internal MulticastMessage(Tag tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {
             this.Tag = tag;
             this.CreationTime = creationTime;
@@ -70,7 +70,7 @@ namespace Library.Net.Outopos
                 {
                     if (id == (byte)SerializeId.Tag)
                     {
-                        this.Tag = Chat.Import(rangeStream, bufferManager);
+                        this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
@@ -134,12 +134,12 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is ChatMessage)) return false;
+            if ((object)obj == null || !(obj is MulticastMessage)) return false;
 
-            return this.Equals((ChatMessage)obj);
+            return this.Equals((MulticastMessage)obj);
         }
 
-        public override bool Equals(ChatMessage other)
+        public override bool Equals(MulticastMessage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
@@ -194,10 +194,10 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IMulticastHeader<Chat>
+        #region IMulticastHeader
 
         [DataMember(Name = "Tag")]
-        public Chat Tag
+        public Tag Tag
         {
             get
             {
@@ -231,7 +231,7 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region IChatMessageContent
+        #region IMulticastContent
 
         [DataMember(Name = "Comment")]
         public string Comment
@@ -242,7 +242,7 @@ namespace Library.Net.Outopos
             }
             private set
             {
-                if (value != null && value.Length > ChatMessage.MaxCommentLength)
+                if (value != null && value.Length > MulticastMessage.MaxCommentLength)
                 {
                     throw new ArgumentException();
                 }

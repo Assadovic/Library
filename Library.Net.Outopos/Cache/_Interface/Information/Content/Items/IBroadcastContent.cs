@@ -6,13 +6,12 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IProfileContent : IComputeHash
+    public interface IBroadcastContent : IComputeHash
     {
         int Cost { get; }
         ExchangePublicKey ExchangePublicKey { get; }
         IEnumerable<string> TrustSignatures { get; }
         IEnumerable<string> DeleteSignatures { get; }
-        IEnumerable<Wiki> Wikis { get; }
-        IEnumerable<Chat> Chats { get; }
+        IEnumerable<Tag> Tags { get; }
     }
 }

@@ -10,17 +10,14 @@ namespace Library.Net.Outopos
         [DataMember(Name = "Type")]
         public string Type { get; set; }
 
-        [DataMember(Name = "Profile")]
-        public Profile Profile { get; set; }
+        [DataMember(Name = "BroadcastMessage")]
+        public BroadcastMessage BroadcastMessage { get; set; }
 
-        [DataMember(Name = "SignatureMessage")]
-        public SignatureMessage SignatureMessage { get; set; }
+        [DataMember(Name = "UnicastMessage")]
+        public UnicastMessage UnicastMessage { get; set; }
 
-        [DataMember(Name = "WikiDocument")]
-        public WikiDocument WikiDocument { get; set; }
-
-        [DataMember(Name = "ChatMessage")]
-        public ChatMessage ChatMessage { get; set; }
+        [DataMember(Name = "MulticastMessage")]
+        public MulticastMessage MulticastMessage { get; set; }
 
         [DataMember(Name = "DigitalSignature")]
         public DigitalSignature DigitalSignature { get; set; }

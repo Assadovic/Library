@@ -3,10 +3,9 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IMulticastHeader<TTag>
-        where TTag : ITag
+    public interface IMulticastHeader
     {
-        TTag Tag { get; }
+        Tag Tag { get; }
         DateTime CreationTime { get; }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Library.Io;
@@ -9,39 +9,37 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "MulticastMetadata", Namespace = "http://Library/Net/Outopos")]
-    public abstract class MulticastMetadata<TMetadata, TTag> : ImmutableCertificateItemBase<TMetadata>, IMulticastHeader<TTag>, IMulticastOptions
-        where TMetadata : MulticastMetadata<TMetadata, TTag>
-        where TTag : ItemBase<TTag>, ITag
+    [DataContract(Name = "UnicastMessage", Namespace = "http://Library/Net/Outopos")]
+    public sealed class UnicastMessage : ImmutableCertificateItemBase<UnicastMessage>, IUnicastHeader, IUnicastContent
     {
         private enum SerializeId : byte
         {
-            Tag = 0,
+            Signature = 0,
             CreationTime = 1,
 
-            Key = 2,
-            Cash = 3,
+            Comment = 2,
 
-            Certificate = 4,
+            Certificate = 3,
         }
 
-        private volatile TTag _tag;
+        private volatile string _signature;
         private DateTime _creationTime;
 
-        private volatile Key _key;
-        private volatile Cash _cash;
+        private volatile string _comment;
 
         private volatile Certificate _certificate;
 
         private volatile object _thisLock;
 
-        internal MulticastMetadata(TTag tag, DateTime creationTime, Key key, Miner miner, DigitalSignature digitalSignature)
+        public static readonly int MaxCommentLength = 1024 * 32;
+        public static readonly int MaxAnchorCount = 32;
+
+        internal UnicastMessage(string signature, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {
-            this.Tag = tag;
+            this.Signature = signature;
             this.CreationTime = creationTime;
 
-            this.Key = key;
-            this.CreateCash(miner, digitalSignature.ToString());
+            this.Comment = comment;
 
             this.CreateCertificate(digitalSignature);
         }
@@ -71,22 +69,18 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Tag)
+                    if (id == (byte)SerializeId.Signature)
                     {
-                        this.Tag = ItemBase<TTag>.Import(rangeStream, bufferManager);
+                        this.Signature = ItemUtilities.GetString(rangeStream);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Key)
+                    else if (id == (byte)SerializeId.Comment)
                     {
-                        this.Key = Key.Import(rangeStream, bufferManager);
-                    }
-                    else if (id == (byte)SerializeId.Cash)
-                    {
-                        this.Cash = Cash.Import(rangeStream, bufferManager);
+                        this.Comment = ItemUtilities.GetString(rangeStream);
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -101,13 +95,10 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Tag
-            if (this.Tag != null)
+            // Signature
+            if (this.Signature != null)
             {
-                using (var stream = this.Tag.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
-                }
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
@@ -115,21 +106,10 @@ namespace Library.Net.Outopos
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
-            // Key
-            if (this.Key != null)
+            // Comment
+            if (this.Comment != null)
             {
-                using (var stream = this.Key.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
-                }
-            }
-            // Cash
-            if (this.Cash != null)
-            {
-                using (var stream = this.Cash.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Cash, stream);
-                }
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
             }
 
             // Certificate
@@ -147,27 +127,26 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            if (this.Key == null) return 0;
-            else return this.Key.GetHashCode();
+            if (this.Comment == null) return 0;
+            else return this.Comment.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is TMetadata)) return false;
+            if ((object)obj == null || !(obj is UnicastMessage)) return false;
 
-            return this.Equals((TMetadata)obj);
+            return this.Equals((UnicastMessage)obj);
         }
 
-        public override bool Equals(TMetadata other)
+        public override bool Equals(UnicastMessage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Tag != other.Tag
+            if (this.Signature != other.Signature
                 || this.CreationTime != other.CreationTime
 
-                || this.Key != other.Key
-                || this.Cash != other.Cash
+                || this.Comment != other.Comment
 
                 || this.Certificate != other.Certificate)
             {
@@ -175,71 +154,6 @@ namespace Library.Net.Outopos
             }
 
             return true;
-        }
-
-        protected virtual void CreateCash(Miner miner, string signature)
-        {
-            var tempCertificate = this.Certificate;
-            this.Certificate = null;
-
-            var tempCash = this.Cash;
-            this.Cash = null;
-
-            try
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    stream.Seek(0, SeekOrigin.End);
-                    ItemUtilities.Write(stream, byte.MaxValue, signature);
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    tempCash = miner.Create(stream);
-                }
-            }
-            finally
-            {
-                this.Certificate = tempCertificate;
-                this.Cash = tempCash;
-            }
-        }
-
-        protected virtual int VerifyCash(string signature)
-        {
-            var tempCertificate = this.Certificate;
-            this.Certificate = null;
-
-            var tempCash = this.Cash;
-            this.Cash = null;
-
-            try
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    stream.Seek(0, SeekOrigin.End);
-                    ItemUtilities.Write(stream, byte.MaxValue, signature);
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    return Miner.Verify(tempCash, stream);
-                }
-            }
-            finally
-            {
-                this.Certificate = tempCertificate;
-                this.Cash = tempCash;
-            }
-        }
-
-        [DataMember(Name = "Cash")]
-        protected virtual Cash Cash
-        {
-            get
-            {
-                return _cash;
-            }
-            set
-            {
-                _cash = value;
-            }
         }
 
         protected override void CreateCertificate(DigitalSignature digitalSignature)
@@ -279,18 +193,18 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IMulticastHeader<TTag>
+        #region IUnicastHeader
 
-        [DataMember(Name = "Tag")]
-        public TTag Tag
+        [DataMember(Name = "Signature")]
+        public string Signature
         {
             get
             {
-                return _tag;
+                return _signature;
             }
             private set
             {
-                _tag = value;
+                _signature = value;
             }
         }
 
@@ -316,33 +230,24 @@ namespace Library.Net.Outopos
 
         #endregion
 
-        #region IMulticastOptions
+        #region IUnicastContent
 
-        [DataMember(Name = "Key")]
-        public Key Key
+        [DataMember(Name = "Comment")]
+        public string Comment
         {
             get
             {
-                return _key;
+                return _comment;
             }
             private set
             {
-                _key = value;
-            }
-        }
-
-        private int? _cost;
-
-        public int Cost
-        {
-            get
-            {
-                lock (_thisLock)
+                if (value != null && value.Length > UnicastMessage.MaxCommentLength)
                 {
-                    if (_cost == null)
-                        _cost = this.VerifyCash(this.Certificate.ToString());
-
-                    return (int)_cost;
+                    throw new ArgumentException();
+                }
+                else
+                {
+                    _comment = value;
                 }
             }
         }
