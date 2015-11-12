@@ -8,7 +8,7 @@ using Library.Io;
 namespace Library.Net.Amoeba
 {
     [DataContract(Name = "Index", Namespace = "http://Library/Net/Amoeba")]
-    public sealed class Index : ItemBase<Index>, IIndex<Group, Key>, ICloneable<Index>, IThisLock
+    sealed class Index : ItemBase<Index>, IIndex<Group, Key>, ICloneable<Index>, IThisLock
     {
         private enum SerializeId : byte
         {

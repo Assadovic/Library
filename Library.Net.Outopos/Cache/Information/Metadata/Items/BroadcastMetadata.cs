@@ -10,7 +10,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
-    public class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
+    class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
     {
         private enum SerializeId : byte
         {

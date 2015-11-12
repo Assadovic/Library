@@ -8,7 +8,7 @@ using Library.Io;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "Key", Namespace = "http://Library/Net/Outopos")]
-    public sealed class Key : ItemBase<Key>, IKey
+    sealed class Key : ItemBase<Key>, IKey
     {
         private enum SerializeId : byte
         {

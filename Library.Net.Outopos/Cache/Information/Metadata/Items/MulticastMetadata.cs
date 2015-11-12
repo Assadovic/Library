@@ -10,7 +10,7 @@ using Library.Security;
 namespace Library.Net.Outopos
 {
     [DataContract(Name = "MulticastMetadata", Namespace = "http://Library/Net/Outopos")]
-    public class MulticastMetadata : ImmutableCertificateItemBase<MulticastMetadata>, IMulticastHeader, IMulticastOptions
+    class MulticastMetadata : ImmutableCertificateItemBase<MulticastMetadata>, IMulticastHeader, IMulticastOptions
     {
         private enum SerializeId : byte
         {

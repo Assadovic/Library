@@ -3,7 +3,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IBroadcastOptions : IComputeHash
+    interface IBroadcastOptions : IComputeHash
     {
         Key Key { get; }
     }

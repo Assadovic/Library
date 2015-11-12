@@ -8,7 +8,7 @@ using Library.Io;
 namespace Library.Net.Amoeba
 {
     [DataContract(Name = "Group", Namespace = "http://Library/Net/Amoeba")]
-    public sealed class Group : ItemBase<Group>, IGroup<Key>, ICloneable<Group>, IThisLock
+    sealed class Group : ItemBase<Group>, IGroup<Key>, ICloneable<Group>, IThisLock
     {
         private enum SerializeId : byte
         {
