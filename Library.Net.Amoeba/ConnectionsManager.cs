@@ -194,11 +194,11 @@ namespace Library.Net.Amoeba
             {
                 if (messageManager.Priority > 32)
                 {
-                    messageManager.Priority.Subtract(1);
+                    messageManager.Priority.Decrement();
                 }
                 else if (messageManager.Priority < -32)
                 {
-                    messageManager.Priority.Add(1);
+                    messageManager.Priority.Increment();
                 }
             }
         }
