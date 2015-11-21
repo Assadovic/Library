@@ -1021,7 +1021,7 @@ namespace Library.Net.Amoeba
                                     requestNodes.Add(node);
                                 }
 
-                                if (requestNodes.Any(n => _messagesManager[n].StockBlocks.Contains(key)))
+                                if (requestNodes.Count == 0)
                                 {
                                     _settings.UploadBlocksRequest.Remove(key);
                                     _settings.DiffusionBlocksRequest.Remove(key);
