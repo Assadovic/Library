@@ -1016,8 +1016,7 @@ namespace Library.Net.Amoeba
                             {
                                 var requestNodes = new List<Node>();
 
-                                // 自分より距離が遠いノードにもアップロードを試みる。
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 3))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 1))
                                 {
                                     requestNodes.Add(node);
                                 }
