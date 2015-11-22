@@ -1228,7 +1228,7 @@ namespace Library.Net.Amoeba
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1278,7 +1278,7 @@ namespace Library.Net.Amoeba
                             {
                                 List<Node> requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 3))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 3))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1359,7 +1359,7 @@ namespace Library.Net.Amoeba
                         {
                             var requestNodes = new List<Node>();
 
-                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                             {
                                 requestNodes.Add(node);
                             }
@@ -1453,7 +1453,7 @@ namespace Library.Net.Amoeba
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }

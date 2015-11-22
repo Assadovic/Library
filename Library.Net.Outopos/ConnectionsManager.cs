@@ -1169,13 +1169,12 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                // 自分より距離が遠いノードにもアップロードを試みる。
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 3))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 1))
                                 {
                                     requestNodes.Add(node);
                                 }
 
-                                if (requestNodes.Any(n => _messagesManager[n].StockBlocks.Contains(key)))
+                                if (requestNodes.Count == 0)
                                 {
                                     _settings.UploadBlocksRequest.Remove(key);
                                     _settings.DiffusionBlocksRequest.Remove(key);
@@ -1384,7 +1383,7 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 1))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 1))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1434,7 +1433,7 @@ namespace Library.Net.Outopos
                             {
                                 List<Node> requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1516,7 +1515,7 @@ namespace Library.Net.Outopos
                         {
                             var requestNodes = new List<Node>();
 
-                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                             {
                                 requestNodes.Add(node);
                             }
@@ -1539,7 +1538,7 @@ namespace Library.Net.Outopos
                         {
                             var requestNodes = new List<Node>();
 
-                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                             {
                                 requestNodes.Add(node);
                             }
@@ -1563,7 +1562,7 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1750,7 +1749,7 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1801,7 +1800,7 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
@@ -1852,7 +1851,7 @@ namespace Library.Net.Outopos
                             {
                                 var requestNodes = new List<Node>();
 
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, baseNode.Id, otherNodes, 2))
+                                foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
                                 {
                                     requestNodes.Add(node);
                                 }
