@@ -282,7 +282,7 @@ namespace Library.Net.Outopos
                             {
                                 if (filter.ConnectionType != ConnectionType.None)
                                 {
-                                    connectionFilter = filter.Clone();
+                                    connectionFilter = filter;
                                 }
 
                                 break;

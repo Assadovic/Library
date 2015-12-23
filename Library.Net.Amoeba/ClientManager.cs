@@ -282,7 +282,7 @@ namespace Library.Net.Amoeba
                             {
                                 if (filter.ConnectionType != ConnectionType.None)
                                 {
-                                    connectionFilter = filter.Clone();
+                                    connectionFilter = filter;
                                 }
 
                                 break;

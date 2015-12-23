@@ -69,7 +69,9 @@ namespace Library.Net.Amoeba
 
         public CacheManager(string cachePath, BitmapManager bitmapManager, BufferManager bufferManager)
         {
-            _fileStream = new FileStream(cachePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 8192, FileOptions.None);
+            const int FILE_FLAG_NO_BUFFERING = 0x20000000;
+
+            _fileStream = new FileStream(cachePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, CacheManager.SectorSize, (FileOptions)FILE_FLAG_NO_BUFFERING);
             _bitmapManager = bitmapManager;
             _bufferManager = bufferManager;
 
@@ -1376,6 +1378,8 @@ namespace Library.Net.Amoeba
             }
         }
 
+        private byte[] _sectorBuffer = new byte[CacheManager.SectorSize];
+
         public ArraySegment<byte> this[Key key]
         {
             get
@@ -1412,7 +1416,12 @@ namespace Library.Net.Amoeba
                                         }
 
                                         int length = Math.Min(remain, CacheManager.SectorSize);
-                                        _fileStream.Read(buffer, CacheManager.SectorSize * i, length);
+
+                                        {
+                                            _fileStream.Read(_sectorBuffer, 0, _sectorBuffer.Length);
+
+                                            Unsafe.Copy(_sectorBuffer, 0, buffer, CacheManager.SectorSize * i, length);
+                                        }
                                     }
                                     catch (ArgumentOutOfRangeException)
                                     {
@@ -1576,7 +1585,13 @@ namespace Library.Net.Amoeba
                             }
 
                             int length = Math.Min(remain, CacheManager.SectorSize);
-                            _fileStream.Write(value.Array, value.Offset + (CacheManager.SectorSize * i), length);
+
+                            {
+                                Unsafe.Copy(value.Array, value.Offset + (CacheManager.SectorSize * i), _sectorBuffer, 0, length);
+                                Unsafe.Zero(_sectorBuffer, length, _sectorBuffer.Length - length);
+
+                                _fileStream.Write(_sectorBuffer, 0, _sectorBuffer.Length);
+                            }
                         }
 
                         _fileStream.Flush();

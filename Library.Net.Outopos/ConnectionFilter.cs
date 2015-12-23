@@ -29,33 +29,22 @@ namespace Library.Net.Outopos
     }
 
     [DataContract(Name = "ConnectionFilter", Namespace = "http://Library/Net/Outopos")]
-    public sealed class ConnectionFilter : IEquatable<ConnectionFilter>, ICloneable<ConnectionFilter>, IThisLock
+    public sealed class ConnectionFilter : IEquatable<ConnectionFilter>, IThisLock
     {
-        private UriCondition _uriCondition;
         private ConnectionType _connectionType;
         private string _proxyUri;
+        private UriCondition _uriCondition;
         private string _option;
 
         private static readonly object _initializeLock = new object();
         private volatile object _thisLock;
 
-        public static bool operator ==(ConnectionFilter x, ConnectionFilter y)
+        public ConnectionFilter(ConnectionType connectionType, string proxyUri, UriCondition uriCondition, string option)
         {
-            if ((object)x == null)
-            {
-                if ((object)y == null) return true;
-
-                return y.Equals(x);
-            }
-            else
-            {
-                return x.Equals(y);
-            }
-        }
-
-        public static bool operator !=(ConnectionFilter x, ConnectionFilter y)
-        {
-            return !(x == y);
+            this.ConnectionType = connectionType;
+            this.ProxyUri = proxyUri;
+            this.UriCondition = UriCondition;
+            this.Option = option;
         }
 
         public override int GetHashCode()
@@ -78,34 +67,15 @@ namespace Library.Net.Outopos
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if ((this.UriCondition != other.UriCondition)
-                || (this.ConnectionType != other.ConnectionType)
+            if ((this.ConnectionType != other.ConnectionType)
                 || (this.ProxyUri != other.ProxyUri)
+                || (this.UriCondition != other.UriCondition)
                 || (this.Option != other.Option))
             {
                 return false;
             }
 
             return true;
-        }
-
-        [DataMember(Name = "UriCondition")]
-        public UriCondition UriCondition
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _uriCondition;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _uriCondition = value;
-                }
-            }
         }
 
         [DataMember(Name = "ConnectionType")]
@@ -118,7 +88,7 @@ namespace Library.Net.Outopos
                     return _connectionType;
                 }
             }
-            set
+            private set
             {
                 lock (this.ThisLock)
                 {
@@ -137,11 +107,30 @@ namespace Library.Net.Outopos
                     return _proxyUri;
                 }
             }
-            set
+            private set
             {
                 lock (this.ThisLock)
                 {
                     _proxyUri = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "UriCondition")]
+        public UriCondition UriCondition
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _uriCondition;
+                }
+            }
+            private set
+            {
+                lock (this.ThisLock)
+                {
+                    _uriCondition = value;
                 }
             }
         }
@@ -156,7 +145,7 @@ namespace Library.Net.Outopos
                     return _option;
                 }
             }
-            set
+            private set
             {
                 lock (this.ThisLock)
                 {
@@ -164,34 +153,6 @@ namespace Library.Net.Outopos
                 }
             }
         }
-
-        #region ICloneable<ConnectionFilter>
-
-        public ConnectionFilter Clone()
-        {
-            lock (this.ThisLock)
-            {
-                var ds = new DataContractSerializer(typeof(ConnectionFilter));
-
-                using (BufferStream stream = new BufferStream(BufferManager.Instance))
-                {
-                    using (WrapperStream wrapperStream = new WrapperStream(stream, true))
-                    using (XmlDictionaryWriter xmlDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(wrapperStream))
-                    {
-                        ds.WriteObject(xmlDictionaryWriter, this);
-                    }
-
-                    stream.Position = 0;
-
-                    using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
-                    {
-                        return (ConnectionFilter)ds.ReadObject(xmlDictionaryReader);
-                    }
-                }
-            }
-        }
-
-        #endregion
 
         #region IThisLock
 
@@ -218,7 +179,7 @@ namespace Library.Net.Outopos
     }
 
     [DataContract(Name = "UriCondition", Namespace = "http://Library/Net/Outopos")]
-    public sealed class UriCondition : IEquatable<UriCondition>, ICloneable<UriCondition>, IThisLock
+    public sealed class UriCondition : IEquatable<UriCondition>, IThisLock
     {
         private string _value;
         private Regex _regex;
@@ -226,23 +187,9 @@ namespace Library.Net.Outopos
         private static readonly object _initializeLock = new object();
         private volatile object _thisLock;
 
-        public static bool operator ==(UriCondition x, UriCondition y)
+        public UriCondition(string value)
         {
-            if ((object)x == null)
-            {
-                if ((object)y == null) return true;
-
-                return y.Equals(x);
-            }
-            else
-            {
-                return x.Equals(y);
-            }
-        }
-
-        public static bool operator !=(UriCondition x, UriCondition y)
-        {
-            return !(x == y);
+            this.Value = value;
         }
 
         public override int GetHashCode()
@@ -277,7 +224,8 @@ namespace Library.Net.Outopos
         {
             lock (this.ThisLock)
             {
-                return _regex.IsMatch(uri);
+                if (_regex == null) return false;
+                else return _regex.IsMatch(uri);
             }
         }
 
@@ -291,45 +239,17 @@ namespace Library.Net.Outopos
                     return _value;
                 }
             }
-            set
+            private set
             {
                 lock (this.ThisLock)
                 {
-                    var regex = new Regex(value);
-
-                    _regex = regex;
                     _value = value;
+
+                    if (value == null) _regex = null;
+                    else _regex = new Regex(value, RegexOptions.Compiled);
                 }
             }
         }
-
-        #region ICloneable<UriCondition>
-
-        public UriCondition Clone()
-        {
-            lock (this.ThisLock)
-            {
-                var ds = new DataContractSerializer(typeof(UriCollection));
-
-                using (BufferStream stream = new BufferStream(BufferManager.Instance))
-                {
-                    using (WrapperStream wrapperStream = new WrapperStream(stream, true))
-                    using (XmlDictionaryWriter xmlDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(wrapperStream))
-                    {
-                        ds.WriteObject(xmlDictionaryWriter, this);
-                    }
-
-                    stream.Position = 0;
-
-                    using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
-                    {
-                        return (UriCondition)ds.ReadObject(xmlDictionaryReader);
-                    }
-                }
-            }
-        }
-
-        #endregion
 
         #region IThisLock
 
