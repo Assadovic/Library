@@ -83,6 +83,12 @@ namespace Library.Net.Amoeba
             _checkTimer = new WatchTimer(this.CheckTimer, Timeout.Infinite);
         }
 
+        private static long Roundup(long value, long unit)
+        {
+            if (value % unit == 0) return value;
+            else return ((value / unit) + 1) * unit;
+        }
+
         private void WatchTimer()
         {
             this.CheckInformation();
@@ -343,7 +349,7 @@ namespace Library.Net.Amoeba
             {
                 if (!_spaceSectorsInitialized)
                 {
-                    _bitmapManager.SetLength((this.Size + ((long)CacheManager.SectorSize - 1)) / (long)CacheManager.SectorSize);
+                    _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
                     foreach (var clusterInfo in _settings.ClusterIndex.Values)
                     {
@@ -574,12 +580,12 @@ namespace Library.Net.Amoeba
 
         public void Resize(long size)
         {
+            if (size < 0) throw new ArgumentOutOfRangeException("size");
+
             lock (this.ThisLock)
             {
-                size = (long)Math.Min(size, NetworkConverter.FromSizeString("256TB"));
-
-                long unit = 256 * 1024 * 1024;
-                size = ((size + (unit - 1)) / unit) * unit;
+                int unit = 1024 * 1024 * 256; // 256MB
+                size = CacheManager.Roundup(size, unit);
 
                 foreach (var key in _settings.ClusterIndex.Keys.ToArray()
                     .Where(n => _settings.ClusterIndex[n].Indexes.Any(point => size < (point * CacheManager.SectorSize) + CacheManager.SectorSize))
@@ -588,7 +594,7 @@ namespace Library.Net.Amoeba
                     this.Remove(key);
                 }
 
-                _settings.Size = ((size + ((long)CacheManager.SectorSize - 1)) / (long)CacheManager.SectorSize) * CacheManager.SectorSize;
+                _settings.Size = CacheManager.Roundup(size, CacheManager.SectorSize);
                 _fileStream.SetLength(Math.Min(_settings.Size, _fileStream.Length));
 
                 _spaceSectors.Clear();
@@ -655,7 +661,7 @@ namespace Library.Net.Amoeba
             // 重複するセクタを確保したブロックを検出しRemoveする。
             lock (this.ThisLock)
             {
-                _bitmapManager.SetLength((this.Size + ((long)CacheManager.SectorSize - 1)) / (long)CacheManager.SectorSize);
+                _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
                 List<Key> keys = new List<Key>();
 
@@ -1573,8 +1579,8 @@ namespace Library.Net.Amoeba
 
                             if ((_fileStream.Length < posision + CacheManager.SectorSize))
                             {
-                                int unit = 1024 * 1024 * 256;// 256MB
-                                long size = (((posision + CacheManager.SectorSize) + (unit - 1)) / unit) * unit;
+                                int unit = 1024 * 1024 * 256; // 256MB
+                                long size = CacheManager.Roundup((posision + CacheManager.SectorSize), unit);
 
                                 _fileStream.SetLength(Math.Min(size, this.Size));
                             }

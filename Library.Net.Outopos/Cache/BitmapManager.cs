@@ -38,6 +38,12 @@ namespace Library.Net.Outopos
             _settings = new Settings(this.ThisLock);
         }
 
+        private static long Roundup(long value, long unit)
+        {
+            if (value % unit == 0) return value;
+            else return ((value / unit) + 1) * unit;
+        }
+
         public long Length
         {
             get
@@ -54,7 +60,7 @@ namespace Library.Net.Outopos
             lock (this.ThisLock)
             {
                 {
-                    var size = (length + (8 - 1)) / 8;
+                    var size = BitmapManager.Roundup(length, 8);
 
                     _bitmapStream.SetLength(size);
                     _bitmapStream.Seek(0, SeekOrigin.Begin);

@@ -97,6 +97,20 @@ namespace Library.Security
             stream.Write(value, 0, value.Length);
         }
 
+        public static void Write(Stream stream, byte type, byte value)
+        {
+            stream.WriteByte(type);
+            stream.Write(NetworkConverter.GetBytes((int)1), 0, 4);
+            stream.WriteByte(value);
+        }
+
+        public static void Write(Stream stream, byte type, short value)
+        {
+            stream.WriteByte(type);
+            stream.Write(NetworkConverter.GetBytes((int)2), 0, 4);
+            stream.Write(NetworkConverter.GetBytes(value), 0, 2);
+        }
+
         public static void Write(Stream stream, byte type, int value)
         {
             stream.WriteByte(type);
@@ -132,6 +146,52 @@ namespace Library.Security
                 stream.Read(buffer, 0, length);
 
                 return encoding.GetString(buffer, 0, length);
+            }
+            finally
+            {
+                if (buffer != null)
+                {
+                    _bufferManager.ReturnBuffer(buffer);
+                }
+            }
+        }
+
+        public static int GetByte(Stream stream)
+        {
+            if (stream.Length != 1) throw new ArgumentException();
+
+            byte[] buffer = null;
+
+            try
+            {
+                buffer = _bufferManager.TakeBuffer(1);
+
+                stream.Read(buffer, 0, 1);
+
+                return buffer[0];
+            }
+            finally
+            {
+                if (buffer != null)
+                {
+                    _bufferManager.ReturnBuffer(buffer);
+                }
+            }
+        }
+
+        public static int GetShort(Stream stream)
+        {
+            if (stream.Length != 2) throw new ArgumentException();
+
+            byte[] buffer = null;
+
+            try
+            {
+                buffer = _bufferManager.TakeBuffer(2);
+
+                stream.Read(buffer, 0, 2);
+
+                return NetworkConverter.ToInt16(buffer);
             }
             finally
             {
