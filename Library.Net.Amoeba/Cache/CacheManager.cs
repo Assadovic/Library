@@ -18,6 +18,7 @@ namespace Library.Net.Amoeba
 
     delegate void SetKeyEventHandler(object sender, IEnumerable<Key> keys);
     delegate void RemoveKeyEventHandler(object sender, IEnumerable<Key> keys);
+
     delegate void RemoveShareEventHandler(object sender, string path);
 
     delegate bool WatchEventHandler(object sender);
@@ -51,8 +52,9 @@ namespace Library.Net.Amoeba
         private Dictionary<Key, int> _lockedKeys = new Dictionary<Key, int>();
 
         private SetKeyEventHandler _setKeyEvent;
-        private RemoveShareEventHandler _removeShareEvent;
         private RemoveKeyEventHandler _removeKeyEvent;
+
+        private RemoveShareEventHandler _removeShareEvent;
 
         private WatchTimer _watchTimer;
         private WatchTimer _checkTimer;
@@ -164,24 +166,6 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public event RemoveShareEventHandler RemoveShareEvent
-        {
-            add
-            {
-                lock (this.ThisLock)
-                {
-                    _removeShareEvent += value;
-                }
-            }
-            remove
-            {
-                lock (this.ThisLock)
-                {
-                    _removeShareEvent -= value;
-                }
-            }
-        }
-
         public event RemoveKeyEventHandler RemoveKeyEvent
         {
             add
@@ -196,6 +180,24 @@ namespace Library.Net.Amoeba
                 lock (this.ThisLock)
                 {
                     _removeKeyEvent -= value;
+                }
+            }
+        }
+
+        public event RemoveShareEventHandler RemoveShareEvent
+        {
+            add
+            {
+                lock (this.ThisLock)
+                {
+                    _removeShareEvent += value;
+                }
+            }
+            remove
+            {
+                lock (this.ThisLock)
+                {
+                    _removeShareEvent -= value;
                 }
             }
         }

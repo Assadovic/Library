@@ -41,22 +41,30 @@ namespace Library.Net.Outopos
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
-        public static readonly int SectorSize = 1024 * 8;
-        public static readonly int SpaceSectorCount = 128 * 1024; // 1MB * 1024 = 1024MB
+        public static readonly int SectorSize = 1024 * 32;
+        public static readonly int SpaceSectorUnit = 32 * 1024; // 1MB * 1024 = 1024MB
 
         private int _threadCount = 2;
 
         public CacheManager(string cachePath, BitmapManager bitmapManager, BufferManager bufferManager)
         {
-            _fileStream = new FileStream(cachePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 8192, FileOptions.None);
+            const int FILE_FLAG_NO_BUFFERING = 0x20000000;
+
+            _fileStream = new FileStream(cachePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, CacheManager.SectorSize, (FileOptions)FILE_FLAG_NO_BUFFERING);
             _bitmapManager = bitmapManager;
             _bufferManager = bufferManager;
 
             _settings = new Settings(this.ThisLock);
 
-            _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 4);
+            _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
+        }
+
+        private static long Roundup(long value, long unit)
+        {
+            if (value % unit == 0) return value;
+            else return ((value / unit) + 1) * unit;
         }
 
         private void WatchTimer()
@@ -140,7 +148,7 @@ namespace Library.Net.Outopos
             {
                 if (!_spaceSectorsInitialized)
                 {
-                    _bitmapManager.SetLength((this.Size + ((long)CacheManager.SectorSize - 1)) / (long)CacheManager.SectorSize);
+                    _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
                     foreach (var clusterInfo in _settings.ClusterIndex.Values)
                     {
@@ -299,7 +307,7 @@ namespace Library.Net.Outopos
                     foreach (var sector in clusterInfo.Indexes)
                     {
                         _bitmapManager.Set(sector, false);
-                        if (_spaceSectors.Count < CacheManager.SpaceSectorCount) _spaceSectors.Add(sector);
+                        if (_spaceSectors.Count < CacheManager.SpaceSectorUnit) _spaceSectors.Add(sector);
                     }
                 }
             }
@@ -307,12 +315,12 @@ namespace Library.Net.Outopos
 
         public void Resize(long size)
         {
+            if (size < 0) throw new ArgumentOutOfRangeException("size");
+
             lock (this.ThisLock)
             {
-                size = (long)Math.Min(size, NetworkConverter.FromSizeString("256TB"));
-
-                long unit = 256 * 1024 * 1024;
-                size = ((size + (unit - 1)) / unit) * unit;
+                int unit = 1024 * 1024 * 256; // 256MB
+                size = CacheManager.Roundup(size, unit);
 
                 foreach (var key in _settings.ClusterIndex.Keys.ToArray()
                     .Where(n => _settings.ClusterIndex[n].Indexes.Any(point => size < (point * CacheManager.SectorSize) + CacheManager.SectorSize))
@@ -321,13 +329,15 @@ namespace Library.Net.Outopos
                     this.Remove(key);
                 }
 
-                _settings.Size = ((size + ((long)CacheManager.SectorSize - 1)) / (long)CacheManager.SectorSize) * CacheManager.SectorSize;
+                _settings.Size = CacheManager.Roundup(size, CacheManager.SectorSize);
                 _fileStream.SetLength(Math.Min(_settings.Size, _fileStream.Length));
 
                 _spaceSectors.Clear();
                 _spaceSectorsInitialized = false;
             }
         }
+
+        private byte[] _sectorBuffer = new byte[CacheManager.SectorSize];
 
         public ArraySegment<byte> this[Key key]
         {
@@ -365,21 +375,20 @@ namespace Library.Net.Outopos
                                         }
 
                                         int length = Math.Min(remain, CacheManager.SectorSize);
-                                        _fileStream.Read(buffer, CacheManager.SectorSize * i, length);
+
+                                        {
+                                            _fileStream.Read(_sectorBuffer, 0, _sectorBuffer.Length);
+
+                                            Unsafe.Copy(_sectorBuffer, 0, buffer, CacheManager.SectorSize * i, length);
+                                        }
                                     }
-                                    catch (EndOfStreamException)
+                                    catch (ArgumentOutOfRangeException)
                                     {
                                         this.Remove(key);
 
                                         throw new BlockNotFoundException();
                                     }
                                     catch (IOException)
-                                    {
-                                        this.Remove(key);
-
-                                        throw new BlockNotFoundException();
-                                    }
-                                    catch (ArgumentOutOfRangeException)
                                     {
                                         this.Remove(key);
 
@@ -442,7 +451,7 @@ namespace Library.Net.Outopos
 
                         if (_spaceSectors.Count < count)
                         {
-                            this.CreatingSpace(CacheManager.SpaceSectorCount);
+                            this.CreatingSpace(CacheManager.SpaceSectorUnit);
                         }
 
                         if (_spaceSectors.Count < count) throw new SpaceNotFoundException();
@@ -461,8 +470,8 @@ namespace Library.Net.Outopos
 
                             if ((_fileStream.Length < posision + CacheManager.SectorSize))
                             {
-                                int unit = 1024 * 1024 * 256;// 256MB
-                                long size = (((posision + CacheManager.SectorSize) + (unit - 1)) / unit) * unit;
+                                int unit = 1024 * 1024 * 256; // 256MB
+                                long size = CacheManager.Roundup((posision + CacheManager.SectorSize), unit);
 
                                 _fileStream.SetLength(Math.Min(size, this.Size));
                             }
@@ -473,7 +482,13 @@ namespace Library.Net.Outopos
                             }
 
                             int length = Math.Min(remain, CacheManager.SectorSize);
-                            _fileStream.Write(value.Array, value.Offset + (CacheManager.SectorSize * i), length);
+
+                            {
+                                Unsafe.Copy(value.Array, value.Offset + (CacheManager.SectorSize * i), _sectorBuffer, 0, length);
+                                Unsafe.Zero(_sectorBuffer, length, _sectorBuffer.Length - length);
+
+                                _fileStream.Write(_sectorBuffer, 0, _sectorBuffer.Length);
+                            }
                         }
 
                         _fileStream.Flush();
