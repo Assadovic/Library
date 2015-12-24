@@ -579,7 +579,7 @@ namespace Library.Net.Outopos
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() { 
                     new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClusterIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
-                    new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 8 },
+                    new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 32 },
                 })
             {
                 _thisLock = lockObject;

@@ -32,7 +32,6 @@ namespace Library.Net.Outopos
         private volatile object _thisLock;
 
         public static readonly int MaxCommentLength = 1024 * 32;
-        public static readonly int MaxAnchorCount = 32;
 
         internal UnicastMessage(string signature, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {

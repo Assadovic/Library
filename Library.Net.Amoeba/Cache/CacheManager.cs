@@ -1733,7 +1733,7 @@ namespace Library.Net.Amoeba
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() { 
                     new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClustersIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
-                    new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 50 },
+                    new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 256 },
                     new Library.Configuration.SettingContent<LockedHashDictionary<string, ShareInfo>>() { Name = "ShareIndex", Value = new LockedHashDictionary<string, ShareInfo>() },
                     new Library.Configuration.SettingContent<LockedList<SeedInfo>>() { Name = "SeedInformation", Value = new LockedList<SeedInfo>() },
                 })

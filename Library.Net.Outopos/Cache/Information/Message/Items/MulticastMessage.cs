@@ -31,7 +31,7 @@ namespace Library.Net.Outopos
 
         private volatile object _thisLock;
 
-        public static readonly int MaxCommentLength = 1024 * 4;
+        public static readonly int MaxCommentLength = 1024 * 8;
 
         internal MulticastMessage(Tag tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {
