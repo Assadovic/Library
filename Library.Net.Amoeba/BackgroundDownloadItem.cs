@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
 using Library.Io;
@@ -182,7 +183,7 @@ namespace Library.Net.Amoeba
                         ds.WriteObject(xmlDictionaryWriter, this);
                     }
 
-                    stream.Position = 0;
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                     {

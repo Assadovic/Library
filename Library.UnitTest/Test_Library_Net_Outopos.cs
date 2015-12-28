@@ -12,6 +12,7 @@ using NUnit.Framework;
 using System.Runtime.Serialization;
 using Library.Io;
 using System.Xml;
+using System.IO;
 
 namespace Library.UnitTest
 {
@@ -116,7 +117,7 @@ namespace Library.UnitTest
                         ds.WriteObject(xmlDictionaryWriter, tag);
                     }
 
-                    stream.Position = 0;
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                     {
@@ -162,7 +163,7 @@ namespace Library.UnitTest
                             ds.WriteObject(xmlDictionaryWriter, metadata);
                         }
 
-                        stream.Position = 0;
+                        stream.Seek(0, SeekOrigin.Begin);
 
                         using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                         {

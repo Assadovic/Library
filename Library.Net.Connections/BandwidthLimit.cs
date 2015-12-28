@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
@@ -272,7 +273,7 @@ namespace Library.Net.Connections
                         ds.WriteObject(xmlDictionaryWriter, this);
                     }
 
-                    stream.Position = 0;
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
                     {
