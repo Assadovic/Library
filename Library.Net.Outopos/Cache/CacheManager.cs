@@ -28,7 +28,7 @@ namespace Library.Net.Outopos
 
         private Settings _settings;
 
-        private bool _spaceSectorsInitialized;
+        private bool _spaceSectors_Initialized;
         private SortedSet<long> _spaceSectors = new SortedSet<long>();
 
         private long _lockSpace;
@@ -146,7 +146,7 @@ namespace Library.Net.Outopos
         {
             lock (this.ThisLock)
             {
-                if (!_spaceSectorsInitialized)
+                if (!_spaceSectors_Initialized)
                 {
                     _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
@@ -158,7 +158,7 @@ namespace Library.Net.Outopos
                         }
                     }
 
-                    _spaceSectorsInitialized = true;
+                    _spaceSectors_Initialized = true;
                 }
 
                 if (_spaceSectors.Count < sectorCount)
@@ -333,7 +333,7 @@ namespace Library.Net.Outopos
                 _fileStream.SetLength(Math.Min(_settings.Size, _fileStream.Length));
 
                 _spaceSectors.Clear();
-                _spaceSectorsInitialized = false;
+                _spaceSectors_Initialized = false;
             }
         }
 

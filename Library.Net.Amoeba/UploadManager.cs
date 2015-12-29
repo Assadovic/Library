@@ -22,7 +22,7 @@ namespace Library.Net.Amoeba
         private List<Thread> _encodeManagerThreads = new List<Thread>();
 
         private Dictionary<int, UploadItem> _ids = new Dictionary<int, UploadItem>();
-        private Dictionary<string, List<int>> _shareLink = new Dictionary<string, List<int>>();
+        private Dictionary<string, int> _shareIdLink = new Dictionary<string, int>();
         private int _id;
 
         private volatile ManagerState _state = ManagerState.Stop;
@@ -121,14 +121,11 @@ namespace Library.Net.Amoeba
 
                         lock (this.ThisLock)
                         {
-                            List<int> ids = null;
+                            int id;
 
-                            if (_shareLink.TryGetValue(path, out ids))
+                            if (_shareIdLink.TryGetValue(path, out id))
                             {
-                                foreach (var id in ids.ToArray())
-                                {
-                                    this.Remove(id);
-                                }
+                                this.Remove(id);
                             }
                         }
                     }
@@ -854,6 +851,13 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
+                if (_cacheManager.ShareInformation
+                    .Any(n => ((string)n["Path"]) == filePath)) return;
+
+                if (_settings.UploadItems
+                    .Where(n => n.Type == UploadType.Share)
+                    .Any(n => n.FilePath == filePath)) return;
+
                 UploadItem item = new UploadItem();
 
                 item.State = UploadState.ComputeHash;
@@ -875,16 +879,7 @@ namespace Library.Net.Amoeba
 
                 _settings.UploadItems.Add(item);
                 _ids.Add(_id, item);
-
-                List<int> idList = null;
-
-                if (!_shareLink.TryGetValue(filePath, out idList))
-                {
-                    idList = new List<int>();
-                    _shareLink[filePath] = idList;
-                }
-
-                idList.Add(_id);
+                _shareIdLink.Add(filePath, _id);
 
                 _id++;
             }
@@ -906,13 +901,7 @@ namespace Library.Net.Amoeba
 
                 if (item.Type == UploadType.Share)
                 {
-                    List<int> idList = null;
-
-                    if (_shareLink.TryGetValue(item.FilePath, out idList))
-                    {
-                        idList.Remove(id);
-                        if (idList.Count == 0) _shareLink.Remove(item.FilePath);
-                    }
+                    _shareIdLink.Remove(item.FilePath);
                 }
             }
         }
@@ -1071,7 +1060,7 @@ namespace Library.Net.Amoeba
 
                 _id = 0;
                 _ids.Clear();
-                _shareLink.Clear();
+                _shareIdLink.Clear();
 
                 foreach (var item in _settings.UploadItems)
                 {
@@ -1079,16 +1068,7 @@ namespace Library.Net.Amoeba
 
                     if (item.Type == UploadType.Share)
                     {
-                        List<int> idList = null;
-
-                        if (_shareLink.TryGetValue(item.FilePath, out idList))
-                        {
-                            idList.Add(_id);
-                        }
-                        else
-                        {
-                            _shareLink.Add(item.FilePath, new List<int>() { _id });
-                        }
+                        _shareIdLink.Add(item.FilePath, _id);
                     }
 
                     _id++;

@@ -37,13 +37,13 @@ namespace Library.Net.Amoeba
 
         private Settings _settings;
 
-        private bool _spaceSectorsInitialized;
+        private bool _spaceSectors_Initialized;
         private SortedSet<long> _spaceSectors = new SortedSet<long>();
 
         private Dictionary<int, string> _ids = new Dictionary<int, string>();
         private int _id;
 
-        private bool _shareIndexLinkInitialized;
+        private bool _shareIndexLink_Initialized;
         private Dictionary<Key, string> _shareIndexLink = new Dictionary<Key, string>();
 
         private long _lockSpace;
@@ -349,7 +349,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                if (!_spaceSectorsInitialized)
+                if (!_spaceSectors_Initialized)
                 {
                     _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
@@ -361,7 +361,7 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    _spaceSectorsInitialized = true;
+                    _spaceSectors_Initialized = true;
                 }
 
                 if (_spaceSectors.Count < sectorCount)
@@ -516,7 +516,7 @@ namespace Library.Net.Amoeba
                     return true;
                 }
 
-                _shareIndexLinkUpdate();
+                _shareIndexLink_Update();
 
                 if (_shareIndexLink.ContainsKey(key))
                 {
@@ -531,7 +531,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                _shareIndexLinkUpdate();
+                _shareIndexLink_Update();
 
                 foreach (var key in collection)
                 {
@@ -547,7 +547,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                _shareIndexLinkUpdate();
+                _shareIndexLink_Update();
 
                 foreach (var key in collection)
                 {
@@ -600,7 +600,7 @@ namespace Library.Net.Amoeba
                 _fileStream.SetLength(Math.Min(_settings.Size, _fileStream.Length));
 
                 _spaceSectors.Clear();
-                _spaceSectorsInitialized = false;
+                _spaceSectors_Initialized = false;
 
                 this.CheckSeeds();
             }
@@ -694,7 +694,7 @@ namespace Library.Net.Amoeba
                 }
 
                 _spaceSectors.Clear();
-                _spaceSectorsInitialized = false;
+                _spaceSectors_Initialized = false;
             }
 
             // 読めないブロックを検出しRemoveする。
@@ -802,11 +802,11 @@ namespace Library.Net.Amoeba
             }
         }
 
-        private void _shareIndexLinkUpdate()
+        private void _shareIndexLink_Update()
         {
             lock (this.ThisLock)
             {
-                if (!_shareIndexLinkInitialized)
+                if (!_shareIndexLink_Initialized)
                 {
                     _shareIndexLink.Clear();
 
@@ -821,7 +821,7 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    _shareIndexLinkInitialized = true;
+                    _shareIndexLink_Initialized = true;
                 }
             }
         }
@@ -861,14 +861,14 @@ namespace Library.Net.Amoeba
                 {
                     _settings.ShareIndex[path] = shareInfo;
 
-                    _shareIndexLinkInitialized = false;
+                    _shareIndexLink_Initialized = false;
                 }
                 else
                 {
                     _settings.ShareIndex.Add(path, shareInfo);
                     _ids.Add(_id++, path);
 
-                    _shareIndexLinkInitialized = false;
+                    _shareIndexLink_Initialized = false;
                 }
             }
 
@@ -889,7 +889,7 @@ namespace Library.Net.Amoeba
                 _settings.ShareIndex.Remove(path);
                 _ids.Remove(id);
 
-                _shareIndexLinkInitialized = false;
+                _shareIndexLink_Initialized = false;
 
                 this.OnRemoveShareEvent(path);
                 this.OnRemoveKeyEvent(keys);
@@ -1473,7 +1473,7 @@ namespace Library.Net.Amoeba
                     {
                         string path = null;
 
-                        _shareIndexLinkUpdate();
+                        _shareIndexLink_Update();
 
                         if (_shareIndexLink.TryGetValue(key, out path))
                         {
@@ -1644,7 +1644,7 @@ namespace Library.Net.Amoeba
                     _ids.Add(_id++, item.Key);
                 }
 
-                _shareIndexLinkInitialized = false;
+                _shareIndexLink_Initialized = false;
 
                 _watchTimer.Change(new TimeSpan(0, 0, 0), new TimeSpan(0, 5, 0));
                 _checkTimer.Change(new TimeSpan(0, 0, 0), new TimeSpan(0, 30, 0));
