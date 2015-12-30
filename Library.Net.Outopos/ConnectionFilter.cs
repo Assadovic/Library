@@ -43,7 +43,7 @@ namespace Library.Net.Outopos
         {
             this.ConnectionType = connectionType;
             this.ProxyUri = proxyUri;
-            this.UriCondition = UriCondition;
+            this.UriCondition = uriCondition;
             this.Option = option;
         }
 
