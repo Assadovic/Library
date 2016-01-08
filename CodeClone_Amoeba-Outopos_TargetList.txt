@@ -25,20 +25,17 @@ Library.Net.Outopos\UriCollection.cs
 Library.Net.Amoeba\Utilities\WatchTimer.cs
 Library.Net.Outopos\Utilities\WatchTimer.cs
 
-..\Amoeba\Amoeba\Utilities\AutoBaseNodeSettingManager.cs
-..\Outopos\Outopos\Utilities\AutoBaseNodeSettingManager.cs
+..\Amoeba\Amoeba\Utilities\CatharsisManager.cs
+..\Outopos\Outopos\Utilities\CatharsisManager.cs
 
 ..\Amoeba\Amoeba\Utilities\Ipv4AddressFilter.cs
 ..\Outopos\Outopos\Utilities\Ipv4AddressFilter.cs
 
-..\Amoeba\Amoeba\Utilities\CatharsisManager.cs
-..\Outopos\Outopos\Utilities\CatharsisManager.cs
+..\Amoeba\Amoeba\Utilities\ConnectionSettingManager.cs
+..\Outopos\Outopos\Utilities\ConnectionSettingManager.cs
 
 ..\Amoeba\Amoeba\Utilities\OverlayNetworkManager.cs
 ..\Outopos\Outopos\Utilities\OverlayNetworkManager.cs
-
-..\Amoeba\Amoeba\Utilities\TransfarLimitManager.cs
-..\Outopos\Outopos\Utilities\TransfarLimitManager.cs
 
 ..\Amoeba\Amoeba\Utilities\EqualityComparer.cs
 ..\Outopos\Outopos\Utilities\EqualityComparer.cs
@@ -48,9 +45,6 @@ Library.Net.Outopos\Utilities\WatchTimer.cs
 
 ..\Amoeba\Amoeba\Utilities\WindowPosition.cs
 ..\Outopos\Outopos\Utilities\WindowPosition.cs
-
-..\Amoeba\Amoeba\Windows\_Items\UpdateOption.cs
-..\Outopos\Outopos\Windows\_Items\UpdateOption.cs
 
 ..\Amoeba\Amoeba\Windows\_Controls\ComboBoxEx.cs
 ..\Outopos\Outopos\Windows\_Controls\ComboBoxEx.cs

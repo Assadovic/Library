@@ -13,7 +13,7 @@ namespace Library.Net.Outopos
     public sealed class OutoposManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
         private string _bitmapPath;
-        private string _cachePath;
+        private string _blocksPath;
         private BufferManager _bufferManager;
 
         private ClientManager _clientManager;
@@ -37,16 +37,16 @@ namespace Library.Net.Outopos
         private volatile bool _disposed;
         private readonly object _thisLock = new object();
 
-        public OutoposManager(string bitmapPath, string cachePath, BufferManager bufferManager)
+        public OutoposManager(string bitmapPath, string blocksPath, BufferManager bufferManager)
         {
             _bitmapPath = bitmapPath;
-            _cachePath = cachePath;
+            _blocksPath = blocksPath;
             _bufferManager = bufferManager;
 
             _clientManager = new ClientManager(_bufferManager);
             _serverManager = new ServerManager(_bufferManager);
             _bitmapManager = new BitmapManager(_bitmapPath, _bufferManager);
-            _cacheManager = new CacheManager(_cachePath, _bitmapManager, _bufferManager);
+            _cacheManager = new CacheManager(_blocksPath, _bitmapManager, _bufferManager);
             _connectionsManager = new ConnectionsManager(_clientManager, _serverManager, _cacheManager, _bufferManager);
             _downloadManager = new DownloadManager(_connectionsManager, _cacheManager, _bufferManager);
             _uploadManager = new UploadManager(_connectionsManager, _cacheManager, _bufferManager);
@@ -422,6 +422,9 @@ namespace Library.Net.Outopos
 
         public BroadcastMessage GetBroadcastMessage(string signature)
         {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
             lock (this.ThisLock)
             {
                 return _downloadManager.GetBroadcastMessage(signature);
@@ -430,6 +433,9 @@ namespace Library.Net.Outopos
 
         public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
         {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
             lock (this.ThisLock)
             {
                 return _downloadManager.GetUnicastMessages(signature, exchangePrivateKey, limit);
@@ -438,6 +444,9 @@ namespace Library.Net.Outopos
 
         public IEnumerable<MulticastMessage> GetMulticastMessages(Tag tag, int limit)
         {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
+
             lock (this.ThisLock)
             {
                 return _downloadManager.GetMulticastMessages(tag, limit);
@@ -454,6 +463,7 @@ namespace Library.Net.Outopos
             DigitalSignature digitalSignature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
 
             lock (this.ThisLock)
             {
@@ -470,6 +480,7 @@ namespace Library.Net.Outopos
             DigitalSignature digitalSignature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
 
             lock (this.ThisLock)
             {
@@ -485,6 +496,7 @@ namespace Library.Net.Outopos
             DigitalSignature digitalSignature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
 
             lock (this.ThisLock)
             {

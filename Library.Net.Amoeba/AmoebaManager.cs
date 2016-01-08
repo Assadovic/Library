@@ -16,7 +16,7 @@ namespace Library.Net.Amoeba
     public sealed class AmoebaManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
         private string _bitmapPath;
-        private string _cachePath;
+        private string _blocksPath;
         private BufferManager _bufferManager;
 
         private ClientManager _clientManager;
@@ -42,16 +42,16 @@ namespace Library.Net.Amoeba
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
-        public AmoebaManager(string bitmapPath, string cachePath, BufferManager bufferManager)
+        public AmoebaManager(string bitmapPath, string blocksPath, BufferManager bufferManager)
         {
             _bitmapPath = bitmapPath;
-            _cachePath = cachePath;
+            _blocksPath = blocksPath;
             _bufferManager = bufferManager;
 
             _clientManager = new ClientManager(_bufferManager);
             _serverManager = new ServerManager(_bufferManager);
             _bitmapManager = new BitmapManager(_bitmapPath, _bufferManager);
-            _cacheManager = new CacheManager(_cachePath, _bitmapManager, _bufferManager);
+            _cacheManager = new CacheManager(_blocksPath, _bitmapManager, _bufferManager);
             _connectionsManager = new ConnectionsManager(_clientManager, _serverManager, _cacheManager, _bufferManager);
             _downloadManager = new DownloadManager(_connectionsManager, _cacheManager, _bufferManager);
             _uploadManager = new UploadManager(_connectionsManager, _cacheManager, _bufferManager);

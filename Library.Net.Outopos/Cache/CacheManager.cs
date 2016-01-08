@@ -46,11 +46,11 @@ namespace Library.Net.Outopos
 
         private int _threadCount = 2;
 
-        public CacheManager(string cachePath, BitmapManager bitmapManager, BufferManager bufferManager)
+        public CacheManager(string blocksPath, BitmapManager bitmapManager, BufferManager bufferManager)
         {
             const int FILE_FLAG_NO_BUFFERING = 0x20000000;
 
-            _fileStream = new FileStream(cachePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, CacheManager.SectorSize, (FileOptions)FILE_FLAG_NO_BUFFERING);
+            _fileStream = new FileStream(blocksPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, CacheManager.SectorSize, (FileOptions)FILE_FLAG_NO_BUFFERING);
             _bitmapManager = bitmapManager;
             _bufferManager = bufferManager;
 
