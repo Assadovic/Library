@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Library.Net.Outopos")]
-[assembly: AssemblyCopyright("Copyright © Lyrise 2009-2015")]
+[assembly: AssemblyCopyright("Copyright © Lyrise 2009-2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("5aa52eb2-1037-4319-97dc-9bbe976d1ce6")]
-[assembly: AssemblyVersion("0.0.0.830")] // MMdb0BN7nTbbJcMZTWoBTHUkY3r6PaycGws2KjoJw8k=
+[assembly: AssemblyVersion("0.0.0.832")] // 7pDsJ+i0hjsYPTB/ZK3epk1N4oZJJ7ELNuqlpB1AbLI=
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Library.UnitTest")]

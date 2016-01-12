@@ -116,14 +116,12 @@ namespace Library.Net.Connections
                                 byte[] sessionId = new byte[32];
                                 _random.GetBytes(sessionId);
 
-                                myProtocol3 = new SecureVersion3.ProtocolInformation()
-                                {
-                                    KeyExchangeAlgorithm = SecureVersion3.KeyExchangeAlgorithm.EcDiffieHellmanP521 | SecureVersion3.KeyExchangeAlgorithm.Rsa2048,
-                                    KeyDerivationAlgorithm = SecureVersion3.KeyDerivationAlgorithm.Pbkdf2,
-                                    CryptoAlgorithm = SecureVersion3.CryptoAlgorithm.Aes256,
-                                    HashAlgorithm = SecureVersion3.HashAlgorithm.Sha256,
-                                    SessionId = sessionId,
-                                };
+                                myProtocol3 = new SecureVersion3.ProtocolInformation(
+                                    SecureVersion3.KeyExchangeAlgorithm.EcDiffieHellmanP521 | SecureVersion3.KeyExchangeAlgorithm.Rsa2048,
+                                    SecureVersion3.KeyDerivationAlgorithm.Pbkdf2,
+                                    SecureVersion3.CryptoAlgorithm.Aes256,
+                                    SecureVersion3.HashAlgorithm.Sha256,
+                                    sessionId);
                             }
                         }
                         else
@@ -132,14 +130,12 @@ namespace Library.Net.Connections
                                 byte[] sessionId = new byte[32];
                                 _random.GetBytes(sessionId);
 
-                                myProtocol3 = new SecureVersion3.ProtocolInformation()
-                                {
-                                    KeyExchangeAlgorithm = SecureVersion3.KeyExchangeAlgorithm.Rsa2048,
-                                    KeyDerivationAlgorithm = SecureVersion3.KeyDerivationAlgorithm.Pbkdf2,
-                                    CryptoAlgorithm = SecureVersion3.CryptoAlgorithm.Aes256,
-                                    HashAlgorithm = SecureVersion3.HashAlgorithm.Sha256,
-                                    SessionId = sessionId,
-                                };
+                                myProtocol3 = new SecureVersion3.ProtocolInformation(
+                                    SecureVersion3.KeyExchangeAlgorithm.Rsa2048,
+                                    SecureVersion3.KeyDerivationAlgorithm.Pbkdf2,
+                                    SecureVersion3.CryptoAlgorithm.Aes256,
+                                    SecureVersion3.HashAlgorithm.Sha256,
+                                    sessionId);
                             }
                         }
                     }
@@ -170,8 +166,6 @@ namespace Library.Net.Connections
                         stream.Seek(0, SeekOrigin.Begin);
                         _connection.Send(stream, CheckTimeout(stopwatch.Elapsed, timeout));
                     }
-
-                    otherProtocol3 = new SecureVersion3.ProtocolInformation();
 
                     using (Stream stream = _connection.Receive(CheckTimeout(stopwatch.Elapsed, timeout)))
                     using (XmlTextReader xml = new XmlTextReader(stream))

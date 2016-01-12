@@ -21,8 +21,6 @@ namespace Library.Security
         private volatile CashAlgorithm _cashAlgorithm = 0;
         private volatile byte[] _key;
 
-        private volatile int _hashCode;
-
         public static readonly int MaxKeyLength = 32;
         public static readonly int MaxValueLength = 32;
 
@@ -90,7 +88,7 @@ namespace Library.Security
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return (this.Key == null) ? 0 : ItemUtilities.GetHashCode(this.Key);
         }
 
         public override bool Equals(object obj)
@@ -155,15 +153,6 @@ namespace Library.Security
                 else
                 {
                     _key = value;
-                }
-
-                if (value != null)
-                {
-                    _hashCode = ItemUtilities.GetHashCode(value);
-                }
-                else
-                {
-                    _hashCode = 0;
                 }
             }
         }

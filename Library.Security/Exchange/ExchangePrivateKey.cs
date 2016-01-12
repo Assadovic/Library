@@ -22,8 +22,6 @@ namespace Library.Security
         private volatile ExchangeAlgorithm _exchangeAlgorithm = 0;
         private volatile byte[] _privateKey;
 
-        private volatile int _hashCode;
-
         private volatile object _thisLock;
 
         public static readonly int MaxPrivatekeyLength = 1024 * 8;
@@ -102,7 +100,7 @@ namespace Library.Security
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return (this.PrivateKey == null) ? 0 : ItemUtilities.GetHashCode(this.PrivateKey);
         }
 
         public override bool Equals(object obj)
@@ -188,15 +186,6 @@ namespace Library.Security
                 else
                 {
                     _privateKey = value;
-                }
-
-                if (value != null)
-                {
-                    _hashCode = ItemUtilities.GetHashCode(value);
-                }
-                else
-                {
-                    _hashCode = 0;
                 }
             }
         }

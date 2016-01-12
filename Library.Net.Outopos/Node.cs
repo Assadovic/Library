@@ -24,8 +24,6 @@ namespace Library.Net.Outopos
         private volatile byte[] _id;
         private volatile UriCollection _uris;
 
-        private volatile int _hashCode;
-
         public static readonly int MaxIdLength = 32;
         public static readonly int MaxUriCount = 32;
 
@@ -95,7 +93,7 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return (this.Id == null) ? 0 : ItemUtilities.GetHashCode(this.Id);
         }
 
         public override bool Equals(object obj)
@@ -155,15 +153,6 @@ namespace Library.Net.Outopos
                 else
                 {
                     _id = value;
-                }
-
-                if (value != null)
-                {
-                    _hashCode = ItemUtilities.GetHashCode(value);
-                }
-                else
-                {
-                    _hashCode = 0;
                 }
             }
         }

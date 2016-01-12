@@ -47,8 +47,6 @@ namespace Library.Net.Amoeba
 
         private Certificate _certificate;
 
-        private volatile int _hashCode;
-
         private volatile object _thisLock;
 
         public static readonly int MaxNameLength = 256;
@@ -224,7 +222,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                return _hashCode;
+                return (this.Key == null) ? 0 : this.Key.GetHashCode();
             }
         }
 
@@ -454,15 +452,6 @@ namespace Library.Net.Amoeba
                 lock (this.ThisLock)
                 {
                     _key = value;
-
-                    if (value != null)
-                    {
-                        _hashCode = value.GetHashCode();
-                    }
-                    else
-                    {
-                        _hashCode = 0;
-                    }
                 }
             }
         }

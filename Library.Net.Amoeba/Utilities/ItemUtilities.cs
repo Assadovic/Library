@@ -31,12 +31,12 @@ namespace Library.Net.Amoeba
         {
             if (buffer == null) throw new ArgumentNullException("buffer");
 
-            return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
+            return BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
                 new ArraySegment<byte>[]
                 {
                     new ArraySegment<byte>(_vector),
                     new ArraySegment<byte>(buffer),
-                }), 0));
+                }), 0);
         }
 
         public static void Write(Stream stream, byte type, Stream exportStream)
