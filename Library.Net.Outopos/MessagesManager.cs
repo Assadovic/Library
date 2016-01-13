@@ -214,7 +214,7 @@ namespace Library.Net.Outopos
             _receivedByteCount = new SafeInteger();
             _sentByteCount = new SafeInteger();
 
-            _stockBlocks = new VolatileHashSet<Key>(new TimeSpan(1, 0, 0, 0));
+            _stockBlocks = new VolatileHashSet<Key>(new TimeSpan(1, 0, 0));
             _stockBroadcastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockUnicastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockWikiDocumentMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
