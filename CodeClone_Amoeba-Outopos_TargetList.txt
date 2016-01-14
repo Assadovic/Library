@@ -46,6 +46,9 @@ Library.Net.Outopos\Utilities\WatchTimer.cs
 ..\Amoeba\Amoeba\Utilities\WindowPosition.cs
 ..\Outopos\Outopos\Utilities\WindowPosition.cs
 
+..\Amoeba\Amoeba\Windows\_Items\UpdateOption.cs
+..\Outopos\Outopos\Windows\_Items\UpdateOption.cs
+
 ..\Amoeba\Amoeba\Windows\_Controls\ComboBoxEx.cs
 ..\Outopos\Outopos\Windows\_Controls\ComboBoxEx.cs
 

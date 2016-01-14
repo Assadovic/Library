@@ -7,20 +7,20 @@ namespace Library.Collections
 {
     public class VolatileSortedSet<T> : ICollection<T>, IEnumerable<T>, ICollection, IEnumerable, IThisLock
     {
-        private SortedDictionary<T, DateTime> _dic;
+        private SortedList<T, DateTime> _dic;
         private readonly TimeSpan _survivalTime;
 
         private readonly object _thisLock = new object();
 
         public VolatileSortedSet(TimeSpan survivalTime)
         {
-            _dic = new SortedDictionary<T, DateTime>();
+            _dic = new SortedList<T, DateTime>();
             _survivalTime = survivalTime;
         }
 
         public VolatileSortedSet(TimeSpan survivalTime, IComparer<T> comparer)
         {
-            _dic = new SortedDictionary<T, DateTime>(comparer);
+            _dic = new SortedList<T, DateTime>(comparer);
             _survivalTime = survivalTime;
         }
 
