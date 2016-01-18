@@ -22,6 +22,8 @@ namespace Library.Net.Outopos
         private static Intern<byte[]> _idCache = new Intern<byte[]>(new ByteArrayEqualityComparer());
         private volatile byte[] _id;
 
+        private volatile int _hashCode;
+
         public static readonly int MaxNameLength = 256;
         public static readonly int MaxIdLength = 32;
 
@@ -89,7 +91,7 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            return (this.Id == null) ? 0 : ItemUtilities.GetHashCode(this.Id);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -156,6 +158,15 @@ namespace Library.Net.Outopos
                 else
                 {
                     _id = _idCache.GetValue(value, this);
+                }
+
+                if (value != null)
+                {
+                    _hashCode = RuntimeHelpers.GetHashCode(_id);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }

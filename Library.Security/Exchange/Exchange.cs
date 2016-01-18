@@ -24,6 +24,8 @@ namespace Library.Security
         private volatile byte[] _publicKey;
         private volatile byte[] _privateKey;
 
+        private volatile int _hashCode;
+
         private volatile object _thisLock;
 
         public static readonly int MaxPublickeyLength = 1024 * 8;
@@ -121,7 +123,7 @@ namespace Library.Security
 
         public override int GetHashCode()
         {
-            return (this.PublicKey == null) ? 0 : ItemUtilities.GetHashCode(this.PublicKey);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -197,7 +199,7 @@ namespace Library.Security
                     return _creationTime;
                 }
             }
-            private set
+            set
             {
                 lock (_thisLock)
                 {
@@ -243,6 +245,15 @@ namespace Library.Security
                 else
                 {
                     _publicKey = value;
+                }
+
+                if (value != null)
+                {
+                    _hashCode = ItemUtilities.GetHashCode(value);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }

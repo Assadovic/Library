@@ -27,6 +27,7 @@ namespace Library.Security
         private volatile byte[] _publicKey;
         private volatile byte[] _signature;
 
+        private volatile int _hashCode;
         private volatile string _toString;
 
         public static readonly int MaxNickNameLength = 256;
@@ -134,7 +135,7 @@ namespace Library.Security
 
         public override int GetHashCode()
         {
-            return (this.PublicKey == null) ? 0 : ItemUtilities.GetHashCode(this.PublicKey);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -245,6 +246,15 @@ namespace Library.Security
                 else
                 {
                     _publicKey = _publicKeyCache.GetValue(value, this);
+                }
+
+                if (value != null)
+                {
+                    _hashCode = RuntimeHelpers.GetHashCode(_publicKey);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }

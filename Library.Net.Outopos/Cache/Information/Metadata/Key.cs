@@ -21,6 +21,8 @@ namespace Library.Net.Outopos
 
         private volatile HashAlgorithm _hashAlgorithm = 0;
 
+        private volatile int _hashCode;
+
         public static readonly int MaxHashLength = 32;
 
         public Key(byte[] hash, HashAlgorithm hashAlgorithm)
@@ -90,7 +92,7 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            return (this.Hash == null) ? 0 : ItemUtilities.GetHashCode(this.Hash);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -138,6 +140,15 @@ namespace Library.Net.Outopos
                 else
                 {
                     _hash = value;
+                }
+
+                if (value != null)
+                {
+                    _hashCode = ItemUtilities.GetHashCode(value);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }

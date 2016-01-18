@@ -25,6 +25,9 @@ Library.Net.Outopos\UriCollection.cs
 Library.Net.Amoeba\Utilities\WatchTimer.cs
 Library.Net.Outopos\Utilities\WatchTimer.cs
 
+..\Amoeba\Amoeba\Themes\ExpressionDark.xaml
+..\Outopos\Outopos\Themes\ExpressionDark.xaml
+
 ..\Amoeba\Amoeba\Utilities\CatharsisManager.cs
 ..\Outopos\Outopos\Utilities\CatharsisManager.cs
 

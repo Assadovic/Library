@@ -24,6 +24,8 @@ namespace Library.Net.Amoeba
 
         private volatile HashAlgorithm _hashAlgorithm = 0;
 
+        private volatile int _hashCode;
+
         public static readonly int MaxHashLength = 32;
 
         public Key(byte[] hash, HashAlgorithm hashAlgorithm)
@@ -93,7 +95,7 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            return (this.Hash == null) ? 0 : ItemUtilities.GetHashCode(this.Hash);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -141,6 +143,15 @@ namespace Library.Net.Amoeba
                 else
                 {
                     _hash = value;
+                }
+
+                if (value != null)
+                {
+                    _hashCode = ItemUtilities.GetHashCode(value);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }
