@@ -27,6 +27,8 @@ namespace Library.Net.Connections.SecureVersion3
         private volatile HashAlgorithm _hashAlgorithm;
         private volatile byte[] _sessionId;
 
+        private volatile int _hashCode;
+
         public static readonly int MaxSessionIdLength = 32;
 
         public ProtocolInformation(KeyExchangeAlgorithm keyExchangeAlgorithm, KeyDerivationAlgorithm keyDerivationAlgorithm, CryptoAlgorithm cryptoAlgorithm, HashAlgorithm hashAlgorithm, byte[] sessionId)
@@ -123,7 +125,7 @@ namespace Library.Net.Connections.SecureVersion3
 
         public override int GetHashCode()
         {
-            return (this.SessionId == null) ? 0 : ItemUtilities.GetHashCode(this.SessionId);
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -223,6 +225,15 @@ namespace Library.Net.Connections.SecureVersion3
                 else
                 {
                     _sessionId = value;
+                }
+
+                if (value != null)
+                {
+                    _hashCode = ItemUtilities.GetHashCode(value);
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }
