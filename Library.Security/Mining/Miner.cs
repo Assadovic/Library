@@ -110,25 +110,6 @@ namespace Library.Security
             return 0;
         }
 
-        public static int Sample(TimeSpan computationTime)
-        {
-            var miner = new Miner(CashAlgorithm.Version1, -1, computationTime);
-
-            var buffer = new byte[32];
-            {
-                var random = RandomNumberGenerator.Create();
-                random.GetBytes(buffer);
-            }
-
-            using (var stream = new MemoryStream(buffer))
-            {
-                var cash = miner.Create(new WrapperStream(stream, true));
-
-                stream.Seek(0, SeekOrigin.Begin);
-                return Miner.Verify(cash, new WrapperStream(stream, true));
-            }
-        }
-
         private class MinerUtilities
         {
             private static string _path;
