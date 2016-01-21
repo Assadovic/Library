@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -115,8 +116,8 @@ namespace Library.Security
 
             var buffer = new byte[32];
             {
-                var random = new Random();
-                random.NextBytes(buffer);
+                var random = RandomNumberGenerator.Create();
+                random.GetBytes(buffer);
             }
 
             using (var stream = new MemoryStream(buffer))
@@ -156,10 +157,17 @@ namespace Library.Security
                 if (value == null) throw new ArgumentNullException("value");
                 if (value.Length != 32) throw new ArgumentOutOfRangeException("value");
 
+#if DEBUG
+                var info = new ProcessStartInfo(@"C:\Local\Projects\Alliance-Network\Library\Library.Tools\bin\Debug\Library.Tools.exe");
+                info.CreateNoWindow = true;
+                info.UseShellExecute = false;
+                info.RedirectStandardOutput = true;
+#else
                 var info = new ProcessStartInfo(_path);
                 info.CreateNoWindow = true;
                 info.UseShellExecute = false;
                 info.RedirectStandardOutput = true;
+#endif
 
                 {
                     if (limit < 0) limit = -1;
@@ -169,11 +177,21 @@ namespace Library.Security
                     if (computationTime < TimeSpan.Zero) timeout = -1;
                     else timeout = (int)computationTime.TotalSeconds;
 
+#if DEBUG
+                    info.Arguments = string.Format(
+                        "Watcher \"{0}\" \"{1}\" hashcash1 create {2} {3} {4}",
+                        Process.GetCurrentProcess().Id,
+                        _path,
+                        NetworkConverter.ToHexString(value),
+                        limit,
+                        timeout);
+#else
                     info.Arguments = string.Format(
                         "hashcash1 create {0} {1} {2}",
                         NetworkConverter.ToHexString(value),
                         limit,
                         timeout);
+#endif
                 }
 
                 using (var process = Process.Start(info))
@@ -255,6 +273,31 @@ namespace Library.Security
 
             public void Cancel()
             {
+#if DEBUG
+                string taskkill = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "taskkill.exe");
+
+                foreach (var process in _processes.ToArray())
+                {
+                    try
+                    {
+                        using (var killer = new System.Diagnostics.Process())
+                        {
+                            killer.StartInfo.FileName = taskkill;
+                            killer.StartInfo.Arguments = string.Format("/PID {0} /T /F", process.Id);
+                            killer.StartInfo.CreateNoWindow = true;
+                            killer.StartInfo.UseShellExecute = false;
+                            killer.Start();
+                            killer.WaitForExit();
+                        }
+
+                        process.Dispose();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+#else
                 foreach (var process in _processes.ToArray())
                 {
                     try
@@ -266,6 +309,9 @@ namespace Library.Security
 
                     }
                 }
+#endif
+
+                _processes.Clear();
             }
         }
     }

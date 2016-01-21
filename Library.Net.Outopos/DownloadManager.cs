@@ -178,14 +178,7 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (limit < 0)
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString())) continue;
-                    }
-                    else
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
-                    }
+                    if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {
@@ -259,14 +252,7 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (limit < 0)
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString())) continue;
-                    }
-                    else
-                    {
-                        if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
-                    }
+                    if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {

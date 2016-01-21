@@ -7,6 +7,7 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
 using Library.Security;
@@ -66,62 +67,8 @@ namespace Library.Tools
                         MessageBox.Show(DigitalSignature.VerifyFileCertificate(certificate, inStream.Name, inStream).ToString());
                     }
                 }
-                else if (args.Length >= 4 && args[0] == "define")
+                else if (args.Length >= 3 && args[0] == "Increment")
                 {
-                    List<string> list = new List<string>();
-
-                    using (FileStream inStream = new FileStream(args[2], FileMode.Open))
-                    using (StreamReader reader = new StreamReader(inStream))
-                    {
-                        for (; ; )
-                        {
-                            string line = reader.ReadLine();
-                            if (line == null) break;
-
-                            list.Add(line);
-                        }
-                    }
-
-                    bool flag = (args[1] == "on");
-
-                    foreach (var item in list)
-                    {
-                        Program.Define(item, flag, args[3]);
-                    }
-                }
-                else if (args.Length >= 3 && args[0] == "increment")
-                {
-                    //{
-                    //    var path = args[1];
-                    //    bool flag = false;
-
-                    //    using (var stream = new FileStream(path, FileMode.Open))
-                    //    {
-                    //        byte[] b = new byte[3];
-                    //        stream.Read(b, 0, b.Length);
-
-                    //        flag = CollectionUtilities.Equals(b, new byte[] { 0xEF, 0xBB, 0xBF });
-                    //    }
-
-                    //    if (!flag) goto End;
-
-                    //    string newPath;
-
-                    //    using (var reader = new StreamReader(path))
-                    //    using (var newStream = Program.GetUniqueFileStream(path))
-                    //    using (var writer = new StreamWriter(newStream, new UTF8Encoding(false)))
-                    //    {
-                    //        newPath = newStream.Name;
-
-                    //        writer.Write(reader.ReadToEnd());
-                    //    }
-
-                    //    File.Delete(path);
-                    //    File.Move(newPath, path);
-
-                    //End: ;
-                    //}
-
                     string baseDirectory = Path.GetDirectoryName(args[1]);
                     List<string> filePaths = new List<string>();
 
@@ -227,7 +174,7 @@ namespace Library.Tools
                         File.Delete(args[2] + "~");
                     }
                 }
-                else if (args.Length >= 1 && args[0] == "settings")
+                else if (args.Length >= 1 && args[0] == "Settings")
                 {
                     string settingsPath = args[1];
 
@@ -357,7 +304,7 @@ namespace Library.Tools
                     File.Delete(settingsPath);
                     File.Move(settingsPath + ".tmp", settingsPath);
                 }
-                else if (args.Length >= 3 && args[0] == "languages")
+                else if (args.Length >= 3 && args[0] == "Languages")
                 {
                     string languageManagerPath = args[1];
                     string languageXmlPath = Path.Combine(args[2], "English.xml");
@@ -522,39 +469,7 @@ namespace Library.Tools
                         }
                     }
                 }
-                else if (args.Length >= 2 && args[0] == "linecount")
-                {
-                    string basePath = args[1];
-                    int count = 0;
-
-                    var list = new List<KeyValuePair<int, string>>();
-
-                    foreach (var path in Program.GetFiles(basePath))
-                    {
-                        int tcount = 0;
-                        using (StreamReader reader = new StreamReader(path))
-                        {
-                            tcount = reader.ReadToEnd().Count(n => n == '\n');
-                        }
-
-                        list.Add(new KeyValuePair<int, string>(tcount, path));
-                        count += tcount;
-                    }
-
-                    list.Sort((KeyValuePair<int, string> kvp1, KeyValuePair<int, string> kvp2) =>
-                    {
-                        return kvp1.Key.CompareTo(kvp2.Key);
-                    });
-
-                    foreach (var item in list)
-                    {
-                        var text = item.Value.Substring(basePath.Length).Replace(@"\", "/");
-                        Console.WriteLine(string.Format("{0}\t{1}", item.Key, text));
-                    }
-
-                    Console.WriteLine(count);
-                }
-                else if (args.Length >= 3 && args[0] == "run")
+                else if (args.Length >= 3 && args[0] == "Run")
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo();
                     startInfo.FileName = Path.Combine(Directory.GetCurrentDirectory(), args[1]);
@@ -618,125 +533,110 @@ namespace Library.Tools
                         }
                     }
                 }
+                else if (args.Length >= 3 && args[0] == "Watcher")
+                {
+                    Process parentProcess = null;
+                    {
+                        var id = int.Parse(args[1]);
+                        parentProcess = Process.GetProcessById(id);
+                    }
+
+                    if (parentProcess == null) return;
+
+                    Process childProcess = null;
+                    {
+                        childProcess = new Process();
+                        childProcess.StartInfo.FileName = args[2];
+                        childProcess.StartInfo.Arguments = string.Join(" ", args.Skip(3).Select(n => string.Format("\"{0}\"", n)));
+                        childProcess.StartInfo.RedirectStandardInput = true;
+                        childProcess.StartInfo.RedirectStandardOutput = true;
+                        childProcess.StartInfo.CreateNoWindow = true;
+                        childProcess.StartInfo.UseShellExecute = false;
+                    }
+
+                    childProcess.Start();
+
+                    var thread1 = new Thread(() =>
+                    {
+                        try
+                        {
+                            byte[] buffer = new byte[1024 * 4];
+
+                            using (var targetOutputStream = childProcess.StandardOutput.BaseStream)
+                            using (var myOutputStream = System.Console.OpenStandardOutput())
+                            {
+                                int length = 0;
+
+                                while ((length = targetOutputStream.Read(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    myOutputStream.Write(buffer, 0, length);
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                    });
+                    thread1.IsBackground = true;
+                    thread1.Start();
+
+                    var thread2 = new Thread(() =>
+                    {
+                        try
+                        {
+                            byte[] buffer = new byte[1024 * 4];
+
+                            using (var targetInputStream = childProcess.StandardInput.BaseStream)
+                            using (var myInputStream = System.Console.OpenStandardInput())
+                            {
+                                int length = 0;
+
+                                while ((length = myInputStream.Read(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    targetInputStream.Write(buffer, 0, length);
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                    });
+                    thread2.IsBackground = true;
+                    thread2.Start();
+
+                    try
+                    {
+                        for (; ; )
+                        {
+                            Thread.Sleep(1000);
+
+                            if (parentProcess.HasExited)
+                            {
+                                childProcess.Kill();
+                            }
+
+                            if (childProcess.HasExited)
+                            {
+                                thread1.Join();
+                                thread2.Join();
+
+                                return;
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
             }
             catch (Exception e)
             {
                 MessageBox.Show(e.Message, "Library.Tool Error", MessageBoxButtons.OK);
                 MessageBox.Show(e.StackTrace, "Library.Tool Error", MessageBoxButtons.OK);
             }
-        }
-
-        private static void Define(string path, bool on, string name)
-        {
-            Regex regex = new Regex(@"(.*)#(.*)define(\s*)(?<name>\S*)(.*)");
-
-            List<string> items = new List<string>();
-            StringBuilder content = new StringBuilder();
-
-            if (on)
-            {
-                bool writed = false;
-
-                using (FileStream inStream = new FileStream(path, FileMode.Open))
-                using (StreamReader reader = new StreamReader(inStream))
-                {
-                    string line;
-                    bool flag = false;
-
-                    while (null != (line = reader.ReadLine()))
-                    {
-                        if (!flag)
-                        {
-                            var match = regex.Match(line);
-
-                            if (match.Success)
-                            {
-                                items.Add(line);
-
-                                if (match.Groups["name"].Value == name)
-                                {
-                                    writed = true;
-                                }
-                            }
-                            else
-                            {
-                                content.AppendLine(line);
-
-                                if (!string.IsNullOrWhiteSpace(line))
-                                {
-                                    flag = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            content.AppendLine(line);
-                        }
-                    }
-                }
-
-                if (!writed)
-                {
-                    items.Add("#define " + name);
-                }
-            }
-            else
-            {
-                using (FileStream inStream = new FileStream(path, FileMode.Open))
-                using (StreamReader reader = new StreamReader(inStream))
-                {
-                    string line;
-                    bool flag = false;
-
-                    while (null != (line = reader.ReadLine()))
-                    {
-                        if (!flag)
-                        {
-                            var match = regex.Match(line);
-
-                            if (match.Success)
-                            {
-                                if (match.Groups["name"].Value != name)
-                                {
-                                    items.Add(line);
-                                }
-                            }
-                            else
-                            {
-                                content.AppendLine(line);
-
-                                if (!string.IsNullOrWhiteSpace(line))
-                                {
-                                    flag = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            content.AppendLine(line);
-                        }
-                    }
-                }
-            }
-
-            using (FileStream outStream = new FileStream(path + ".tmp", FileMode.Create))
-            using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(false)))
-            {
-                if (items.Count != 0)
-                {
-                    foreach (var line in items)
-                    {
-                        writer.WriteLine(line);
-                    }
-
-                    writer.WriteLine();
-                }
-
-                writer.Write(content.ToString().TrimStart('\r', '\n'));
-            }
-
-            File.Delete(path);
-            File.Move(path + ".tmp", path);
         }
 
         private static void LanguageSetting(string languageXmlPath)
@@ -914,7 +814,7 @@ namespace Library.Tools
         {
             List<string> list = new List<string>();
             List<string> directoryFilter = new List<string>() { "bin", "obj", ".hg", "test-results" };
-            List<string> fileFilter = new List<string>() { ".cs", ".xaml", ".xml", ".py" };
+            List<string> fileFilter = new List<string>() { ".c", ".cpp", ".cs", ".xaml", ".xml" };
 
             foreach (var path in System.IO.Directory.GetDirectories(directory))
             {
