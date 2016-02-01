@@ -150,7 +150,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
+        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
         {
             if (signature == null) throw new ArgumentNullException("signature");
             if (exchangePrivateKey == null) throw new ArgumentNullException("exchangePrivateKey");
@@ -178,7 +178,7 @@ namespace Library.Net.Outopos
 
                 foreach (var metadata in metadatas)
                 {
-                    if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString()) && metadata.Cost < limit) continue;
+                    if (!_settings.TrustSignatures.Contains(metadata.Certificate.ToString())) continue;
 
                     if (!_cacheManager.Contains(metadata.Key))
                     {

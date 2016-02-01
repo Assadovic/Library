@@ -160,7 +160,7 @@ namespace Library.Net.Outopos
                                     }
                                     else if (item.Type == "UnicastMessage")
                                     {
-                                        var metadata = new UnicastMetadata(item.UnicastMessage.Signature, item.UnicastMessage.CreationTime, key, miner, item.DigitalSignature);
+                                        var metadata = new UnicastMetadata(item.UnicastMessage.Signature, item.UnicastMessage.CreationTime, key, item.DigitalSignature);
                                         _connectionsManager.Upload(metadata);
                                     }
                                     else if (item.Type == "MulticastMessage")
@@ -254,8 +254,6 @@ namespace Library.Net.Outopos
             string comment,
 
             ExchangePublicKey exchangePublicKey,
-            int miningLimit,
-            TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
             lock (this.ThisLock)
@@ -264,8 +262,6 @@ namespace Library.Net.Outopos
                 uploadItem.Type = "UnicastMessage";
                 uploadItem.UnicastMessage = new UnicastMessage(signature, DateTime.UtcNow, comment, digitalSignature);
                 uploadItem.ExchangePublicKey = exchangePublicKey;
-                uploadItem.MiningLimit = miningLimit;
-                uploadItem.MiningTime = miningTime;
                 uploadItem.DigitalSignature = digitalSignature;
 
                 _settings.UploadItems.Add(uploadItem);

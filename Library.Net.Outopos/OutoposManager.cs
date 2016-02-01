@@ -431,14 +431,14 @@ namespace Library.Net.Outopos
             }
         }
 
-        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey, int limit)
+        public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_isLoaded) throw new OutoposManagerException("OutoposManager is not loaded.");
 
             lock (this.ThisLock)
             {
-                return _downloadManager.GetUnicastMessages(signature, exchangePrivateKey, limit);
+                return _downloadManager.GetUnicastMessages(signature, exchangePrivateKey);
             }
         }
 
@@ -475,8 +475,6 @@ namespace Library.Net.Outopos
             string comment,
 
             ExchangePublicKey exchangePublicKey,
-            int miningLimit,
-            TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -484,7 +482,7 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                return _uploadManager.UploadUnicastMessage(signature, comment, exchangePublicKey, miningLimit, miningTime, digitalSignature);
+                return _uploadManager.UploadUnicastMessage(signature, comment, exchangePublicKey, digitalSignature);
             }
         }
 
