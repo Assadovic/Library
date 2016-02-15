@@ -496,7 +496,7 @@ namespace Library.Net.Amoeba
             {
                 Stopwatch sw = new Stopwatch();
 
-                for (; ; )
+                for (;;)
                 {
                     if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -947,7 +947,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1037,7 +1037,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1127,7 +1127,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1220,7 +1220,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1342,7 +1342,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1429,7 +1429,7 @@ namespace Library.Net.Amoeba
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {

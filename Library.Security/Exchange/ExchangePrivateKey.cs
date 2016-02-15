@@ -42,7 +42,7 @@ namespace Library.Security
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            for (; ; )
+            for (;;)
             {
                 byte id;
                 {

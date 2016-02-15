@@ -131,7 +131,7 @@ namespace Library.Net.Connections
 
         internal int GetOutBandwidth(Connection connection, int size)
         {
-            for (; ; )
+            for (;;)
             {
                 if (_out == 0) return size;
 
@@ -168,7 +168,7 @@ namespace Library.Net.Connections
 
         internal int GetInBandwidth(Connection connection, int size)
         {
-            for (; ; )
+            for (;;)
             {
                 if (_in == 0) return size;
 

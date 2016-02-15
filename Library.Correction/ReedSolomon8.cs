@@ -156,7 +156,7 @@ namespace Library.Correction
 
         private static void Shuffle(ArraySegment<byte>[] pkts, int[] index, int k)
         {
-            for (int i = 0; i < k; )
+            for (int i = 0; i < k;)
             {
                 if (index[i] >= k || index[i] == i)
                 {
@@ -582,7 +582,7 @@ namespace Library.Correction
 
                     if (!foundPiv)
                     {
-                    loop1:
+                        loop1:
                         for (int row = 0; row < k; row++)
                         {
                             if (ipiv[row] != 1)

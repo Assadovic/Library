@@ -548,7 +548,7 @@ namespace Library.Net.Outopos
 
         private void CreateConnectionThread()
         {
-            for (; ; )
+            for (;;)
             {
                 if (this.State == ManagerState.Stop) return;
                 Thread.Sleep(1000);
@@ -662,7 +662,7 @@ namespace Library.Net.Outopos
                     }
 
                     this.RemoveNode(node);
-                End: ;
+                    End:;
                 }
                 finally
                 {
@@ -673,7 +673,7 @@ namespace Library.Net.Outopos
 
         private void AcceptConnectionThread()
         {
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000);
                 if (this.State == ManagerState.Stop) return;
@@ -757,7 +757,7 @@ namespace Library.Net.Outopos
             Stopwatch pushMetadataDownloadStopwatch = new Stopwatch();
             pushMetadataDownloadStopwatch.Start();
 
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000);
                 if (this.State == ManagerState.Stop) return;
@@ -1915,7 +1915,7 @@ namespace Library.Net.Outopos
                 Stopwatch metadataUpdateTime = new Stopwatch();
                 metadataUpdateTime.Start();
 
-                for (; ; )
+                for (;;)
                 {
                     Thread.Sleep(1000);
                     if (this.State == ManagerState.Stop) return;
@@ -3009,7 +3009,7 @@ namespace Library.Net.Outopos
             private MetadataManager _metadataManager = new MetadataManager();
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = new Node(new byte[0], null)},
                     new Library.Configuration.SettingContent<NodeCollection>() { Name = "OtherNodes", Value = new NodeCollection() },
                     new Library.Configuration.SettingContent<int>() { Name = "ConnectionCountLimit", Value = 32 },

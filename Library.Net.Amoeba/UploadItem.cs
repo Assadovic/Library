@@ -39,7 +39,7 @@ namespace Library.Net.Amoeba
     }
 
     [DataContract(Name = "UploadItem", Namespace = "http://Library/Net/Amoeba")]
-    sealed class UploadItem 
+    sealed class UploadItem
     {
         private UploadType _type;
         private UploadState _state;

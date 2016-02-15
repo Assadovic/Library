@@ -44,7 +44,7 @@ namespace Library.UnitTest
         {
             var seed = new Seed();
             seed.Name = "aaaa.zip";
-            seed.Keywords.AddRange(new KeywordCollection 
+            seed.Keywords.AddRange(new KeywordCollection
             {
                 "bbbb",
                 "cccc",
@@ -143,7 +143,7 @@ namespace Library.UnitTest
             {
                 var seed = new Seed();
                 seed.Name = "aaaa.zip";
-                seed.Keywords.AddRange(new KeywordCollection 
+                seed.Keywords.AddRange(new KeywordCollection
                 {
                     "bbbb",
                     "cccc",
@@ -660,7 +660,7 @@ namespace Library.UnitTest
                     {
                         var seed = new Seed();
                         seed.Name = "aaaa.zip";
-                        seed.Keywords.AddRange(new KeywordCollection 
+                        seed.Keywords.AddRange(new KeywordCollection
                         {
                             "bbbb",
                             "cccc",

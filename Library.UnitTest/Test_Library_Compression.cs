@@ -45,7 +45,7 @@ namespace Library.UnitTest
 
                 Assert.AreEqual(stream1.Length, stream3.Length);
 
-                for (; ; )
+                for (;;)
                 {
                     byte[] buffer1 = new byte[1024 * 32];
                     int buffer1Length;
@@ -91,7 +91,7 @@ namespace Library.UnitTest
 
                 Assert.AreEqual(stream1.Length, stream3.Length);
 
-                for (; ; )
+                for (;;)
                 {
                     byte[] buffer1 = new byte[1024 * 32];
                     int buffer1Length;

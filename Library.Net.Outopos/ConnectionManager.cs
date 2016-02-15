@@ -535,7 +535,7 @@ namespace Library.Net.Outopos
             {
                 Stopwatch sw = new Stopwatch();
 
-                for (; ; )
+                for (;;)
                 {
                     if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -1212,7 +1212,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1302,7 +1302,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1392,7 +1392,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1485,7 +1485,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1607,7 +1607,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1694,7 +1694,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1784,7 +1784,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1871,7 +1871,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -1961,7 +1961,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {
@@ -2051,7 +2051,7 @@ namespace Library.Net.Outopos
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {

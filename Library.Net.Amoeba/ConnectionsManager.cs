@@ -561,7 +561,7 @@ namespace Library.Net.Amoeba
 
         private void CreateConnectionThread()
         {
-            for (; ; )
+            for (;;)
             {
                 if (this.State == ManagerState.Stop) return;
                 Thread.Sleep(1000);
@@ -675,7 +675,7 @@ namespace Library.Net.Amoeba
                     }
 
                     this.RemoveNode(node);
-                End: ;
+                    End:;
                 }
                 finally
                 {
@@ -686,7 +686,7 @@ namespace Library.Net.Amoeba
 
         private void AcceptConnectionThread()
         {
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000);
                 if (this.State == ManagerState.Stop) return;
@@ -801,7 +801,7 @@ namespace Library.Net.Amoeba
                 _settings.RemoveSignatures(removeSignatures);
             }
 
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000);
                 if (this.State == ManagerState.Stop) return;
@@ -1519,7 +1519,7 @@ namespace Library.Net.Amoeba
                 Stopwatch seedUpdateTime = new Stopwatch();
                 seedUpdateTime.Start();
 
-                for (; ; )
+                for (;;)
                 {
                     Thread.Sleep(1000);
                     if (this.State == ManagerState.Stop) return;
@@ -2409,7 +2409,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = new Node(new byte[0], null)},
                     new Library.Configuration.SettingContent<NodeCollection>() { Name = "OtherNodes", Value = new NodeCollection() },
                     new Library.Configuration.SettingContent<int>() { Name = "ConnectionCountLimit", Value = 32 },

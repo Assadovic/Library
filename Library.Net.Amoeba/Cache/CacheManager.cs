@@ -322,11 +322,11 @@ namespace Library.Net.Amoeba
                             flag = false;
                             goto Break;
 
-                        End: ;
+                            End:;
                         }
                     }
 
-                Break: ;
+                    Break:;
 
                     if (!flag)
                     {
@@ -1731,7 +1731,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClustersIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
                     new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 256 },
                     new Library.Configuration.SettingContent<LockedHashDictionary<string, ShareInfo>>() { Name = "ShareIndex", Value = new LockedHashDictionary<string, ShareInfo>() },

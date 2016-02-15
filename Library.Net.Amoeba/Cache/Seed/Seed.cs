@@ -72,7 +72,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {

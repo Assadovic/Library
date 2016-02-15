@@ -117,7 +117,7 @@ namespace Library.Collections
 
         public T Dequeue(TimeSpan timeout)
         {
-            for (; ; )
+            for (;;)
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -165,7 +165,7 @@ namespace Library.Collections
 
         public void Enqueue(T item, TimeSpan timeout)
         {
-            for (; ; )
+            for (;;)
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -215,7 +215,7 @@ namespace Library.Collections
 
         public T Peek(TimeSpan timeout)
         {
-            for (; ; )
+            for (;;)
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 

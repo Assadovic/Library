@@ -113,7 +113,7 @@ namespace Library.Net.Upnp
 
             using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
             {
-                for (; ; )
+                for (;;)
                 {
                     try
                     {

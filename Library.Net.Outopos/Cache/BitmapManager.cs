@@ -187,7 +187,7 @@ namespace Library.Net.Outopos
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<long>() { Name = "Length", Value = 0 },
                 })
             {

@@ -267,7 +267,7 @@ namespace Library.Net.Outopos
                     connection = new BaseConnection(cap, bandwidthLimit, _maxReceiveCount, _bufferManager);
                     garbages.Add(connection);
 
-                End: ;
+                    End:;
                 }
 
                 if (connection == null)
@@ -534,7 +534,7 @@ namespace Library.Net.Outopos
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<ConnectionFilterCollection>() { Name = "ConnectionFilters", Value = new ConnectionFilterCollection() },
                  })
             {

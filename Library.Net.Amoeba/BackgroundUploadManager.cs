@@ -58,7 +58,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _uploadedKeys.Dequeue();
 
@@ -117,7 +117,7 @@ namespace Library.Net.Amoeba
 
         private void UploadManagerThread()
         {
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 1);
                 if (this.State == ManagerState.Stop) return;
@@ -373,7 +373,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                for (; ; )
+                for (;;)
                 {
                     Thread.Sleep(1000);
                     if (this.State == ManagerState.Stop) return;
@@ -588,7 +588,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem>>() { Name = "BackgroundUploadItems", Value = new LockedList<BackgroundUploadItem>() },
                 })
             {

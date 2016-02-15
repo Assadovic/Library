@@ -74,7 +74,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _uploadedKeys.Dequeue();
 
@@ -115,7 +115,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var path = _removeSharePaths.Dequeue();
 
@@ -245,7 +245,7 @@ namespace Library.Net.Amoeba
 
         private void EncodeManagerThread()
         {
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 1);
                 if (this.EncodeState == ManagerState.Stop) return;
@@ -1091,7 +1091,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedList<UploadItem>>() { Name = "UploadItems", Value = new LockedList<UploadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "UploadedSeeds", Value = new SeedCollection() },
                 })

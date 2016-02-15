@@ -45,7 +45,7 @@ namespace Library.Net.Connections.SecureVersion3
         {
             lock (this.ThisLock)
             {
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {

@@ -29,8 +29,8 @@ namespace Library.UnitTest
             private object _thisLock = new object();
 
             public TestSettings()
-                : base(new List<ISettingContent>() 
-                { 
+                : base(new List<ISettingContent>()
+                {
                     new SettingContent<string>() { Name = "Text", Value = "" },
                 })
             {

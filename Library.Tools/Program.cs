@@ -113,7 +113,7 @@ namespace Library.Tools
                     using (var readerStream = new StreamReader(args[2]))
                     using (var writerStream = new StreamWriter(args[2] + "~", false, new UTF8Encoding(false)))
                     {
-                        for (; ; )
+                        for (;;)
                         {
                             var line = readerStream.ReadLine();
                             if (line == null)
@@ -187,7 +187,7 @@ namespace Library.Tools
                     {
                         bool isRead = false;
 
-                        for (; ; )
+                        for (;;)
                         {
                             string line = reader.ReadLine();
                             if (line == null)
@@ -269,7 +269,7 @@ namespace Library.Tools
                         bool isRegion = false;
                         bool isRewrite = false;
 
-                        for (; ; )
+                        for (;;)
                         {
                             string line = reader.ReadLine();
                             if (line == null)
@@ -358,7 +358,7 @@ namespace Library.Tools
                         bool isRegion = false;
                         bool isRewrite = false;
 
-                        for (; ; )
+                        for (;;)
                         {
                             string line = reader.ReadLine();
                             if (line == null)
@@ -407,7 +407,7 @@ namespace Library.Tools
                     {
                         var tempList = new List<string>();
 
-                        for (; ; )
+                        for (;;)
                         {
                             string line = reader.ReadLine();
                             if (line == null) break;
@@ -431,7 +431,7 @@ namespace Library.Tools
                     {
                         var tempList = new List<string>();
 
-                        for (; ; )
+                        for (;;)
                         {
                             string line = reader.ReadLine();
                             if (line == null) break;
@@ -608,7 +608,7 @@ namespace Library.Tools
 
                     try
                     {
-                        for (; ; )
+                        for (;;)
                         {
                             Thread.Sleep(1000);
 
@@ -734,7 +734,7 @@ namespace Library.Tools
 
         private static string GetUniqueFileName(string path)
         {
-            for (; ; )
+            for (;;)
             {
                 if (!File.Exists(path))
                 {

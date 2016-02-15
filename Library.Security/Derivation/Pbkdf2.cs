@@ -136,7 +136,7 @@ namespace Library.Security
             for (int i = 2; i <= this.IterationCount; i++)
             {
                 currentHash = this.Algorithm.ComputeHash(currentHash, 0, currentHash.Length);
-                
+
                 Unsafe.Xor(finalHash, currentHash, finalHash);
             }
 

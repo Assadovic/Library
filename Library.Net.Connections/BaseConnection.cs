@@ -174,7 +174,7 @@ namespace Library.Net.Connections
                 {
                     _receiveStopwatch.Restart();
 
-                Restart: ;
+                    Restart:;
 
                     int length = 0;
 
@@ -288,7 +288,7 @@ namespace Library.Net.Connections
 
                             using (Stream dataStream = new UniteStream(headerStream, new WrapperStream(targetStream, true)))
                             {
-                                for (; ; )
+                                for (;;)
                                 {
                                     int sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, sendBuffer.Length);
                                     if (sendLength == 0) break;

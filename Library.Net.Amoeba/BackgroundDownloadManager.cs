@@ -63,7 +63,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _setKeys.Dequeue();
 
@@ -86,7 +86,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _removeKeys.Dequeue();
 
@@ -221,7 +221,7 @@ namespace Library.Net.Amoeba
             Random random = new Random();
             int round = 0;
 
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 3);
                 if (this.State == ManagerState.Stop) return;
@@ -334,7 +334,7 @@ namespace Library.Net.Amoeba
                                 if (limitCount <= 0) goto End;
                             }
 
-                        End: ;
+                            End:;
                         }
                         else
                         {
@@ -355,7 +355,7 @@ namespace Library.Net.Amoeba
 
         private void DecodeManagerThread()
         {
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 3);
                 if (this.State == ManagerState.Stop) return;
@@ -799,7 +799,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                for (; ; )
+                for (;;)
                 {
                     Thread.Sleep(1000);
                     if (this.State == ManagerState.Stop) return;
@@ -1116,7 +1116,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedList<BackgroundDownloadItem>>() { Name = "BackgroundDownloadItems", Value = new LockedList<BackgroundDownloadItem>() },
                     new Library.Configuration.SettingContent<LockedHashSet<string>>() { Name = "Signatures", Value = new LockedHashSet<string>() },
                 })

@@ -60,7 +60,7 @@ namespace Library.UnitTest
             {
                 Encoding encoding = new UTF8Encoding(false);
 
-                for (; ; )
+                for (;;)
                 {
                     byte id;
                     {

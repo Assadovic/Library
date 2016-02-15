@@ -70,7 +70,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _setKeys.Dequeue();
 
@@ -93,7 +93,7 @@ namespace Library.Net.Amoeba
             {
                 try
                 {
-                    for (; ; )
+                    for (;;)
                     {
                         var key = _removeKeys.Dequeue();
 
@@ -339,7 +339,7 @@ namespace Library.Net.Amoeba
             Random random = new Random();
             int round = 0;
 
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 3);
                 if (this.State == ManagerState.Stop) return;
@@ -455,7 +455,7 @@ namespace Library.Net.Amoeba
                                 if (limitCount <= 0) goto End;
                             }
 
-                        End: ;
+                            End:;
                         }
                         else
                         {
@@ -478,7 +478,7 @@ namespace Library.Net.Amoeba
         {
             Random random = new Random();
 
-            for (; ; )
+            for (;;)
             {
                 Thread.Sleep(1000 * 3);
                 if (this.DecodeState == ManagerState.Stop) return;
@@ -1258,7 +1258,7 @@ namespace Library.Net.Amoeba
             private volatile object _thisLock;
 
             public Settings(object lockObject)
-                : base(new List<Library.Configuration.ISettingContent>() { 
+                : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<string>() { Name = "BaseDirectory", Value = "" },
                     new Library.Configuration.SettingContent<LockedList<DownloadItem>>() { Name = "DownloadItems", Value = new LockedList<DownloadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "DownloadedSeeds", Value = new SeedCollection() },

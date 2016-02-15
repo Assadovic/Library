@@ -186,7 +186,7 @@ namespace Library.Io
 
             private void WatchThread()
             {
-                for (; ; )
+                for (;;)
                 {
                     byte[] buffer = null;
 
@@ -300,7 +300,7 @@ namespace Library.Io
                 {
                     int readSumLength = 0;
 
-                    for (; ; )
+                    for (;;)
                     {
                         if (_current == null) _current = _queue.Dequeue();
                         if (_current.Value.Array == null) return 0;
@@ -432,7 +432,7 @@ namespace Library.Io
 
             private void WatchThread()
             {
-                for (; ; )
+                for (;;)
                 {
                     ArraySegment<byte> buffer = new ArraySegment<byte>();
 
