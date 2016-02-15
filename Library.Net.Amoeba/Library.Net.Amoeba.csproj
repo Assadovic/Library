@@ -20,7 +20,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <ReleaseVersion>
     </ReleaseVersion>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

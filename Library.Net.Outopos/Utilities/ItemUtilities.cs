@@ -29,7 +29,7 @@ namespace Library.Net.Outopos
 
         public static int GetHashCode(byte[] buffer)
         {
-            if (buffer == null) throw new ArgumentNullException("buffer");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
                 new ArraySegment<byte>[]

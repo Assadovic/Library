@@ -181,7 +181,7 @@ namespace Library.Net.Connections
                     {
                         byte[] lengthbuffer = new byte[4];
 
-                        var time = BaseConnection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
+                        var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                         time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
                         _cap.Receive(lengthbuffer, time);
@@ -222,7 +222,7 @@ namespace Library.Net.Connections
                                     if (receiveLength < 0) throw new ConnectionException();
                                 }
 
-                                var time = BaseConnection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
+                                var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                                 time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
                                 _cap.Receive(receiveBuffer, 0, receiveLength, time);
@@ -266,8 +266,8 @@ namespace Library.Net.Connections
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_connect) throw new ConnectionException();
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (stream.Length == 0) throw new ArgumentOutOfRangeException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream.Length == 0) throw new ArgumentOutOfRangeException(nameof(stream));
 
             lock (_sendLock)
             {
@@ -301,7 +301,7 @@ namespace Library.Net.Connections
 
                                     dataStream.Read(sendBuffer, 0, sendLength);
 
-                                    var time = BaseConnection.CheckTimeout(_sendStopwatch.Elapsed, timeout);
+                                    var time = Connection.CheckTimeout(_sendStopwatch.Elapsed, timeout);
                                     time = (time < _sendTimeSpan) ? time : _sendTimeSpan;
 
                                     _cap.Send(sendBuffer, 0, sendLength, time);

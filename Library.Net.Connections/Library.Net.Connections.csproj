@@ -23,6 +23,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <ReleaseVersion>
     </ReleaseVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -42,6 +44,7 @@
         <Command type="BeforeBuild" command="&quot;$(SolutionDir)\Define.bat&quot; on &quot;$(ProjectDir)\KeyExchange\ECDiffieHellmanP521_Sha512.cs&quot; MONO" workingdir="${SolutionDir}" />
       </CustomCommands>
     </CustomCommands>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -59,6 +62,7 @@
         <Command type="BeforeBuild" command="&quot;$(SolutionDir)\Define.bat&quot; on &quot;$(ProjectDir)\KeyExchange\ECDiffieHellmanP521_Sha512.cs&quot; MONO" workingdir="${SolutionDir}" />
       </CustomCommands>
     </CustomCommands>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

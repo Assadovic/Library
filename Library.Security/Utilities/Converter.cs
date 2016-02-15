@@ -210,7 +210,7 @@ namespace Library.Security
 
         public static Stream ToDigitalSignatureStream(DigitalSignature item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -224,7 +224,7 @@ namespace Library.Security
 
         public static DigitalSignature FromDigitalSignatureStream(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {
@@ -238,7 +238,7 @@ namespace Library.Security
 
         public static Stream ToCertificateStream(Certificate item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -252,7 +252,7 @@ namespace Library.Security
 
         public static Certificate FromCertificateStream(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {

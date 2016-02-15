@@ -247,7 +247,7 @@ namespace Library.Net.Amoeba
 
         public static string ToNodeString(Node item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -264,7 +264,7 @@ namespace Library.Net.Amoeba
 
         public static Node FromNodeString(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             if (!item.StartsWith("Node:")) throw new ArgumentException("item");
 
             try
@@ -282,7 +282,7 @@ namespace Library.Net.Amoeba
 
         public static string ToSeedString(Seed item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -299,7 +299,7 @@ namespace Library.Net.Amoeba
 
         public static Seed FromSeedString(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             if (!item.StartsWith("Seed:")) throw new ArgumentException("item");
 
             try
@@ -317,7 +317,7 @@ namespace Library.Net.Amoeba
 
         public static Stream ToBoxStream(Box item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -331,7 +331,7 @@ namespace Library.Net.Amoeba
 
         public static Box FromBoxStream(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {

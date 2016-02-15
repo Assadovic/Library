@@ -92,7 +92,7 @@ namespace Library
 
         public override bool Equals(object obj)
         {
-            return base.Equals(obj);
+            return object.ReferenceEquals(this, obj);
         }
 
         #region IEquatable<T>

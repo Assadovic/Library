@@ -247,7 +247,7 @@ namespace Library.Net.Outopos
 
         public static string ToNodeString(Node item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -264,7 +264,7 @@ namespace Library.Net.Outopos
 
         public static Node FromNodeString(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             if (!item.StartsWith("Node:")) throw new ArgumentException("item");
 
             try
@@ -282,7 +282,7 @@ namespace Library.Net.Outopos
 
         public static string ToTagString(Tag item)
         {
-            if (item == null) throw new ArgumentNullException("Tag");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -299,7 +299,7 @@ namespace Library.Net.Outopos
 
         public static Tag FromTagString(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
             if (!item.StartsWith("Tag:")) throw new ArgumentException("item");
 
             try

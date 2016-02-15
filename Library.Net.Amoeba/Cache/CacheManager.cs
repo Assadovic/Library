@@ -582,7 +582,7 @@ namespace Library.Net.Amoeba
 
         public void Resize(long size)
         {
-            if (size < 0) throw new ArgumentOutOfRangeException("size");
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
             lock (this.ThisLock)
             {
@@ -828,7 +828,7 @@ namespace Library.Net.Amoeba
 
         public KeyCollection Share(Stream inStream, string path, HashAlgorithm hashAlgorithm, int blockLength)
         {
-            if (inStream == null) throw new ArgumentNullException("inStream");
+            if (inStream == null) throw new ArgumentNullException(nameof(inStream));
 
             byte[] buffer = _bufferManager.TakeBuffer(blockLength);
 
@@ -899,7 +899,7 @@ namespace Library.Net.Amoeba
         public KeyCollection Encoding(Stream inStream,
             CompressionAlgorithm compressionAlgorithm, CryptoAlgorithm cryptoAlgorithm, byte[] cryptoKey, int blockLength, HashAlgorithm hashAlgorithm)
         {
-            if (inStream == null) throw new ArgumentNullException("inStream");
+            if (inStream == null) throw new ArgumentNullException(nameof(inStream));
             if (!Enum.IsDefined(typeof(CompressionAlgorithm), compressionAlgorithm)) throw new ArgumentException("CompressAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(CryptoAlgorithm), cryptoAlgorithm)) throw new ArgumentException("CryptoAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(HashAlgorithm), hashAlgorithm)) throw new ArgumentException("HashAlgorithm に存在しない列挙");
@@ -1002,7 +1002,7 @@ namespace Library.Net.Amoeba
         public void Decoding(Stream outStream,
             CompressionAlgorithm compressionAlgorithm, CryptoAlgorithm cryptoAlgorithm, byte[] cryptoKey, KeyCollection keys)
         {
-            if (outStream == null) throw new ArgumentNullException("outStream");
+            if (outStream == null) throw new ArgumentNullException(nameof(outStream));
             if (!Enum.IsDefined(typeof(CompressionAlgorithm), compressionAlgorithm)) throw new ArgumentException("CompressAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(CryptoAlgorithm), cryptoAlgorithm)) throw new ArgumentException("CryptoAlgorithm に存在しない列挙");
 
@@ -1092,7 +1092,7 @@ namespace Library.Net.Amoeba
                     sw.Start();
 #endif
 
-                    if (keys.Count > 128) throw new ArgumentOutOfRangeException("keys");
+                    if (keys.Count > 128) throw new ArgumentOutOfRangeException(nameof(keys));
 
                     var buffers = new ArraySegment<byte>[keys.Count];
                     var parityBuffers = new ArraySegment<byte>[keys.Count];
@@ -1116,7 +1116,7 @@ namespace Library.Net.Amoeba
 
                                 if (bufferLength > blockLength)
                                 {
-                                    throw new ArgumentOutOfRangeException("blockLength");
+                                    throw new ArgumentOutOfRangeException(nameof(blockLength));
                                 }
                                 else if (bufferLength < blockLength)
                                 {
@@ -1284,7 +1284,7 @@ namespace Library.Net.Amoeba
 
                                 if (bufferLength > group.BlockLength)
                                 {
-                                    throw new ArgumentOutOfRangeException("group.BlockLength");
+                                    throw new ArgumentOutOfRangeException(nameof(group), "BlockLength");
                                 }
                                 else if (bufferLength < group.BlockLength)
                                 {

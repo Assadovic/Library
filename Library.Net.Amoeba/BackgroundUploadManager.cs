@@ -406,8 +406,8 @@ namespace Library.Net.Amoeba
 
         public void Upload(Link link, DigitalSignature digitalSignature)
         {
-            if (link == null) throw new ArgumentNullException("link");
-            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
+            if (link == null) throw new ArgumentNullException(nameof(link));
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
             lock (this.ThisLock)
             {
@@ -444,8 +444,8 @@ namespace Library.Net.Amoeba
 
         public void Upload(Store store, DigitalSignature digitalSignature)
         {
-            if (store == null) throw new ArgumentNullException("store");
-            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
+            if (store == null) throw new ArgumentNullException(nameof(store));
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
             lock (this.ThisLock)
             {

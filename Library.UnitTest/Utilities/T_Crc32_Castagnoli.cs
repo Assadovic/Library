@@ -38,15 +38,15 @@ namespace Library.UnitTest
         {
             if (buffer == null)
             {
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             }
             else if (offset < 0 || buffer.Length < offset)
             {
-                throw new ArgumentOutOfRangeException("offset");
+                throw new ArgumentOutOfRangeException(nameof(offset));
             }
             else if (length < 0 || (buffer.Length - offset) < length)
             {
-                throw new ArgumentOutOfRangeException("length");
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
 
             uint x = 0xFFFFFFFF;
@@ -67,7 +67,7 @@ namespace Library.UnitTest
         {
             if (buffer == null)
             {
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             }
 
             return T_Crc32_Castagnoli.ComputeHash(buffer, 0, buffer.Length);
@@ -77,7 +77,7 @@ namespace Library.UnitTest
         {
             if (value.Array == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             return T_Crc32_Castagnoli.ComputeHash(value.Array, value.Offset, value.Count);
@@ -87,7 +87,7 @@ namespace Library.UnitTest
         {
             if (inputStream == null)
             {
-                throw new ArgumentNullException("inputStream");
+                throw new ArgumentNullException(nameof(inputStream));
             }
 
             uint x = 0xFFFFFFFF;
@@ -110,7 +110,7 @@ namespace Library.UnitTest
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             uint x = 0xFFFFFFFF;

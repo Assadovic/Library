@@ -94,7 +94,7 @@ namespace Library.Net.I2p
         private void privateConstructor(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             this.reply = reply;
         }
         public SamReplyException(SamReply reply)
@@ -123,7 +123,7 @@ namespace Library.Net.I2p
         private static string replyGetErrorMessage(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             return reply.GetErrorMessage();
         }
         public SamBridgeErrorException(SamReply reply) :
@@ -250,7 +250,7 @@ namespace Library.Net.I2p
         public static string[] UnescapeAndTokenize(string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             StringBuilder builder = new StringBuilder(input.Length);
             int begin = 0;
@@ -276,7 +276,7 @@ namespace Library.Net.I2p
         public static SamReply Parse(string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             string[] tokens = UnescapeAndTokenize(input);
             if (tokens.Length < 2)
@@ -318,11 +318,11 @@ namespace Library.Net.I2p
         public static SamReply ParseReply(string input, string major, string minor)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             if (major == null)
-                throw new ArgumentNullException("major");
+                throw new ArgumentNullException(nameof(major));
             if (minor == null)
-                throw new ArgumentNullException("minor");
+                throw new ArgumentNullException(nameof(minor));
 
             SamReply reply = Parse(input);
             if (!reply.Check(major, minor))
@@ -337,9 +337,9 @@ namespace Library.Net.I2p
         public SamRequestBuilder(string major, string minor)
         {
             if (major == null)
-                throw new ArgumentNullException("major");
+                throw new ArgumentNullException(nameof(major));
             if (minor == null)
-                throw new ArgumentNullException("minor");
+                throw new ArgumentNullException(nameof(minor));
 
             this.Add(major);
             this.Add(minor);
@@ -445,7 +445,7 @@ namespace Library.Net.I2p
         public SamV3BridgeBasicCommunicator(NetworkStream stream)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
 
             this.Stream = stream;
         }
@@ -457,7 +457,7 @@ namespace Library.Net.I2p
         public void WriteLine(string command)
         {
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
 
             byte[] work = Encoding.ASCII.GetBytes(command + "\n");
             this.Stream.Write(work, 0, work.Length);
@@ -495,7 +495,7 @@ namespace Library.Net.I2p
         public string Communicate(string command, bool silence = false, int capacity = 0xc00)
         {
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
 
             this.WriteLine(command);
             if (silence)
@@ -515,9 +515,9 @@ namespace Library.Net.I2p
         public static string GenerateHelloVersion(string minVersion, string maxVersion, string options = null)
         {
             if (minVersion == null)
-                throw new ArgumentNullException("minVersion");
+                throw new ArgumentNullException(nameof(minVersion));
             if (maxVersion == null)
-                throw new ArgumentNullException("maxVersion");
+                throw new ArgumentNullException(nameof(maxVersion));
 
             SamRequestBuilder request = new SamRequestBuilder("HELLO", "VERSION");
             request.Add("MIN", minVersion);
@@ -530,7 +530,7 @@ namespace Library.Net.I2p
         public static string ParseHelloReply(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             if (!reply.Check("HELLO", "REPLY"))
                 throw new SamReplyMismatchException(reply);
             if (reply.ResultString != SamBridgeErrorMessage.OK)
@@ -557,9 +557,9 @@ namespace Library.Net.I2p
         public static string GenerateSessionCreate(string style, string id, string destination = null, string options = null)
         {
             if (style == null)
-                throw new ArgumentNullException("style");
+                throw new ArgumentNullException(nameof(style));
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (destination == null)
                 destination = "TRANSIENT";
 
@@ -575,7 +575,7 @@ namespace Library.Net.I2p
         public static string ParseSessionStatus(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             if (!reply.Check("SESSION", "STATUS"))
                 throw new SamReplyMismatchException(reply);
             if (reply.ResultString != SamBridgeErrorMessage.OK)
@@ -602,9 +602,9 @@ namespace Library.Net.I2p
         public static string GenerateStreamConnect(string id, string destination, bool? silence = null, string options = null)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (destination == null)
-                throw new ArgumentNullException("destination");
+                throw new ArgumentNullException(nameof(destination));
             bool silenceBool = silence ?? false;
             string silenceString = (silence == null) ? null : silenceBool ? "true" : "false";
 
@@ -620,7 +620,7 @@ namespace Library.Net.I2p
         public static void ParseStreamStatus(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             if (!reply.Check("STREAM", "STATUS"))
                 throw new SamReplyMismatchException(reply);
             if (reply.ResultString != SamBridgeErrorMessage.OK)
@@ -643,7 +643,7 @@ namespace Library.Net.I2p
         public static string GenerateStreamAccept(string id, bool? silence = null, string options = null)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             bool silenceBool = silence ?? false;
             string silenceString = (silence == null) ? null : silenceBool ? "true" : "false";
 
@@ -689,9 +689,9 @@ namespace Library.Net.I2p
         public static string GenerateStreamForward(string id, int port, string host = null, bool? silence = null, string options = null)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (port <= 0 || 65535 < port)
-                throw new ArgumentOutOfRangeException("port");
+                throw new ArgumentOutOfRangeException(nameof(port));
             bool silenceBool = silence ?? false;
             string silenceString = (silence == null) ? null : silenceBool ? "true" : "false";
 
@@ -734,7 +734,7 @@ namespace Library.Net.I2p
         public static SamLookupResult ParseNamingReply(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             if (!reply.Check("NAMING", "REPLY"))
                 throw new SamReplyMismatchException(reply);
             if (reply.ResultString != SamBridgeErrorMessage.OK)
@@ -766,7 +766,7 @@ namespace Library.Net.I2p
         public static SamDestination ParseDestReply(SamReply reply)
         {
             if (reply == null)
-                throw new ArgumentNullException("reply");
+                throw new ArgumentNullException(nameof(reply));
             if (!reply.Check("DEST", "REPLY"))
                 throw new SamReplyMismatchException(reply);
             if (reply.ResultString != SamBridgeErrorMessage.OK)
@@ -1042,22 +1042,22 @@ namespace Library.Net.I2p
             public static int ToCharArray(byte[] inArray, int offsetIn, int lengthIn, char[] outArray, int offsetOut)
             {
                 if (inArray == null)
-                    throw new ArgumentNullException("inArray");
+                    throw new ArgumentNullException(nameof(inArray));
                 if (offsetIn < 0 || inArray.Length < offsetIn)
-                    throw new ArgumentOutOfRangeException("offsetIn");
+                    throw new ArgumentOutOfRangeException(nameof(offsetIn));
                 if (lengthIn < 0 || inArray.Length < lengthIn)
-                    throw new ArgumentOutOfRangeException("lengthIn");
+                    throw new ArgumentOutOfRangeException(nameof(lengthIn));
                 if (inArray.Length - offsetIn < lengthIn)
                     throw new ArgumentOutOfRangeException();
                 if (outArray == null)
-                    throw new ArgumentNullException("outArray");
+                    throw new ArgumentNullException(nameof(outArray));
                 if (offsetOut < 0 || outArray.Length < offsetOut)
-                    throw new ArgumentOutOfRangeException("offsetOut");
+                    throw new ArgumentOutOfRangeException(nameof(offsetOut));
 
                 int lengthOut = CalculateLength(lengthIn);
 
                 if (lengthOut < 0 || outArray.Length < lengthOut)
-                    throw new ArgumentOutOfRangeException("offsetOut");
+                    throw new ArgumentOutOfRangeException(nameof(offsetOut));
                 if (outArray.Length - offsetOut < lengthOut)
                     throw new ArgumentOutOfRangeException();
 

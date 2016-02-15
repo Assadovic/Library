@@ -75,11 +75,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException("destinationHost");
+                throw new ArgumentNullException(nameof(destinationHost));
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -95,7 +95,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -111,7 +111,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -190,7 +190,7 @@ namespace Library.Net.Proxy
                 // negotiate which authentication methods are supported / accepted by the server
                 NegotiateServerAuthMethod();
 
-                Socks5ProxyClient.CheckTimeout(stopwatch.Elapsed, timeout);
+                ProxyClientBase.CheckTimeout(stopwatch.Elapsed, timeout);
 
                 // send a connect command to the proxy server for destination host and port
                 SendCommand(SOCKS5_CMD_CONNECT, _destinationHost, _destinationPort);
@@ -301,9 +301,9 @@ namespace Library.Net.Proxy
                 byte[] credentials = new byte[_proxyUserName.Length + _proxyPassword.Length + 3];
                 credentials[0] = SOCKS5_VERSION_NUMBER;
                 credentials[1] = (byte)_proxyUserName.Length;
-                Array.Copy(ASCIIEncoding.ASCII.GetBytes(_proxyUserName), 0, credentials, 2, _proxyUserName.Length);
+                Array.Copy(Encoding.ASCII.GetBytes(_proxyUserName), 0, credentials, 2, _proxyUserName.Length);
                 credentials[_proxyUserName.Length + 2] = (byte)_proxyPassword.Length;
-                Array.Copy(ASCIIEncoding.ASCII.GetBytes(_proxyPassword), 0, credentials, _proxyUserName.Length + 3, _proxyPassword.Length);
+                Array.Copy(Encoding.ASCII.GetBytes(_proxyPassword), 0, credentials, _proxyUserName.Length + 3, _proxyPassword.Length);
 
                 // USERNAME / PASSWORD SERVER RESPONSE
                 // The server verifies the supplied UNAME and PASSWD, and sends the
@@ -467,7 +467,7 @@ namespace Library.Net.Proxy
                         addrBytes[i] = response[i + 5];
                     }
 
-                    addr = System.Text.ASCIIEncoding.ASCII.GetString(addrBytes);
+                    addr = Encoding.ASCII.GetString(addrBytes);
                     byte[] portBytesDomain = new byte[2];
                     portBytesDomain[0] = response[6 + addrLen];
                     portBytesDomain[1] = response[5 + addrLen];

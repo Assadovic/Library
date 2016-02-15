@@ -50,9 +50,9 @@ namespace Library
 
         public static string ToBase64UrlString(byte[] value, int offset, int length)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException("length");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException(nameof(length));
 
             var charArray = System.Convert.ToBase64String(value, offset, length).ToCharArray();
             var charLength = charArray.Length;
@@ -85,7 +85,7 @@ namespace Library
 
         public static byte[] FromBase64UrlString(string value)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             char[] charArray = null;
 
@@ -154,9 +154,9 @@ namespace Library
         /// <returns>変換された文字列</returns>
         public static string ToHexString(byte[] value, int offset, int length)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException("length");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException(nameof(length));
 
             char[] array = new char[length * 2];
 
@@ -180,9 +180,9 @@ namespace Library
 
         internal static string ToHexString_2(byte[] value, int offset, int length)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException("length");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException(nameof(length));
 
             char[] array = new char[length * 2];
 
@@ -217,7 +217,7 @@ namespace Library
         /// <returns>変換されたバイト配列</returns>
         public static byte[] FromHexString(string value)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             if (value.Length % 2 != 0)
             {
@@ -275,7 +275,7 @@ namespace Library
 
         internal static byte[] FromHexString_2(string value)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             if (value.Length % 2 != 0)
             {
@@ -447,9 +447,9 @@ namespace Library
 
         public static bool ToBoolean(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 1) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 1) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 1) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 1) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToBoolean(NetworkConverter.GetReverse(value, offset, 1), 0);
             else return System.BitConverter.ToBoolean(value, offset);
@@ -462,9 +462,9 @@ namespace Library
 
         public static char ToChar(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 2) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 2) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToChar(NetworkConverter.GetReverse(value, offset, 2), 0);
             else return System.BitConverter.ToChar(value, offset);
@@ -477,9 +477,9 @@ namespace Library
 
         public static float ToSingle(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 4) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 4) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToSingle(NetworkConverter.GetReverse(value, offset, 4), 0);
             else return System.BitConverter.ToSingle(value, offset);
@@ -492,9 +492,9 @@ namespace Library
 
         public static double ToDouble(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 8) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 8) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToDouble(NetworkConverter.GetReverse(value, offset, 8), 0);
             else return System.BitConverter.ToDouble(value, offset);
@@ -507,9 +507,9 @@ namespace Library
 
         public static short ToInt16(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 2) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 2) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToInt16(NetworkConverter.GetReverse(value, offset, 2), 0);
             else return System.BitConverter.ToInt16(value, offset);
@@ -522,9 +522,9 @@ namespace Library
 
         public static int ToInt32(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 4) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 4) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian)
             {
@@ -551,9 +551,9 @@ namespace Library
 
         public static long ToInt64(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 8) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 8) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian)
             {
@@ -584,9 +584,9 @@ namespace Library
 
         public static ushort ToUInt16(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 2) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 2) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 2) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian) return System.BitConverter.ToUInt16(NetworkConverter.GetReverse(value, offset, 2), 0);
             else return System.BitConverter.ToUInt16(value, offset);
@@ -599,9 +599,9 @@ namespace Library
 
         public static uint ToUInt32(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 4) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 4) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 4) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian)
             {
@@ -628,9 +628,9 @@ namespace Library
 
         public static ulong ToUInt64(byte[] value, int offset)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            if (value.Length < 8) throw new ArgumentOutOfRangeException("value");
-            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException("offset");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length < 8) throw new ArgumentOutOfRangeException(nameof(value));
+            if ((value.Length - offset) < 8) throw new ArgumentOutOfRangeException(nameof(offset));
 
             if (System.BitConverter.IsLittleEndian)
             {

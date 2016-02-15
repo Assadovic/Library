@@ -85,8 +85,8 @@ namespace Library.Net.Proxy
 
             byte[] destIp = { 0, 0, 0, 1 }; // build the invalid ip address as specified in the 4a protocol
             byte[] destPort = GetDestinationPortBytes(destinationPort);
-            byte[] userIdBytes = ASCIIEncoding.ASCII.GetBytes(userId);
-            byte[] hostBytes = ASCIIEncoding.ASCII.GetBytes(destinationHost);
+            byte[] userIdBytes = Encoding.ASCII.GetBytes(userId);
+            byte[] hostBytes = Encoding.ASCII.GetBytes(destinationHost);
             byte[] request = new byte[10 + userIdBytes.Length + hostBytes.Length];
 
             // set the bits on the request byte array

@@ -588,7 +588,7 @@ namespace Library.UnitTest
                         _random.NextBytes(id);
                         var key = new Key(id, HashAlgorithm.Sha256);
                         var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
-                        var metadata = new UnicastMetadata(digitalSignature.ToString(), DateTime.UtcNow, key, miner, digitalSignature);
+                        var metadata = new UnicastMetadata(digitalSignature.ToString(), DateTime.UtcNow, key, digitalSignature);
 
                         metadatas1.Add(metadata);
                     }

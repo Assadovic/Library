@@ -315,7 +315,7 @@ namespace Library.Net.Outopos
 
         public void Resize(long size)
         {
-            if (size < 0) throw new ArgumentOutOfRangeException("size");
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
             lock (this.ThisLock)
             {

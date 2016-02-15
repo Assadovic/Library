@@ -58,7 +58,7 @@ namespace Library.Security
 
         public Cash Create(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             if (this.Limit == 0 || this.ComputationTime <= TimeSpan.Zero) return null;
 
@@ -96,7 +96,7 @@ namespace Library.Security
 
         public static int Verify(Cash cash, Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             if (cash == null) return 0;
 
@@ -135,8 +135,8 @@ namespace Library.Security
 
             public byte[] Create_1(byte[] value, int limit, TimeSpan computationTime)
             {
-                if (value == null) throw new ArgumentNullException("value");
-                if (value.Length != 32) throw new ArgumentOutOfRangeException("value");
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value.Length != 32) throw new ArgumentOutOfRangeException(nameof(value));
 
 #if DEBUG
                 var info = new ProcessStartInfo(@"C:\Local\Projects\Alliance-Network\Library\Library.Tools\bin\Debug\Library.Tools.exe");
@@ -210,10 +210,10 @@ namespace Library.Security
 
             public int Verify_1(byte[] key, byte[] value)
             {
-                if (key == null) throw new ArgumentNullException("key");
-                if (key.Length != 32) throw new ArgumentOutOfRangeException("key");
-                if (value == null) throw new ArgumentNullException("value");
-                if (value.Length != 32) throw new ArgumentOutOfRangeException("value");
+                if (key == null) throw new ArgumentNullException(nameof(key));
+                if (key.Length != 32) throw new ArgumentOutOfRangeException(nameof(key));
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value.Length != 32) throw new ArgumentOutOfRangeException(nameof(value));
 
                 var bufferManager = BufferManager.Instance;
 

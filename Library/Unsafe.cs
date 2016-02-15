@@ -75,13 +75,13 @@ namespace Library
 
         public static void Copy(byte[] source, int sourceIndex, byte[] destination, int destinationIndex, int length)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (destination == null) throw new ArgumentNullException("destination");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
 
-            if (0 > (source.Length - sourceIndex)) throw new ArgumentOutOfRangeException("sourceIndex");
-            if (0 > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
-            if (length > (source.Length - sourceIndex)) throw new ArgumentOutOfRangeException("length");
-            if (length > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException("length");
+            if (0 > (source.Length - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            if (0 > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            if (length > (source.Length - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
 
             if (length == 0) return;
 
@@ -104,8 +104,8 @@ namespace Library
         // http://stackoverflow.com/questions/43289/comparing-two-byte-arrays-in-net
         public static bool Equals(byte[] source1, byte[] source2)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
             if (object.ReferenceEquals(source1, source2)) return true;
             if (source1.Length != source2.Length) return false;
@@ -120,13 +120,13 @@ namespace Library
 
         public static bool Equals(byte[] source1, int source1Index, byte[] source2, int source2Index, int length)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
-            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("source1Index");
-            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("source2Index");
-            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("length");
-            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("length");
+            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(source1Index));
+            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(source2Index));
+            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(length));
 
             fixed (byte* p_x = source1, p_y = source2)
             {
@@ -138,8 +138,8 @@ namespace Library
 
         public static int Compare(byte[] source1, byte[] source2)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
             if (source1.Length != source2.Length) return (source1.Length > source2.Length) ? 1 : -1;
 
@@ -164,8 +164,8 @@ namespace Library
 
         internal static int Compare2(byte[] source1, byte[] source2)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
             if (source1.Length != source2.Length) return (source1.Length > source2.Length) ? 1 : -1;
 
@@ -179,13 +179,13 @@ namespace Library
 
         public static int Compare(byte[] source1, int source1Index, byte[] source2, int source2Index, int length)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
-            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("source1Index");
-            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("source2Index");
-            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("length");
-            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("length");
+            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(source1Index));
+            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(source2Index));
+            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(length));
 
             if (length == 0) return 0;
 
@@ -209,13 +209,13 @@ namespace Library
 
         internal static int Compare2(byte[] source1, int source1Index, byte[] source2, int source2Index, int length)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
 
-            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("source1Index");
-            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("source2Index");
-            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("length");
-            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("length");
+            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(source1Index));
+            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(source2Index));
+            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(length));
 
             if (length == 0) return 0;
 
@@ -229,9 +229,9 @@ namespace Library
 
         public static void Xor(byte[] source1, byte[] source2, byte[] destination)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
-            if (destination == null) throw new ArgumentNullException("destination");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
 
             // Zero
             {
@@ -265,16 +265,16 @@ namespace Library
 
         public static void Xor(byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
         {
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (source2 == null) throw new ArgumentNullException("source2");
-            if (destination == null) throw new ArgumentNullException("destination");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
 
-            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("source1Index");
-            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("source2Index");
-            if (0 > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
-            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException("length");
-            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException("length");
-            if (length > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException("length");
+            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(source1Index));
+            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(source2Index));
+            if (0 > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (length > (destination.Length - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
 
             fixed (byte* p_x = source1, p_y = source2)
             {

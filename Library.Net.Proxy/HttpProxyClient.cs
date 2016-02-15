@@ -72,11 +72,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException("destinationHost");
+                throw new ArgumentNullException(nameof(destinationHost));
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -92,7 +92,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -159,7 +159,7 @@ namespace Library.Net.Proxy
             // <CR><LF>    // Last Empty Line
 
             string connectCmd = String.Format(CultureInfo.InvariantCulture, HTTP_PROXY_CONNECT_CMD, host, port.ToString(CultureInfo.InvariantCulture));
-            byte[] request = ASCIIEncoding.ASCII.GetBytes(connectCmd);
+            byte[] request = Encoding.ASCII.GetBytes(connectCmd);
 
             // send the connect request
             stream.Write(request, 0, request.Length);
@@ -184,7 +184,7 @@ namespace Library.Net.Proxy
             {
                 bytes = stream.Read(response, 0, _tcpClient.ReceiveBufferSize);
                 total += bytes;
-                sbuilder.Append(System.Text.ASCIIEncoding.UTF8.GetString(response, 0, bytes));
+                sbuilder.Append(Encoding.UTF8.GetString(response, 0, bytes));
             }
             while (stream.DataAvailable);
 

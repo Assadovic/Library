@@ -39,9 +39,9 @@ namespace Library.Security
         /// <exception cref="System.ArgumentNullException">Algorithm cannot be null - Password cannot be null. -or- Salt cannot be null.</exception>
         public Pbkdf2(HMAC algorithm, byte[] password, byte[] salt, int iterations)
         {
-            if (algorithm == null) throw new ArgumentNullException("algorithm", "Algorithm cannot be null.");
-            if (password == null) throw new ArgumentNullException("password", "Password cannot be null.");
-            if (salt == null) throw new ArgumentNullException("salt", "Salt cannot be null.");
+            if (algorithm == null) throw new ArgumentNullException(nameof(algorithm), "Algorithm cannot be null.");
+            if (password == null) throw new ArgumentNullException(nameof(password), "Password cannot be null.");
+            if (salt == null) throw new ArgumentNullException(nameof(salt), "Salt cannot be null.");
 
             this.Algorithm = algorithm;
             this.Algorithm.Key = password;

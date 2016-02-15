@@ -121,7 +121,7 @@ namespace Library.Security
 
         public static bool Check(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -144,7 +144,7 @@ namespace Library.Security
 
         public static string GetNickname(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {
@@ -167,7 +167,7 @@ namespace Library.Security
 
         public static byte[] GetHash(string item)
         {
-            if (item == null) throw new ArgumentNullException("item");
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
             try
             {

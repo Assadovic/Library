@@ -208,7 +208,7 @@ namespace Library.Net.Upnp
                     "  <u:GetExternalIPAddress xmlns:u=\"" + serviceType + "\">" + "</u:GetExternalIPAddress>" +
                     " </s:Body>" +
                     "</s:Envelope>";
-                byte[] body = System.Text.UTF8Encoding.ASCII.GetBytes(soapBody);
+                byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
                 Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
@@ -289,7 +289,7 @@ namespace Library.Net.Upnp
                     "  </u:AddPortMapping>" +
                     " </s:Body>" +
                     "</s:Envelope>";
-                byte[] body = System.Text.UTF8Encoding.ASCII.GetBytes(soapBody);
+                byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
                 Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
@@ -358,7 +358,7 @@ namespace Library.Net.Upnp
                     "  </u:DeletePortMapping>" +
                     " </s:Body>" +
                     "</s:Envelope>";
-                byte[] body = System.Text.UTF8Encoding.ASCII.GetBytes(soapBody);
+                byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
                 Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
@@ -414,7 +414,7 @@ namespace Library.Net.Upnp
                     "  </u:GetGenericPortMappingEntry>" +
                     " </s:Body>" +
                     "</s:Envelope>";
-                byte[] body = System.Text.UTF8Encoding.ASCII.GetBytes(soapBody);
+                byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
                 Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 

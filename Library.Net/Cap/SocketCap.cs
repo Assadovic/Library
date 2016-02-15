@@ -20,7 +20,7 @@ namespace Library.Net
 
         public SocketCap(Socket socket)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
+            if (socket == null) throw new ArgumentNullException(nameof(socket));
             if (!socket.Connected) throw new ArgumentException("Socket is not connected.");
 
             _socket = socket;
@@ -52,7 +52,7 @@ namespace Library.Net
 
                     do
                     {
-                        var time = SocketCap.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
+                        var time = Cap.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                         _socket.ReceiveTimeout = (int)Math.Min(int.MaxValue, time.TotalMilliseconds);
 
                         int receiveLength;
