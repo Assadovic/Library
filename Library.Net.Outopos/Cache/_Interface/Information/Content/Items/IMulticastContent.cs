@@ -6,7 +6,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IMulticastContent : IComputeHash
+    public interface IMulticastContent
     {
         string Comment { get; }
     }

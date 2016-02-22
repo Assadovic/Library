@@ -38,7 +38,7 @@ namespace Library.UnitTest
                 Xz.Decompress(new WrapperStream(stream2, true), new WrapperStream(stream3, true), _bufferManager);
 
                 sw.Stop();
-                Debug.WriteLine(string.Format("Xz: {0}", sw.Elapsed.ToString()));
+                Console.WriteLine(string.Format("Xz: {0}", sw.Elapsed.ToString()));
 
                 stream1.Seek(0, SeekOrigin.Begin);
                 stream3.Seek(0, SeekOrigin.Begin);
@@ -84,7 +84,7 @@ namespace Library.UnitTest
                 Lzma.Decompress(new WrapperStream(stream2, true), new WrapperStream(stream3, true), _bufferManager);
 
                 sw.Stop();
-                Debug.WriteLine(string.Format("Lzma: {0}", sw.Elapsed.ToString()));
+                Console.WriteLine(string.Format("Lzma: {0}", sw.Elapsed.ToString()));
 
                 stream1.Seek(0, SeekOrigin.Begin);
                 stream3.Seek(0, SeekOrigin.Begin);

@@ -6,7 +6,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IBroadcastContent : IComputeHash
+    public interface IBroadcastContent
     {
         int Cost { get; }
         ExchangePublicKey ExchangePublicKey { get; }

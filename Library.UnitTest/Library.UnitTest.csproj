@@ -45,9 +45,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Program Files (x86)\NUnit 2.6.3\bin\framework\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework, Version=3.0.5813.39031, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.0.1\lib\net45\nunit.framework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System">
     </Reference>
@@ -77,6 +77,7 @@
     <Compile Include="Benchmark\Benchmark_ToHexString.cs" />
     <Compile Include="Benchmark\Benchmark_FromHexString.cs" />
     <Compile Include="Benchmark\Benchmark_Xor.cs" />
+    <Compile Include="Setup.cs" />
     <Compile Include="Test_Library_Net_Outopos.cs" />
     <Compile Include="Test_Library_Compression.cs" />
     <Compile Include="Utilities\T_Crc32_Castagnoli.cs" />
@@ -151,6 +152,12 @@
     <Content Include="Properties\Library.UnitTest.readme">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

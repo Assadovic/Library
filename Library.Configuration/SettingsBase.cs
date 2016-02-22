@@ -58,7 +58,7 @@ namespace Library.Configuration
     public abstract class SettingsBase : ISettings
     {
         private Dictionary<string, Content> _dic = new Dictionary<string, Content>();
-        private const int _cacheSize = 1024 * 32;
+        private const int _cacheSize = 1024 * 1024;
 
         protected SettingsBase(IEnumerable<ISettingContent> contents)
         {

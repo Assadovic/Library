@@ -6,7 +6,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public interface IUnicastContent : IComputeHash
+    public interface IUnicastContent
     {
         string Comment { get; }
     }
