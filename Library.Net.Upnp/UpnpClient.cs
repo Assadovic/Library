@@ -35,15 +35,7 @@ namespace Library.Net.Upnp
             {
                 try
                 {
-#if Mono
-                    foreach (var machineIp in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-                    {
-                        if (machineIp.AddressFamily != AddressFamily.InterNetwork) continue;
-
-                        _services = GetServicesFromDevice(out _location, IPAddress.Parse("239.255.255.250"), machineIp, timeout);
-                        if (_services != null) return;
-                    }
-#else
+#if Windows
                     foreach (var nic in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
                         .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up))
                     {
@@ -52,6 +44,14 @@ namespace Library.Net.Upnp
                             .Where(n => n.AddressFamily == AddressFamily.InterNetwork)
                             .FirstOrDefault();
                         if (machineIp == null) continue;
+
+                        _services = GetServicesFromDevice(out _location, IPAddress.Parse("239.255.255.250"), machineIp, timeout);
+                        if (_services != null) return;
+                    }
+#else
+                    foreach (var machineIp in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+                    {
+                        if (machineIp.AddressFamily != AddressFamily.InterNetwork) continue;
 
                         _services = GetServicesFromDevice(out _location, IPAddress.Parse("239.255.255.250"), machineIp, timeout);
                         if (_services != null) return;
@@ -508,19 +508,7 @@ namespace Library.Net.Upnp
         {
             if (_services == null) throw new UpnpClientException();
 
-#if Mono
-            string hostname = Dns.GetHostName();
-
-            foreach (var ipAddress in Dns.GetHostAddresses(hostname))
-            {
-                if (ipAddress.AddressFamily != AddressFamily.InterNetwork) continue;
-
-                if (OpenPort(protocol, ipAddress.ToString(), externalPort, internalPort, description, timeout))
-                {
-                    return true;
-                }
-            }
-#else
+#if Windows
             foreach (var nic in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
                 .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up))
             {
@@ -537,6 +525,18 @@ namespace Library.Net.Upnp
                 if (gatewayIp == null) continue;
 
                 if (gatewayIp.ToString() == _location.Host && OpenPort(protocol, machineIp.ToString(), externalPort, internalPort, description, timeout))
+                {
+                    return true;
+                }
+            }
+#else
+            string hostname = Dns.GetHostName();
+
+            foreach (var ipAddress in Dns.GetHostAddresses(hostname))
+            {
+                if (ipAddress.AddressFamily != AddressFamily.InterNetwork) continue;
+
+                if (OpenPort(protocol, ipAddress.ToString(), externalPort, internalPort, description, timeout))
                 {
                     return true;
                 }

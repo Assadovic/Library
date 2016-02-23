@@ -204,9 +204,7 @@ namespace Library.Correction
 
         private unsafe class Math : ManagerBase
         {
-#if Mono
-
-#else
+#if Windows
             private NativeLibraryManager _nativeLibraryManager;
 
             delegate void MulDelegate(byte* src, byte* dst, byte* mulc, int len);
@@ -273,9 +271,7 @@ namespace Library.Correction
 
             public Math()
             {
-#if Mono
-
-#else
+#if Windows
                 try
                 {
                     if (System.Environment.Is64BitProcess)
@@ -429,7 +425,33 @@ namespace Library.Correction
                 return new byte[rows * cols];
             }
 
-#if Mono
+#if Windows             
+            public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
+            {
+                // nop, optimize
+                if (c == 0) return;
+
+                // use our multiplication table.
+                // Instead of doing gf_mul_table[c,x] for multiply, we'll save
+                // the gf_mul_table[c] to a local variable since it is going to
+                // be used many times.
+                byte[] gf_mulc = _gf_mul_table[c];
+
+                try
+                {
+                    fixed (byte* p_dst = dst)
+                    fixed (byte* p_src = src)
+                    fixed (byte* p_gf_mulc = gf_mulc)
+                    {
+                        _mul(p_src + srcPos, p_dst + dstPos, p_gf_mulc, len);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                }
+            }
+#else
             public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
             {
                 // nop, optimize
@@ -497,32 +519,6 @@ namespace Library.Correction
                         {
                             p_dst[i] ^= p_gf_mulc[p_src[j]];
                         }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-            }
-#else
-            public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
-            {
-                // nop, optimize
-                if (c == 0) return;
-
-                // use our multiplication table.
-                // Instead of doing gf_mul_table[c,x] for multiply, we'll save
-                // the gf_mul_table[c] to a local variable since it is going to
-                // be used many times.
-                byte[] gf_mulc = _gf_mul_table[c];
-
-                try
-                {
-                    fixed (byte* p_dst = dst)
-                    fixed (byte* p_src = src)
-                    fixed (byte* p_gf_mulc = gf_mulc)
-                    {
-                        _mul(p_src + srcPos, p_dst + dstPos, p_gf_mulc, len);
                     }
                 }
                 catch (Exception e)
@@ -851,9 +847,7 @@ namespace Library.Correction
 
                 if (disposing)
                 {
-#if Mono
-
-#else
+#if Windows
                     if (_nativeLibraryManager != null)
                     {
                         try

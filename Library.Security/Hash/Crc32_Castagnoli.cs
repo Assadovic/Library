@@ -10,9 +10,7 @@ namespace Library.Security
     {
         private static readonly ThreadLocal<Encoding> _threadLocalEncoding = new ThreadLocal<Encoding>(() => new UTF8Encoding(false));
 
-#if Mono
-
-#else
+#if Windows
         private static NativeLibraryManager _nativeLibraryManager;
 
         delegate uint ComputeDelegate(uint x, byte* src, int len);
@@ -21,9 +19,7 @@ namespace Library.Security
 
         static Crc32_Castagnoli()
         {
-#if Mono
-
-#else
+#if Windows
             try
             {
                 if (System.Environment.Is64BitProcess)

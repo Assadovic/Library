@@ -1316,7 +1316,7 @@ namespace Library.Net.Outopos
                                 var array = messageManager.PullBlocksLink.ToArray();
                                 _random.Shuffle(array);
 
-                                int count = (int)(_maxBlockLinkCount * ((double)12 / otherNodes.Count));
+                                int count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
@@ -1356,7 +1356,7 @@ namespace Library.Net.Outopos
                                 var array = _cacheManager.ExceptFrom(messageManager.PullBlocksRequest.ToArray()).ToArray();
                                 _random.Shuffle(array);
 
-                                int count = (int)(_maxBlockRequestCount * ((double)12 / otherNodes.Count));
+                                int count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {

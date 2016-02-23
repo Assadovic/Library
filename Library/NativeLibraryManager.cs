@@ -6,9 +6,7 @@ using System.Text;
 
 namespace Library
 {
-#if Mono
-
-#else
+#if Windows
     public class NativeLibraryManager : ManagerBase
     {
         private volatile bool _disposed;

@@ -9,9 +9,7 @@ namespace Library
 {
     public unsafe static class Unsafe
     {
-#if Mono
-
-#else
+#if Windows
         private static NativeLibraryManager _nativeLibraryManager;
 
         [SuppressUnmanagedCodeSecurity]
@@ -32,9 +30,7 @@ namespace Library
 
         static Unsafe()
         {
-#if Mono
-
-#else
+#if Windows
             try
             {
                 if (System.Environment.Is64BitProcess)
