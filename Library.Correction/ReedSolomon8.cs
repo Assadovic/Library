@@ -1,3 +1,5 @@
+﻿#define Windows
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -451,7 +453,9 @@ namespace Library.Correction
                     Log.Error(e);
                 }
             }
-#else
+#endif
+
+#if Linux
             public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
             {
                 // nop, optimize

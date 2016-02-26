@@ -1,3 +1,5 @@
+﻿#define Windows
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -138,7 +140,7 @@ namespace Library.Security
                 if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value.Length != 32) throw new ArgumentOutOfRangeException(nameof(value));
 
-#if DEBUG
+#if DEBUG && Windows
                 var info = new ProcessStartInfo(@"C:\Local\Projects\Alliance-Network\Library\Library.Tools\bin\Debug\Library.Tools.exe");
                 info.CreateNoWindow = true;
                 info.UseShellExecute = false;
@@ -158,7 +160,7 @@ namespace Library.Security
                     if (computationTime < TimeSpan.Zero) timeout = -1;
                     else timeout = (int)computationTime.TotalSeconds;
 
-#if DEBUG
+#if DEBUG && Windows
                     info.Arguments = string.Format(
                         "Watcher \"{0}\" \"{1}\" hashcash1 create {2} {3} {4}",
                         Process.GetCurrentProcess().Id,
@@ -254,7 +256,7 @@ namespace Library.Security
 
             public void Cancel()
             {
-#if DEBUG
+#if DEBUG && Windows
                 string taskkill = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "taskkill.exe");
 
                 foreach (var process in _processes.ToArray())

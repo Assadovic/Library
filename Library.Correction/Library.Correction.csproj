@@ -27,7 +27,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;Windows</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>True</DebugSymbols>
@@ -43,7 +43,7 @@
     <DebugType>none</DebugType>
     <Optimize>True</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;Windows</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RegisterForComInterop>False</RegisterForComInterop>
@@ -97,8 +97,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PreBuildEvent>call "$(SolutionDir)Increment.bat" "$(ProjectPath)" "$(ProjectDir)Properties\AssemblyInfo.cs"
-</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
     <PostBuildEvent>
     </PostBuildEvent>
   </PropertyGroup>

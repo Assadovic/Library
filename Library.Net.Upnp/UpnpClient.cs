@@ -1,3 +1,5 @@
+﻿#define Windows
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -48,7 +50,9 @@ namespace Library.Net.Upnp
                         _services = GetServicesFromDevice(out _location, IPAddress.Parse("239.255.255.250"), machineIp, timeout);
                         if (_services != null) return;
                     }
-#else
+#endif
+
+#if Linux
                     foreach (var machineIp in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
                     {
                         if (machineIp.AddressFamily != AddressFamily.InterNetwork) continue;
@@ -529,7 +533,9 @@ namespace Library.Net.Upnp
                     return true;
                 }
             }
-#else
+#endif
+
+#if Linux
             string hostname = Dns.GetHostName();
 
             foreach (var ipAddress in Dns.GetHostAddresses(hostname))

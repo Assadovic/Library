@@ -20,7 +20,30 @@ namespace Library.Tools
         {
             try
             {
-                if (args.Length >= 2 && args[0] == "DigitalSignature_Create")
+                if (args.Length >= 4 && args[0] == "Define")
+                {
+                    List<string> list = new List<string>();
+
+                    using (FileStream inStream = new FileStream(args[3], FileMode.Open))
+                    using (StreamReader reader = new StreamReader(inStream))
+                    {
+                        for (;;)
+                        {
+                            string line = reader.ReadLine();
+                            if (line == null) break;
+
+                            list.Add(line);
+                        }
+                    }
+
+                    bool flag = (args[1] == "on");
+
+                    foreach (var item in list)
+                    {
+                        Program.Define(item, flag, args[2]);
+                    }
+                }
+                else if (args.Length >= 2 && args[0] == "DigitalSignature_Create")
                 {
                     var path = args[2];
                     var signPath = args[1];
@@ -69,10 +92,12 @@ namespace Library.Tools
                 }
                 else if (args.Length >= 3 && args[0] == "Increment")
                 {
-                    string baseDirectory = Path.GetDirectoryName(args[1]);
+                    string projectFilePath = args[1];
+
+                    string baseDirectory = Path.GetDirectoryName(projectFilePath);
                     List<string> filePaths = new List<string>();
 
-                    using (Stream stream = new FileStream(args[1], FileMode.Open))
+                    using (Stream stream = new FileStream(projectFilePath, FileMode.Open))
                     using (XmlTextReader xml = new XmlTextReader(stream))
                     {
                         while (xml.Read())
@@ -103,23 +128,22 @@ namespace Library.Tools
                         }
                     }
 
-                    filePaths.Remove(args[2]);
+                    string assemblyInfoFilePath = args[2];
+
+                    filePaths.Remove(assemblyInfoFilePath);
                     filePaths.Sort();
 
                     Regex regex = new Regex(@"^( *)\[( *)assembly( *):( *)AssemblyVersion( *)\(( *)" + "\"" + @"(\d*)\.(\d*)\.(\d*)\.(\d*)" + "\"" + @"( *)\)( *)\](.*)$");
                     byte[] hash = Program.GetHash(filePaths);
                     bool rewrite = false;
 
-                    using (var readerStream = new StreamReader(args[2]))
-                    using (var writerStream = new StreamWriter(args[2] + "~", false, new UTF8Encoding(false)))
+                    using (var readerStream = new StreamReader(assemblyInfoFilePath))
+                    using (var writerStream = new StreamWriter(assemblyInfoFilePath + "~", false, new UTF8Encoding(false)))
                     {
                         for (;;)
                         {
                             var line = readerStream.ReadLine();
-                            if (line == null)
-                            {
-                                break;
-                            }
+                            if (line == null) break;
 
                             var match = regex.Match(line);
 
@@ -129,7 +153,7 @@ namespace Library.Tools
 
                                 if (match.Groups[13].Value.TrimStart().StartsWith("//"))
                                 {
-                                    if (!Program.ArrayEquals(hash, Convert.FromBase64String(match.Groups[13].Value.TrimStart().Remove(0, 2).Trim())))
+                                    if (!Unsafe.Equals(hash, NetworkConverter.FromBase64UrlString(match.Groups[13].Value.TrimStart().Remove(0, 2).Trim())))
                                     {
                                         i++;
                                         rewrite = true;
@@ -155,7 +179,7 @@ namespace Library.Tools
                                     i.ToString(),
                                     match.Groups[11].Value,
                                     match.Groups[12].Value,
-                                    " // " + Convert.ToBase64String(hash)));
+                                    " // " + NetworkConverter.ToBase64UrlString(hash)));
                             }
                             else
                             {
@@ -164,15 +188,8 @@ namespace Library.Tools
                         }
                     }
 
-                    if (rewrite)
-                    {
-                        File.Delete(args[2]);
-                        File.Move(args[2] + "~", args[2]);
-                    }
-                    else
-                    {
-                        File.Delete(args[2] + "~");
-                    }
+                    File.Delete(assemblyInfoFilePath);
+                    File.Move(assemblyInfoFilePath + "~", assemblyInfoFilePath);
                 }
                 else if (args.Length >= 1 && args[0] == "Settings")
                 {
@@ -190,10 +207,7 @@ namespace Library.Tools
                         for (;;)
                         {
                             string line = reader.ReadLine();
-                            if (line == null)
-                            {
-                                break;
-                            }
+                            if (line == null) break;
 
                             if (line.Contains("new Library.Configuration.SettingContent"))
                             {
@@ -272,10 +286,7 @@ namespace Library.Tools
                         for (;;)
                         {
                             string line = reader.ReadLine();
-                            if (line == null)
-                            {
-                                break;
-                            }
+                            if (line == null) break;
 
                             if (!isRewrite)
                             {
@@ -361,10 +372,7 @@ namespace Library.Tools
                         for (;;)
                         {
                             string line = reader.ReadLine();
-                            if (line == null)
-                            {
-                                break;
-                            }
+                            if (line == null) break;
 
                             if (!isRewrite)
                             {
@@ -639,6 +647,119 @@ namespace Library.Tools
             }
         }
 
+        private static void Define(string path, bool on, string name)
+        {
+            Regex regex = new Regex(@"(.*)#(.*)define(\s*)(?<name>\S*)(.*)");
+
+            List<string> items = new List<string>();
+            StringBuilder content = new StringBuilder();
+
+            if (on)
+            {
+                bool writed = false;
+
+                using (FileStream inStream = new FileStream(path, FileMode.Open))
+                using (StreamReader reader = new StreamReader(inStream))
+                {
+                    string line;
+                    bool flag = false;
+
+                    while (null != (line = reader.ReadLine()))
+                    {
+                        if (!flag)
+                        {
+                            var match = regex.Match(line);
+
+                            if (match.Success)
+                            {
+                                items.Add(line);
+
+                                if (match.Groups["name"].Value == name)
+                                {
+                                    writed = true;
+                                }
+                            }
+                            else
+                            {
+                                content.AppendLine(line);
+
+                                if (!string.IsNullOrWhiteSpace(line))
+                                {
+                                    flag = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            content.AppendLine(line);
+                        }
+                    }
+                }
+
+                if (!writed)
+                {
+                    items.Add("#define " + name);
+                }
+            }
+            else
+            {
+                using (FileStream inStream = new FileStream(path, FileMode.Open))
+                using (StreamReader reader = new StreamReader(inStream))
+                {
+                    string line;
+                    bool flag = false;
+
+                    while (null != (line = reader.ReadLine()))
+                    {
+                        if (!flag)
+                        {
+                            var match = regex.Match(line);
+
+                            if (match.Success)
+                            {
+                                if (match.Groups["name"].Value != name)
+                                {
+                                    items.Add(line);
+                                }
+                            }
+                            else
+                            {
+                                content.AppendLine(line);
+
+                                if (!string.IsNullOrWhiteSpace(line))
+                                {
+                                    flag = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            content.AppendLine(line);
+                        }
+                    }
+                }
+            }
+
+            using (FileStream outStream = new FileStream(path + ".tmp", FileMode.Create))
+            using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(true)))
+            {
+                if (items.Count != 0)
+                {
+                    foreach (var line in items)
+                    {
+                        writer.WriteLine(line);
+                    }
+
+                    writer.WriteLine();
+                }
+
+                writer.Write(content.ToString().TrimStart('\r', '\n'));
+            }
+
+            File.Delete(path);
+            File.Move(path + ".tmp", path);
+        }
+
         private static void LanguageSetting(string languageXmlPath)
         {
             var directoryPath = Path.GetDirectoryName(languageXmlPath);
@@ -795,17 +916,17 @@ namespace Library.Tools
             {
                 foreach (var path in filePaths)
                 {
-                    using (var rstream = new FileStream(path, FileMode.Open, FileAccess.Read))
-                    using (var Sha256 = SHA256.Create())
+                    using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    using (var sha256 = SHA256.Create())
                     {
-                        var buffer = Sha256.ComputeHash(rstream);
+                        var buffer = sha256.ComputeHash(stream);
                         memoryStream.Write(buffer, 0, buffer.Length);
                     }
                 }
 
-                using (var Sha256 = SHA256.Create())
+                using (var sha256 = SHA256.Create())
                 {
-                    return Sha256.ComputeHash(memoryStream.ToArray());
+                    return sha256.ComputeHash(memoryStream.ToArray());
                 }
             }
         }
@@ -833,24 +954,6 @@ namespace Library.Tools
             }
 
             return list;
-        }
-
-        private static bool ArrayEquals(Array b1, Array b2)
-        {
-            if (b1.Length != b2.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < b1.Length; i++)
-            {
-                if (!b1.GetValue(i).Equals(b2.GetValue(i)))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private static IEnumerable<string> Decode(string option)

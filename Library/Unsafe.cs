@@ -1,3 +1,5 @@
+ï»¿#define Windows
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -141,7 +143,7 @@ namespace Library
 
             if (source1.Length == 0) return 0;
 
-            // ƒlƒCƒeƒBƒuŒÄ‚Ño‚µ‚Ì‘O‚ÉAÅ’áŒÀ‚Ì”äŠr‚ğs‚¤B
+            // ãƒã‚¤ãƒ†ã‚£ãƒ–å‘¼ã³å‡ºã—ã®å‰ã«ã€æœ€ä½é™ã®æ¯”è¼ƒã‚’è¡Œã†ã€‚
             {
                 int c;
                 if ((c = source1[0] - source2[0]) != 0) return c;
@@ -185,7 +187,7 @@ namespace Library
 
             if (length == 0) return 0;
 
-            // ƒlƒCƒeƒBƒuŒÄ‚Ño‚µ‚Ì‘O‚ÉAÅ’áŒÀ‚Ì”äŠr‚ğs‚¤B
+            // ãƒã‚¤ãƒ†ã‚£ãƒ–å‘¼ã³å‡ºã—ã®å‰ã«ã€æœ€ä½é™ã®æ¯”è¼ƒã‚’è¡Œã†ã€‚
             {
                 int c;
                 if ((c = source1[source1Index] - source2[source2Index]) != 0) return c;

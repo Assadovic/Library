@@ -30,7 +30,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;Windows</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>True</DebugSymbols>
@@ -39,30 +39,18 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CustomCommands>
-      <CustomCommands>
-        <Command type="BeforeBuild" command="&quot;$(SolutionDir)\Define.bat&quot; on &quot;$(ProjectDir)\KeyExchange\ECDiffieHellmanP521_Sha512.cs&quot; MONO" workingdir="${SolutionDir}" />
-      </CustomCommands>
-    </CustomCommands>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>True</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;Windows</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>none</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CustomCommands>
-      <CustomCommands>
-        <Command type="BeforeBuild" command="&quot;$(SolutionDir)\Define.bat&quot; on &quot;$(ProjectDir)\KeyExchange\ECDiffieHellmanP521_Sha512.cs&quot; MONO" workingdir="${SolutionDir}" />
-      </CustomCommands>
-    </CustomCommands>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -135,8 +123,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PreBuildEvent>call "$(SolutionDir)Increment.bat" "$(ProjectPath)" "$(ProjectDir)Properties\AssemblyInfo.cs"
-</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
