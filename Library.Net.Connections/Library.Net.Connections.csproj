@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{38994E3C-0699-4D6C-AD02-F9F657340347}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -21,8 +19,6 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ReleaseVersion>
-    </ReleaseVersion>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -94,7 +90,7 @@
       <Name>Library.Io</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net\Library.Net.csproj">
-      <Project>{7cfde01d-4a0e-4e10-acc2-34db897dbe0f}</Project>
+      <Project>{7CFDE01D-4A0E-4E10-ACC2-34DB897DBE0F}</Project>
       <Name>Library.Net</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library\Library.csproj">

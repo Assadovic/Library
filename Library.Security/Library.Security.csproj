@@ -3,16 +3,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D314C626-A6FC-4FD5-BE3C-9D36C2738418}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Library.Security</RootNamespace>
     <AssemblyName>Library.Security</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <ReleaseVersion>
-    </ReleaseVersion>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>

@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{82230C99-6599-4130-AAC9-FC926ABC0724}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -18,8 +16,6 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ReleaseVersion>
-    </ReleaseVersion>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -36,7 +32,6 @@
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -162,7 +157,7 @@
       <Name>Library.Net.Connections</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net.Proxy\Library.Net.Proxy.csproj">
-      <Project>{56eb350e-089e-40bb-97cb-f2745a4251ae}</Project>
+      <Project>{56EB350E-089E-40BB-97CB-F2745A4251AE}</Project>
       <Name>Library.Net.Proxy</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library\Library.csproj">

@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{AA2384F3-29B1-42D5-9A4C-52303965C287}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -32,6 +30,10 @@
     <DebugSymbols>true</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -40,15 +42,14 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DebugSymbols>false</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework, Version=3.0.5813.39031, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\packages\NUnit.3.0.1\lib\net45\nunit.framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System">
     </Reference>
     <Reference Include="System.Core">
@@ -65,6 +66,9 @@
     <Reference Include="System.Xml">
     </Reference>
     <Reference Include="System.Xml.Linq">
+    </Reference>
+    <Reference Include="nunit.framework, Version=3.0.5813.39031, Culture=neutral, PublicKeyToken=2638cd05610744eb">
+      <HintPath>..\packages\NUnit.3.0.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -101,7 +105,7 @@
       <Name>Library.Collections</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Compression\Library.Compression.csproj">
-      <Project>{51eccc57-56cb-44a0-9a43-db596f982fc8}</Project>
+      <Project>{51ECCC57-56CB-44A0-9A43-DB596F982FC8}</Project>
       <Name>Library.Compression</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Io\Library.Io.csproj">
@@ -109,7 +113,7 @@
       <Name>Library.Io</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net.Amoeba\Library.Net.Amoeba.csproj">
-      <Project>{82230c99-6599-4130-aac9-fc926abc0724}</Project>
+      <Project>{82230C99-6599-4130-AAC9-FC926ABC0724}</Project>
       <Name>Library.Net.Amoeba</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net.Connections\Library.Net.Connections.csproj">
@@ -117,16 +121,12 @@
       <Name>Library.Net.Connections</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net.Outopos\Library.Net.Outopos.csproj">
-      <Project>{ae8fe1eb-0280-48ce-a26a-f58e3ffe6b5d}</Project>
+      <Project>{AE8FE1EB-0280-48CE-A26A-F58E3FFE6B5D}</Project>
       <Name>Library.Net.Outopos</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Net\Library.Net.csproj">
       <Project>{7CFDE01D-4A0E-4E10-ACC2-34DB897DBE0F}</Project>
       <Name>Library.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Library.Net.UPnP\Library.Net.Upnp.csproj">
-      <Project>{7688AECF-92BD-4212-AAD8-6CD6D42BA6E3}</Project>
-      <Name>Library.Net.Upnp</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library.Configuration\Library.Configuration.csproj">
       <Project>{9AA70F88-4A83-4B3F-B494-7D37EA95766A}</Project>
@@ -144,12 +144,16 @@
       <Project>{63EADC1F-9A8A-4945-A562-DA666D0BCB7B}</Project>
       <Name>Library</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Library.Net.Upnp\Library.Net.Upnp.csproj">
+      <Project>{7688AECF-92BD-4212-AAD8-6CD6D42BA6E3}</Project>
+      <Name>Library.Net.Upnp</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\Library.UnitTest.License">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Properties\Library.UnitTest.readme">
+    <Content Include="Properties\Library.UnitTest.Readme">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
