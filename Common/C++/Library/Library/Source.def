@@ -4,4 +4,4 @@ EXPORTS
 	copy
 	equals
 	compare
-	xor
+	math_xor

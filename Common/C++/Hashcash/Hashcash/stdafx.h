@@ -5,15 +5,17 @@
 
 #pragma once
 
-#include "targetver.h"
-
 #include <stdio.h>
 #include <stdint.h>
 #include <string>
 #include <iostream>
 #include <time.h>
 #include <tchar.h>
+
+#ifdef WINDOWS
+#include "targetver.h"
 #include <windows.h>
+#endif
 
 #ifndef PORTABLE_32_BIT_TEST
     #if _WIN64 || __amd64__

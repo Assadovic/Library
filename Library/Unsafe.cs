@@ -47,7 +47,7 @@ namespace Library
                 _copy = _nativeLibraryManager.GetMethod<CopyDelegate>("copy");
                 _equals = _nativeLibraryManager.GetMethod<EqualsDelegate>("equals");
                 _compare = _nativeLibraryManager.GetMethod<CompareDelegate>("compare");
-                _xor = _nativeLibraryManager.GetMethod<XorDelegate>("xor");
+                _xor = _nativeLibraryManager.GetMethod<XorDelegate>("math_xor");
             }
             catch (Exception e)
             {

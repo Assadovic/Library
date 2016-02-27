@@ -30,4 +30,4 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -R $(BUILD)
-	rm -R $(OBJS)
+	rm $(OBJS)

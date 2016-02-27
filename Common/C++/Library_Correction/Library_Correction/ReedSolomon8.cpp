@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ReedSolomon8.h"
 
 // 32bit Test

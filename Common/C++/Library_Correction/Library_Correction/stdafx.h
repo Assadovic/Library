@@ -5,15 +5,12 @@
 
 #pragma once
 
-#if defined (WINDOWS)
-    #include "targetver.h"
-
-    #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-    // Windows Header Files:
-    #include <windows.h>
-#endif
-
 #include <stdio.h>
 #include <stdint.h>
+
+#ifdef WINDOWS
+#include "targetver.h"
+#include <windows.h>
+#endif
 
 typedef unsigned char byte;
