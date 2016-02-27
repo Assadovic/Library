@@ -9,7 +9,7 @@ SRCS = Unsafe.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 TARGET = Library.so
-BUILD = ./build
+BUILD = ../build
 
 .PHONY: all clean
 .SUFFIXES: .c .cpp .o

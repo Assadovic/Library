@@ -9,7 +9,7 @@ SRCS = Crc32_Castagnoli.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 TARGET = Library_Security.so
-BUILD = ./build
+BUILD = ../build
 
 .PHONY: all clean
 .SUFFIXES: .c .cpp .o

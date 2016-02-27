@@ -9,7 +9,7 @@ SRCS = ReedSolomon8.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 TARGET = Library_Correction.so
-BUILD = ./build
+BUILD = ../build
 
 .PHONY: all clean
 .SUFFIXES: .c .cpp .o
