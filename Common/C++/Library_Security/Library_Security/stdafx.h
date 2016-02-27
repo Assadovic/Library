@@ -5,10 +5,14 @@
 
 #pragma once
 
+#include <stdio.h>
+#include <stdint.h>
+
 #ifdef WINDOWS
 #include "targetver.h"
 #include <windows.h>
 #endif
 
-#include <stdio.h>
-#include <stdint.h>
+#ifdef LINUX
+typedef unsigned char byte;
+#endif

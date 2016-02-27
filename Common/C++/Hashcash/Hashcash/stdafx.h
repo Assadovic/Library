@@ -17,6 +17,10 @@
 #include <windows.h>
 #endif
 
+#ifdef LINUX
+typedef unsigned char byte;
+#endif
+
 #ifndef PORTABLE_32_BIT_TEST
     #if _WIN64 || __amd64__
     #define PORTABLE_64_BIT
