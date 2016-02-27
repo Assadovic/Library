@@ -35,9 +35,9 @@ namespace Library
 
         public static bool Equals<T>(IList<T> source, IList<T> destination, IEqualityComparer<T> equalityComparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (equalityComparer == null) throw new ArgumentNullException("equalityComparer");
 
             if (object.ReferenceEquals(source, destination)) return true;
             if (source.Count != destination.Count) return false;
@@ -52,9 +52,9 @@ namespace Library
 
         public static bool Equals<T>(IEnumerable<T> source, IEnumerable<T> destination, IEqualityComparer<T> equalityComparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (equalityComparer == null) throw new ArgumentNullException("equalityComparer");
 
             if (object.ReferenceEquals(source, destination)) return true;
 
@@ -75,14 +75,14 @@ namespace Library
 
         public static bool Equals<T>(IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length, IEqualityComparer<T> equalityComparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (equalityComparer == null) throw new ArgumentNullException("equalityComparer");
 
-            if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-            if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
-            if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(length));
-            if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("sourceIndex");
+            if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
+            if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("length");
+            if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("length");
 
             for (int i = sourceIndex, j = destinationIndex, k = 0; k < length; i++, j++, k++)
             {
@@ -94,27 +94,27 @@ namespace Library
 
         public static bool Equals<T>(IEnumerable<T> source, int sourceIndex, IEnumerable<T> destination, int destinationIndex, int length, IEqualityComparer<T> equalityComparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (equalityComparer == null) throw new ArgumentNullException("equalityComparer");
 
             using (var s = source.GetEnumerator())
             using (var d = destination.GetEnumerator())
             {
                 for (int i = 0; i < sourceIndex; i++)
                 {
-                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException("sourceIndex");
                 }
 
                 for (int i = 0; i < destinationIndex; i++)
                 {
-                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException("destinationIndex");
                 }
 
                 for (int i = 0; i < length; i++)
                 {
-                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException(nameof(length));
-                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException(nameof(length));
+                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException("length");
+                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException("length");
 
                     if (!equalityComparer.Equals(s.Current, d.Current)) return false;
                 }
@@ -155,10 +155,10 @@ namespace Library
 
                 if (x != null && y != null)
                 {
-                    if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-                    if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
-                    if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(length));
-                    if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
+                    if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("sourceIndex");
+                    if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
+                    if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("length");
+                    if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("length");
 
                     return Unsafe.Equals(x, sourceIndex, y, destinationIndex, length);
                 }
@@ -178,9 +178,9 @@ namespace Library
 
         public static int Compare<T>(IList<T> source, IList<T> destination, IComparer<T> comparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
             if (object.ReferenceEquals(source, destination)) return 0;
             if (source.Count != destination.Count) return (source.Count > destination.Count) ? 1 : -1;
@@ -197,9 +197,9 @@ namespace Library
 
         public static int Compare<T>(IEnumerable<T> source, IEnumerable<T> destination, IComparer<T> comparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
             if (object.ReferenceEquals(source, destination)) return 0;
 
@@ -227,14 +227,14 @@ namespace Library
 
         public static int Compare<T>(IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length, IComparer<T> comparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
-            if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-            if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
-            if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(length));
-            if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
+            if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("sourceIndex");
+            if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
+            if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("length");
+            if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("length");
 
             int c;
 
@@ -248,29 +248,29 @@ namespace Library
 
         public static int Compare<T>(IEnumerable<T> source, int sourceIndex, IEnumerable<T> destination, int destinationIndex, int length, IComparer<T> comparer)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
-            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+            if (source == null) throw new ArgumentNullException("source");
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
             using (var s = source.GetEnumerator())
             using (var d = destination.GetEnumerator())
             {
                 for (int i = 0; i < sourceIndex; i++)
                 {
-                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException("sourceIndex");
                 }
 
                 for (int i = 0; i < destinationIndex; i++)
                 {
-                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException("destinationIndex");
                 }
 
                 int c = 0;
 
                 for (int i = 0; i < length; i++)
                 {
-                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException(nameof(length));
-                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException(nameof(length));
+                    if (!s.MoveNext()) throw new ArgumentOutOfRangeException("length");
+                    if (!d.MoveNext()) throw new ArgumentOutOfRangeException("length");
 
                     if ((c = comparer.Compare(s.Current, d.Current)) != 0) return c;
                 }
@@ -311,10 +311,10 @@ namespace Library
 
                 if (x != null && y != null)
                 {
-                    if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-                    if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(destinationIndex));
-                    if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException(nameof(length));
-                    if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException(nameof(length));
+                    if (0 > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("sourceIndex");
+                    if (0 > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("destinationIndex");
+                    if (length > (source.Count - sourceIndex)) throw new ArgumentOutOfRangeException("length");
+                    if (length > (destination.Count - destinationIndex)) throw new ArgumentOutOfRangeException("length");
 
                     return Unsafe.Compare(x, sourceIndex, y, destinationIndex, length);
                 }

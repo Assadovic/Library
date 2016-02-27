@@ -105,8 +105,8 @@ namespace Library.Io
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
             if (count == 0) return 0;
 
             int readLength = _stream.Read(buffer, offset, count);
@@ -132,8 +132,8 @@ namespace Library.Io
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
             if (count == 0) return;
 
             _stream.Write(buffer, offset, count);

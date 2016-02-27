@@ -1,4 +1,4 @@
-﻿#define Windows
+﻿#define Linux
 
 using System;
 using System.Collections.Generic;

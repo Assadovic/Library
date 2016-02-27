@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{74597E45-7F3C-4958-8B6A-B16DE8DE47B9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -14,8 +12,6 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ReleaseVersion>
-    </ReleaseVersion>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -69,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library.Collections\Library.Collections.csproj">
-      <Project>{197c654f-2461-446a-b531-4a789f14be19}</Project>
+      <Project>{197C654F-2461-446A-B531-4A789F14BE19}</Project>
       <Name>Library.Collections</Name>
     </ProjectReference>
     <ProjectReference Include="..\Library\Library.csproj">

@@ -45,8 +45,8 @@ namespace Library.Net
         /// <param name="column">ノードリストの列数</param>
         public Kademlia(int row, int column)
         {
-            if (row <= 0) throw new ArgumentOutOfRangeException(nameof(row));
-            if (column <= 0) throw new ArgumentOutOfRangeException(nameof(column));
+            if (row <= 0) throw new ArgumentOutOfRangeException("row");
+            if (column <= 0) throw new ArgumentOutOfRangeException("column");
 
             _row = row;
             _column = column;
@@ -178,9 +178,9 @@ namespace Library.Net
 
         public static IEnumerable<T> Search(byte[] targetId, byte[] baseId, IEnumerable<T> nodeList, int count)
         {
-            if (targetId == null) throw new ArgumentNullException(nameof(targetId));
-            if (baseId == null) throw new ArgumentNullException(nameof(baseId));
-            if (nodeList == null) throw new ArgumentNullException(nameof(nodeList));
+            if (targetId == null) throw new ArgumentNullException("targetId");
+            if (baseId == null) throw new ArgumentNullException("baseId");
+            if (nodeList == null) throw new ArgumentNullException("nodeList");
 
             if (count == 0) yield break;
 
@@ -273,8 +273,8 @@ namespace Library.Net
 
         public static IEnumerable<T> Search(byte[] targetId, IEnumerable<T> nodeList, int count)
         {
-            if (targetId == null) throw new ArgumentNullException(nameof(targetId));
-            if (nodeList == null) throw new ArgumentNullException(nameof(nodeList));
+            if (targetId == null) throw new ArgumentNullException("targetId");
+            if (nodeList == null) throw new ArgumentNullException("nodeList");
 
             if (count == 0) yield break;
 
@@ -374,7 +374,7 @@ namespace Library.Net
 
             public void SetBufferSize(int bufferSize)
             {
-                if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
+                if (bufferSize <= 0) throw new ArgumentOutOfRangeException("bufferSize");
 
                 if (_bufferSize != bufferSize)
                 {
@@ -404,8 +404,8 @@ namespace Library.Net
         // Addより優先的に
         public void Live(T item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-            if (item.Id == null) throw new ArgumentException("item.Id", nameof(item));
+            if (item == null) throw new ArgumentNullException("item");
+            if (item.Id == null) throw new ArgumentException("item.Id", "item");
 
             lock (this.ThisLock)
             {
@@ -445,8 +445,8 @@ namespace Library.Net
 
         public void Add(T item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-            if (item.Id == null) throw new ArgumentException("item.Id", nameof(item));
+            if (item == null) throw new ArgumentNullException("item");
+            if (item.Id == null) throw new ArgumentException("item.Id", "item");
 
             lock (this.ThisLock)
             {
@@ -479,8 +479,8 @@ namespace Library.Net
 
         public IEnumerable<T> Search(byte[] targetId, int count)
         {
-            if (targetId == null) throw new ArgumentNullException(nameof(targetId));
-            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+            if (targetId == null) throw new ArgumentNullException("targetId");
+            if (count < 0) throw new ArgumentOutOfRangeException("count");
 
             lock (this.ThisLock)
             {
@@ -522,8 +522,8 @@ namespace Library.Net
 
         public bool Contains(T item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-            if (item.Id == null) throw new ArgumentException("item.Id", nameof(item));
+            if (item == null) throw new ArgumentNullException("item");
+            if (item.Id == null) throw new ArgumentException("item.Id", "item");
 
             lock (this.ThisLock)
             {
@@ -561,8 +561,8 @@ namespace Library.Net
 
         public bool Remove(T item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-            if (item.Id == null) throw new ArgumentException("item.Id", nameof(item));
+            if (item == null) throw new ArgumentNullException("item");
+            if (item.Id == null) throw new ArgumentException("item.Id", "item");
 
             lock (this.ThisLock)
             {

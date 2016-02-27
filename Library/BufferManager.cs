@@ -157,7 +157,7 @@ namespace Library
         public void ReturnBuffer(byte[] buffer)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (buffer == null) throw new ArgumentNullException("buffer");
 
             lock (_thisLock)
             {

@@ -28,8 +28,8 @@ namespace Library.Security
 
         public static byte[] ComputeHash(Stream inputStream, byte[] key)
         {
-            if (inputStream == null) throw new ArgumentNullException(nameof(inputStream));
-            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (inputStream == null) throw new ArgumentNullException("inputStream");
+            if (key == null) throw new ArgumentNullException("key");
 
             var bufferManager = BufferManager.Instance;
 

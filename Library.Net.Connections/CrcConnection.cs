@@ -147,8 +147,8 @@ namespace Library.Net.Connections
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_connect) throw new ConnectionException();
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (stream.Length == 0) throw new ArgumentOutOfRangeException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream.Length == 0) throw new ArgumentOutOfRangeException("stream");
 
             lock (_sendLock)
             {

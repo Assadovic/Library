@@ -1,8 +1,8 @@
-Library\NativeLibraryManager.cs
-Library\Unsafe.cs
-Library.Correction\ReedSolomon8.cs
-Library.Net.Connections\Utilities\EcDiffieHellmanP521_Sha512.cs
-Library.Net.Upnp\UpnpClient.cs
-Library.Security\Hash\Crc32_Castagnoli.cs
-Library.Security\Utilities\EcDsaP521_Sha512.cs
-Library.Security\Mining\Miner.cs
+Library/NativeLibraryManager.cs
+Library/Unsafe.cs
+Library.Correction/ReedSolomon8.cs
+Library.Net.Connections/Utilities/EcDiffieHellmanP521_Sha512.cs
+Library.Net.Upnp/UpnpClient.cs
+Library.Security/Hash/Crc32_Castagnoli.cs
+Library.Security/Utilities/EcDsaP521_Sha512.cs
+Library.Security/Mining/Miner.cs

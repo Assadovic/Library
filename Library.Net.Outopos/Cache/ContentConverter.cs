@@ -34,7 +34,7 @@ namespace Library.Net.Outopos
 
         private static Stream Compress(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             var targetStream = new RangeStream(stream, true);
 
@@ -125,7 +125,7 @@ namespace Library.Net.Outopos
 
         private static Stream Decompress(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             try
             {
@@ -203,8 +203,8 @@ namespace Library.Net.Outopos
 
         private static Stream Encrypt(Stream stream, IExchangeEncrypt publicKey)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (publicKey == null) throw new ArgumentNullException("publicKey");
 
             try
             {
@@ -278,8 +278,8 @@ namespace Library.Net.Outopos
 
         private static Stream Decrypt(Stream stream, IExchangeDecrypt privateKey)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (privateKey == null) throw new ArgumentNullException("privateKey");
 
             try
             {
@@ -360,7 +360,7 @@ namespace Library.Net.Outopos
 
         private static Stream AddPadding(Stream stream, int size)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             try
             {
@@ -409,7 +409,7 @@ namespace Library.Net.Outopos
 
         private static Stream RemovePadding(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             try
             {
@@ -427,7 +427,7 @@ namespace Library.Net.Outopos
 
         private static Stream AddType(Stream stream, string type)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             List<Stream> streams = new List<Stream>();
             Encoding encoding = new UTF8Encoding(false);
@@ -458,7 +458,7 @@ namespace Library.Net.Outopos
 
         private static Stream RemoveType(Stream stream, string type)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             Encoding encoding = new UTF8Encoding(false);
 
@@ -479,7 +479,7 @@ namespace Library.Net.Outopos
 
         private static Stream AddHash(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             try
             {
@@ -504,7 +504,7 @@ namespace Library.Net.Outopos
 
         private static Stream RemoveHash(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
 
             byte type = (byte)stream.ReadByte();
 
@@ -544,7 +544,7 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToBroadcastMessageBlock(BroadcastMessage message)
         {
-            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (message == null) throw new ArgumentNullException("message");
 
             ArraySegment<byte> value;
 
@@ -561,7 +561,7 @@ namespace Library.Net.Outopos
 
         public static BroadcastMessage FromBroadcastMessageBlock(ArraySegment<byte> message)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
+            if (message.Array == null) throw new ArgumentException("message.Array", "message");
 
             try
             {
@@ -580,7 +580,7 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToMulticastMessageBlock(MulticastMessage message)
         {
-            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (message == null) throw new ArgumentNullException("message");
 
             ArraySegment<byte> value;
 
@@ -597,7 +597,7 @@ namespace Library.Net.Outopos
 
         public static MulticastMessage FromMulticastMessageBlock(ArraySegment<byte> message)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
+            if (message.Array == null) throw new ArgumentException("message.Array", "message");
 
             try
             {
@@ -616,8 +616,8 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToUnicastMessageBlock(UnicastMessage message, IExchangeEncrypt publicKey)
         {
-            if (message == null) throw new ArgumentNullException(nameof(message));
-            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
+            if (message == null) throw new ArgumentNullException("message");
+            if (publicKey == null) throw new ArgumentNullException("publicKey");
 
             ArraySegment<byte> value;
 
@@ -637,8 +637,8 @@ namespace Library.Net.Outopos
 
         public static UnicastMessage FromUnicastMessageBlock(ArraySegment<byte> message, IExchangeDecrypt privateKey)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
-            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
+            if (message.Array == null) throw new ArgumentException("message.Array", "message");
+            if (privateKey == null) throw new ArgumentNullException("privateKey");
 
             try
             {

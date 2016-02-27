@@ -73,9 +73,9 @@ namespace Library.UnitTest
 
         public unsafe static void Xor(byte[] source1, byte[] source2, byte[] destination)
         {
-            if (source1 == null) throw new ArgumentNullException(nameof(source1));
-            if (source2 == null) throw new ArgumentNullException(nameof(source2));
-            if (destination == null) throw new ArgumentNullException(nameof(destination));
+            if (source1 == null) throw new ArgumentNullException("source1");
+            if (source2 == null) throw new ArgumentNullException("source2");
+            if (destination == null) throw new ArgumentNullException("destination");
 
             // Zero
             {

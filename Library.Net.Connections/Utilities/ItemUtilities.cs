@@ -29,7 +29,7 @@ namespace Library.Net.Connections
 
         public static int GetHashCode(byte[] buffer)
         {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (buffer == null) throw new ArgumentNullException("buffer");
 
             return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
                 new ArraySegment<byte>[]

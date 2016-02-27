@@ -135,9 +135,8 @@ namespace Library.Tools
 
                     Regex regex = new Regex(@"^( *)\[( *)assembly( *):( *)AssemblyVersion( *)\(( *)" + "\"" + @"(\d*)\.(\d*)\.(\d*)\.(\d*)" + "\"" + @"( *)\)( *)\](.*)$");
                     byte[] hash = Program.GetHash(filePaths);
-                    bool rewrite = false;
 
-                    using (var readerStream = new StreamReader(assemblyInfoFilePath))
+					using (var readerStream = new StreamReader(assemblyInfoFilePath))
                     using (var writerStream = new StreamWriter(assemblyInfoFilePath + "~", false, new UTF8Encoding(false)))
                     {
                         for (;;)
@@ -156,12 +155,7 @@ namespace Library.Tools
                                     if (!Unsafe.Equals(hash, NetworkConverter.FromBase64UrlString(match.Groups[13].Value.TrimStart().Remove(0, 2).Trim())))
                                     {
                                         i++;
-                                        rewrite = true;
                                     }
-                                }
-                                else
-                                {
-                                    rewrite = true;
                                 }
 
                                 writerStream.WriteLine(

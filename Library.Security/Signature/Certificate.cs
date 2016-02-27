@@ -36,7 +36,7 @@ namespace Library.Security
 
         internal Certificate(DigitalSignature digitalSignature, Stream stream)
         {
-            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
+            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
 
             byte[] signature;
 

@@ -75,11 +75,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException(nameof(destinationHost));
+                throw new ArgumentNullException("destinationHost");
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -95,7 +95,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException(nameof(socket));
+                throw new ArgumentNullException("socket");
             }
 
             _tcpClient = new TcpClient();
@@ -111,7 +111,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException(nameof(socket));
+                throw new ArgumentNullException("socket");
             }
 
             _tcpClient = new TcpClient();

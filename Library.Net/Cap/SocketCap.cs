@@ -20,7 +20,7 @@ namespace Library.Net
 
         public SocketCap(Socket socket)
         {
-            if (socket == null) throw new ArgumentNullException(nameof(socket));
+            if (socket == null) throw new ArgumentNullException("socket");
             if (!socket.Connected) throw new ArgumentException("Socket is not connected.");
 
             _socket = socket;

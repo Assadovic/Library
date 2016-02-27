@@ -152,8 +152,8 @@ namespace Library.Net.Outopos
 
         public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
         {
-            if (signature == null) throw new ArgumentNullException(nameof(signature));
-            if (exchangePrivateKey == null) throw new ArgumentNullException(nameof(exchangePrivateKey));
+            if (signature == null) throw new ArgumentNullException("signature");
+            if (exchangePrivateKey == null) throw new ArgumentNullException("exchangePrivateKey");
 
             lock (this.ThisLock)
             {
@@ -227,7 +227,7 @@ namespace Library.Net.Outopos
 
         public IEnumerable<MulticastMessage> GetMulticastMessages(Tag tag, int limit)
         {
-            if (tag == null) throw new ArgumentNullException(nameof(tag));
+            if (tag == null) throw new ArgumentNullException("tag");
 
             lock (this.ThisLock)
             {
