@@ -83,4 +83,16 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Windows)'=='true'">
+    <DefineConstants>$(DefineConstants);Windows</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Linux)'=='true'">
+    <DefineConstants>$(DefineConstants);Linux</DefineConstants>
+  </PropertyGroup>
 </Project>

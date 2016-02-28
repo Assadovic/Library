@@ -118,10 +118,6 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
@@ -130,5 +126,11 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
     <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Windows)'=='true'">
+    <DefineConstants>$(DefineConstants);Windows</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Linux)'=='true'">
+    <DefineConstants>$(DefineConstants);Linux</DefineConstants>
   </PropertyGroup>
 </Project>

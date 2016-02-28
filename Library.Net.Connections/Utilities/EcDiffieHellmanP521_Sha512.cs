@@ -1,6 +1,4 @@
-﻿#define Linux
-
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text;
 
