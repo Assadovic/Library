@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Library.Tools")]
@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Library.Tools")]
-[assembly: AssemblyCopyright("Copyright 息 Lyrise 2010-2016")]
+[assembly: AssemblyCopyright("Copyright © Lyrise 2010-2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("48c63764-07e3-452a-97d8-3d097a886f07")]
-[assembly: AssemblyVersion("0.0.0.4")] // kOoLDkvuX-qsMzmjWBqcdV0_i-7cvB5RDbTajlXmoJg
+[assembly: AssemblyVersion("0.0.0.6")] // 4wTAmSGOnR0rjBD8J0e7wXPCKCISp-v8bd2VcPNiz50

@@ -474,8 +474,8 @@ namespace Library.Tools
                 else if (args.Length >= 3 && args[0] == "Run")
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo();
-                    startInfo.FileName = Path.Combine(Directory.GetCurrentDirectory(), args[1]);
-                    startInfo.WorkingDirectory = Path.GetFullPath(args[2]);
+                    startInfo.FileName = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), args[1]));
+                    startInfo.WorkingDirectory = Path.GetFullPath(Path.GetFullPath(args[2]));
 
                     Process.Start(startInfo);
                 }
@@ -548,7 +548,7 @@ namespace Library.Tools
                     Process childProcess = null;
                     {
                         childProcess = new Process();
-                        childProcess.StartInfo.FileName = args[2];
+                        childProcess.StartInfo.FileName = Path.GetFullPath(args[2]);
                         childProcess.StartInfo.Arguments = string.Join(" ", args.Skip(3).Select(n => string.Format("\"{0}\"", n)));
                         childProcess.StartInfo.RedirectStandardInput = true;
                         childProcess.StartInfo.RedirectStandardOutput = true;

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Library.Net")]
@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Library.Net")]
-[assembly: AssemblyCopyright("Copyright 息 Lyrise 2009-2016")]
+[assembly: AssemblyCopyright("Copyright © Lyrise 2009-2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("178e272e-2e93-48ea-866c-a6da86ca3484")]
-[assembly: AssemblyVersion("0.0.0.152")] // A2nse5CMxCvEVkCcxVPGviyyBqyaROQ6zTQbrRBH52Y
+[assembly: AssemblyVersion("0.0.0.153")] // 2B7ZMCjqQ_vGkXnnLDSmd-Ss8q0gKrSMB7CYmbju7NI
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Library.UnitTest")]

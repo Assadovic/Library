@@ -110,8 +110,8 @@ namespace Library.Update
 
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo();
-                    startInfo.FileName = runExePath;
-                    startInfo.WorkingDirectory = Path.GetDirectoryName(runExePath);
+                    startInfo.FileName = Path.GetFullPath(runExePath);
+                    startInfo.WorkingDirectory = Path.GetFullPath(Path.GetDirectoryName(runExePath));
 
                     Process.Start(startInfo);
                 }
