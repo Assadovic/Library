@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 void copy(byte* src, byte* dst, int32_t len);
 bool equals(byte* x, byte* y, int32_t len);

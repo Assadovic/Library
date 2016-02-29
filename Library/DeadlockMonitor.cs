@@ -1,4 +1,4 @@
-// Stephen Toub
+﻿// Stephen Toub
 
 using System;
 using System.Collections.Generic;
@@ -77,7 +77,7 @@ namespace Library
 
         /// <summary>Attempts, for the specified amount of time, to acquire an exclusive lock on the specified object.</summary>
         /// <param name="monitor">The object on which to acquire the lock.</param>
-        /// <param name="timeout">A TimeSpan representing the amount of time to wait for the lock. A value of �E millisecond specifies an infinite wait.</param>
+        /// <param name="timeout">A TimeSpan representing the amount of time to wait for the lock. A value of ・ millisecond specifies an infinite wait.</param>
         /// <returns>true if the current thread acquires the lock without blocking; otherwise, false.</returns>
         public static bool TryEnter(object monitor, TimeSpan timeout)
         {

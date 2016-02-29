@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Crc32_Castagnoli.h"
 
 Crc32_Castagnoli::Crc32_Castagnoli()

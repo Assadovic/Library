@@ -10,18 +10,16 @@ namespace Library.Security
     {
         private static readonly ThreadLocal<Encoding> _threadLocalEncoding = new ThreadLocal<Encoding>(() => new UTF8Encoding(false));
 
-#if Windows
         private static NativeLibraryManager _nativeLibraryManager;
 
         delegate uint ComputeDelegate(uint x, byte* src, int len);
         private static ComputeDelegate _compute;
-#endif
 
         static Crc32_Castagnoli()
         {
-#if Windows
             try
             {
+#if Windows
                 if (System.Environment.Is64BitProcess)
                 {
                     _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Security_x64.dll");
@@ -30,6 +28,18 @@ namespace Library.Security
                 {
                     _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Security_x86.dll");
                 }
+#endif
+
+#if Linux
+                if (System.Environment.Is64BitProcess)
+                {
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Security_x64.so");
+                }
+                else
+                {
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Security_x86.so");
+                }
+#endif
 
                 _compute = _nativeLibraryManager.GetMethod<ComputeDelegate>("compute_Crc32_Castagnoli");
             }
@@ -37,7 +47,6 @@ namespace Library.Security
             {
                 Log.Warning(e);
             }
-#endif
         }
 
         public static byte[] ComputeHash(byte[] buffer, int offset, int length)

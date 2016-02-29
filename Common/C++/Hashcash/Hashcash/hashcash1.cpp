@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "hashcash1.h"
 
 #include "Xorshift.h"
@@ -51,7 +51,7 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
         memcpy(finalState, currentState, hashSize * 2);
         memcpy(finalResult, currentResult, hashSize);
 
-        // ƒRƒCƒ“”‚ÌZo
+        // ã‚³ã‚¤ãƒ³æ•°ã®ç®—å‡º
         if (limit != -1)
         {
             int32_t count = 0;
@@ -95,7 +95,7 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
                     memcpy(finalState, currentState, hashSize * 2);
                     memcpy(finalResult, currentResult, hashSize);
 
-                    // ƒRƒCƒ“”‚ÌZo
+                    // ã‚³ã‚¤ãƒ³æ•°ã®ç®—å‡º
                     if (limit != -1)
                     {
                         int32_t count = 0;

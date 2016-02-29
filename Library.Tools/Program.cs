@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -107,7 +107,7 @@ namespace Library.Tools
                                 if (xml.LocalName == "Compile")
                                 {
                                     var path = xml.GetAttribute("Include");
-                                    string dependentUponBaseDirectory = Path.GetDirectoryName(path);
+                                    string dependentUponBaseDirectory = Path.GetDirectoryName(path).Replace('\\', '/');
                                     filePaths.Add(Path.Combine(baseDirectory, path));
 
                                     using (var xmlSubtree = xml.ReadSubtree())
@@ -118,7 +118,7 @@ namespace Library.Tools
                                             {
                                                 if (xmlSubtree.LocalName == "DependentUpon")
                                                 {
-                                                    filePaths.Add(Path.Combine(Path.Combine(baseDirectory, dependentUponBaseDirectory), xml.ReadString()));
+                                                    filePaths.Add(Path.Combine(baseDirectory, dependentUponBaseDirectory, xml.ReadString()));
                                                 }
                                             }
                                         }
@@ -136,7 +136,7 @@ namespace Library.Tools
                     Regex regex = new Regex(@"^( *)\[( *)assembly( *):( *)AssemblyVersion( *)\(( *)" + "\"" + @"(\d*)\.(\d*)\.(\d*)\.(\d*)" + "\"" + @"( *)\)( *)\](.*)$");
                     byte[] hash = Program.GetHash(filePaths);
 
-					using (var readerStream = new StreamReader(assemblyInfoFilePath))
+                    using (var readerStream = new StreamReader(assemblyInfoFilePath))
                     using (var writerStream = new StreamWriter(assemblyInfoFilePath + "~", false, new UTF8Encoding(false)))
                     {
                         for (;;)
@@ -735,7 +735,7 @@ namespace Library.Tools
             }
 
             using (FileStream outStream = new FileStream(path + ".tmp", FileMode.Create))
-            using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(true)))
+            using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
             {
                 if (items.Count != 0)
                 {

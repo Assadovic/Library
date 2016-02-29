@@ -204,12 +204,10 @@ namespace Library.Correction
 
         private unsafe class Math : ManagerBase
         {
-#if Windows
             private NativeLibraryManager _nativeLibraryManager;
 
             delegate void MulDelegate(byte* src, byte* dst, byte* mulc, int len);
             private MulDelegate _mul;
-#endif
 
             private const int _gfBits = 8;
 
@@ -271,9 +269,9 @@ namespace Library.Correction
 
             public Math()
             {
-#if Windows
                 try
                 {
+#if Windows
                     if (System.Environment.Is64BitProcess)
                     {
                         _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Correction_x64.dll");
@@ -282,6 +280,18 @@ namespace Library.Correction
                     {
                         _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Correction_x86.dll");
                     }
+#endif
+
+#if Linux
+                    if (System.Environment.Is64BitProcess)
+                    {
+                        _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Correction_x64.so");
+                    }
+                    else
+                    {
+                        _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_Correction_x86.so");
+                    }
+#endif
 
                     _mul = _nativeLibraryManager.GetMethod<MulDelegate>("mul");
                 }
@@ -289,7 +299,6 @@ namespace Library.Correction
                 {
                     Log.Warning(e);
                 }
-#endif
 
                 _gfSize = ((1 << _gfBits) - 1);
 
@@ -425,7 +434,6 @@ namespace Library.Correction
                 return new byte[rows * cols];
             }
 
-#if Windows             
             public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
             {
                 // nop, optimize
@@ -451,84 +459,6 @@ namespace Library.Correction
                     Log.Error(e);
                 }
             }
-#endif
-
-#if Linux
-            public void AddMul(byte[] dst, int dstPos, byte[] src, int srcPos, byte c, int len)
-            {
-                // nop, optimize
-                if (c == 0) return;
-
-                int unroll = 32; // unroll the loop 32 times.
-                int i = dstPos;
-                int j = srcPos;
-                int lim = dstPos + len;
-
-                // use our multiplication table.
-                // Instead of doing gf_mul_table[c,x] for multiply, we'll save
-                // the gf_mul_table[c] to a local variable since it is going to
-                // be used many times.
-                byte[] gf_mulc = _gf_mul_table[c];
-
-                try
-                {
-                    fixed (byte* p_dst = dst)
-                    fixed (byte* p_src = src)
-                    fixed (byte* p_gf_mulc = gf_mulc)
-                    {
-                        // Not sure if loop unrolling has any real benefit in Java, but 
-                        // what the hey.
-                        for (; i < lim && (lim - i) > unroll; i += unroll, j += unroll)
-                        {
-                            // dst ^= gf_mulc[x] is equal to mult then add (xor == add)
-
-                            p_dst[i] ^= p_gf_mulc[p_src[j]];
-                            p_dst[i + 1] ^= p_gf_mulc[p_src[j + 1]];
-                            p_dst[i + 2] ^= p_gf_mulc[p_src[j + 2]];
-                            p_dst[i + 3] ^= p_gf_mulc[p_src[j + 3]];
-                            p_dst[i + 4] ^= p_gf_mulc[p_src[j + 4]];
-                            p_dst[i + 5] ^= p_gf_mulc[p_src[j + 5]];
-                            p_dst[i + 6] ^= p_gf_mulc[p_src[j + 6]];
-                            p_dst[i + 7] ^= p_gf_mulc[p_src[j + 7]];
-                            p_dst[i + 8] ^= p_gf_mulc[p_src[j + 8]];
-                            p_dst[i + 9] ^= p_gf_mulc[p_src[j + 9]];
-                            p_dst[i + 10] ^= p_gf_mulc[p_src[j + 10]];
-                            p_dst[i + 11] ^= p_gf_mulc[p_src[j + 11]];
-                            p_dst[i + 12] ^= p_gf_mulc[p_src[j + 12]];
-                            p_dst[i + 13] ^= p_gf_mulc[p_src[j + 13]];
-                            p_dst[i + 14] ^= p_gf_mulc[p_src[j + 14]];
-                            p_dst[i + 15] ^= p_gf_mulc[p_src[j + 15]];
-                            p_dst[i + 16] ^= p_gf_mulc[p_src[j + 16]];
-                            p_dst[i + 17] ^= p_gf_mulc[p_src[j + 17]];
-                            p_dst[i + 18] ^= p_gf_mulc[p_src[j + 18]];
-                            p_dst[i + 19] ^= p_gf_mulc[p_src[j + 19]];
-                            p_dst[i + 20] ^= p_gf_mulc[p_src[j + 20]];
-                            p_dst[i + 21] ^= p_gf_mulc[p_src[j + 21]];
-                            p_dst[i + 22] ^= p_gf_mulc[p_src[j + 22]];
-                            p_dst[i + 23] ^= p_gf_mulc[p_src[j + 23]];
-                            p_dst[i + 24] ^= p_gf_mulc[p_src[j + 24]];
-                            p_dst[i + 25] ^= p_gf_mulc[p_src[j + 25]];
-                            p_dst[i + 26] ^= p_gf_mulc[p_src[j + 26]];
-                            p_dst[i + 27] ^= p_gf_mulc[p_src[j + 27]];
-                            p_dst[i + 28] ^= p_gf_mulc[p_src[j + 28]];
-                            p_dst[i + 29] ^= p_gf_mulc[p_src[j + 29]];
-                            p_dst[i + 30] ^= p_gf_mulc[p_src[j + 30]];
-                            p_dst[i + 31] ^= p_gf_mulc[p_src[j + 31]];
-                        }
-
-                        // final components
-                        for (; i < lim; i++, j++)
-                        {
-                            p_dst[i] ^= p_gf_mulc[p_src[j]];
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-            }
-#endif
 
             public void MatMul(byte[] a, int aStart, byte[] b, int bStart, byte[] c, int cStart, int n, int k, int m)
             {
@@ -849,7 +779,6 @@ namespace Library.Correction
 
                 if (disposing)
                 {
-#if Windows
                     if (_nativeLibraryManager != null)
                     {
                         try
@@ -863,7 +792,6 @@ namespace Library.Correction
 
                         _nativeLibraryManager = null;
                     }
-#endif
                 }
             }
         }

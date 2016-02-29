@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -109,7 +109,7 @@ namespace Library.Net.Connections
                     {
                         OperatingSystem osInfo = Environment.OSVersion;
 
-                        // Windows Vista�ȏ�B
+                        // Windows Vista以上。
                         if (osInfo.Platform == PlatformID.Win32NT && osInfo.Version >= new Version(6, 0))
                         {
                             {

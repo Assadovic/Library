@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Xorshift.h"
 
 #include "osrng.h"

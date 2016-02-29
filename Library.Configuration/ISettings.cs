@@ -1,4 +1,4 @@
-namespace Library.Configuration
+﻿namespace Library.Configuration
 {
     public interface ISettings
     {

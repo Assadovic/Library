@@ -1,4 +1,4 @@
-
+﻿
 namespace Library.Net.Outopos
 {
     public interface IComputeHash

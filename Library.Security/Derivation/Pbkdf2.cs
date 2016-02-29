@@ -1,4 +1,4 @@
-//Copyright (c) 2012 Josip Medved <jmedved@jmedved.com>
+﻿//Copyright (c) 2012 Josip Medved <jmedved@jmedved.com>
 
 //2012-04-12: Initial version.
 
