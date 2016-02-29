@@ -134,7 +134,7 @@ namespace Library.Configuration
                         using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
                         using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
                         {
-                            //using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateTextReader(decompressStream, XmlDictionaryReaderQuotas.Max))
+                            //using (XmlDictionaryReader xml = XmlDictionaryReader.CreateTextReader(decompressStream, XmlDictionaryReaderQuotas.Max))
                             using (XmlDictionaryReader xml = XmlDictionaryReader.CreateBinaryReader(decompressStream, XmlDictionaryReaderQuotas.Max))
                             {
                                 var deserializer = new DataContractSerializer(content.Type);
@@ -208,12 +208,14 @@ namespace Library.Configuration
 
                     string uniquePath = null;
 
+#if Windows
                     using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
                     using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
                     {
                         uniquePath = stream.Name;
 
                         using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
+                        //using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateTextWriter(compressStream))
                         using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateBinaryWriter(compressStream))
                         {
                             var serializer = new DataContractSerializer(type);
@@ -253,6 +255,43 @@ namespace Library.Configuration
                             }
                         }
                     }
+#endif
+
+#if Linux
+                    using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
+                    using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
+                    {
+                        uniquePath = stream.Name;
+
+                        using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
+                        using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateTextWriter(compressStream))
+                        {
+                            var serializer = new DataContractSerializer(type);
+
+                            serializer.WriteStartObject(xml, value);
+                            xml.WriteAttributeString("xmlns", "xa", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/");
+                            xml.WriteAttributeString("xmlns", "xc", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/Arrays");
+                            xml.WriteAttributeString("xmlns", "xb", "http://www.w3.org/2000/xmlns/", "http://www.w3.org/2001/XMLSchema");
+                            serializer.WriteObjectContent(xml, value);
+                            serializer.WriteEndObject(xml);
+                        }
+                    }
+
+                    string newPath = Path.Combine(directoryPath, name + ".gz");
+                    string bakPath = Path.Combine(directoryPath, name + ".gz.bak");
+
+                    if (File.Exists(newPath))
+                    {
+                        if (File.Exists(bakPath))
+                        {
+                            File.Delete(bakPath);
+                        }
+
+                        File.Move(newPath, bakPath);
+                    }
+
+                    File.Move(uniquePath, newPath);
+#endif
                 }
                 catch (Exception e)
                 {
@@ -291,7 +330,7 @@ namespace Library.Configuration
 
             for (int index = 1; ; index++)
             {
-                string text = string.Format(@"{0}\{1} ({2}){3}",
+                string text = string.Format(@"{0}/{1} ({2}){3}",
                     Path.GetDirectoryName(path),
                     Path.GetFileNameWithoutExtension(path),
                     index,

@@ -31,25 +31,25 @@ namespace Library
             try
             {
 #if Windows
-				if (System.Environment.Is64BitProcess)
-				{
+                if (System.Environment.Is64BitProcess)
+                {
 					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.dll");
-				}
-				else
-				{
+                }
+                else
+                {
 					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.dll");
-				}
+                }
 #endif
 
 #if Linux
-				if (System.Environment.Is64BitProcess)
-				{
-					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.so");
+                if (System.Environment.Is64BitProcess)
+                {
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.so");
 				}
-				else
-				{
-					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.so");
-				}
+                else
+                {
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.so");
+                }
 #endif
 
                 _copy = _nativeLibraryManager.GetMethod<CopyDelegate>("copy");

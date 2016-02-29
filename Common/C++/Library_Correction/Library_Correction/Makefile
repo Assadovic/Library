@@ -1,15 +1,12 @@
 #!/bin/make
 CC = gcc
-CFLAGS = -shared -fPIC -Wall -O2 -pipe -D LINUX 
 CXX = g++
-CXXFLAGS = -shared -fPIC -Wall -O2 -pipe -D LINUX 
 LDFLAGS = -lm
 
 SRCS = ReedSolomon8.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 TARGET = Library_Correction.so
-BUILD = ../build
 
 .PHONY: all clean
 .SUFFIXES: .c .cpp .o

@@ -13,19 +13,20 @@ namespace Library.Compression
 
         static Xz()
         {
-            OperatingSystem osInfo = Environment.OSVersion;
-
-            if (osInfo.Platform == PlatformID.Win32NT)
+#if Windows
+            if (System.Environment.Is64BitProcess)
             {
-                if (System.Environment.Is64BitProcess)
-                {
-                    _path = "Assemblies/Xz_x64.exe";
-                }
-                else
-                {
-                    _path = "Assemblies/Xz_x86.exe";
-                }
+                _path = "Assemblies/Xz_x64.exe";
             }
+            else
+            {
+                _path = "Assemblies/Xz_x86.exe";
+            }
+#endif
+
+#if Linux
+            _path = "xz";
+#endif           
         }
 
         public static void Compress(Stream inStream, Stream outStream, BufferManager bufferManager)

@@ -107,8 +107,8 @@ namespace Library.Tools
                                 if (xml.LocalName == "Compile")
                                 {
                                     var path = xml.GetAttribute("Include");
-                                    string dependentUponBaseDirectory = Path.GetDirectoryName(path).Replace('\\', '/');
-                                    filePaths.Add(Path.Combine(baseDirectory, path));
+                                    string dependentUponBaseDirectory = Path.GetDirectoryName(path);
+                                    filePaths.Add(Path.Combine(baseDirectory, path).Replace('\\', '/'));
 
                                     using (var xmlSubtree = xml.ReadSubtree())
                                     {
@@ -118,7 +118,7 @@ namespace Library.Tools
                                             {
                                                 if (xmlSubtree.LocalName == "DependentUpon")
                                                 {
-                                                    filePaths.Add(Path.Combine(baseDirectory, dependentUponBaseDirectory, xml.ReadString()));
+                                                    filePaths.Add(Path.Combine(baseDirectory, dependentUponBaseDirectory, xml.ReadString()).Replace('\\', '/'));
                                                 }
                                             }
                                         }
@@ -137,7 +137,7 @@ namespace Library.Tools
                     byte[] hash = Program.GetHash(filePaths);
 
                     using (var readerStream = new StreamReader(assemblyInfoFilePath))
-                    using (var writerStream = new StreamWriter(assemblyInfoFilePath + "~", false, new UTF8Encoding(false)))
+                    using (var writerStream = new StreamWriter(assemblyInfoFilePath + "~", false, Encoding.UTF8))
                     {
                         for (;;)
                         {
@@ -272,7 +272,7 @@ namespace Library.Tools
                     using (FileStream inStream = new FileStream(settingsPath, FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
                     using (FileStream outStream = new FileStream(settingsPath + ".tmp", FileMode.Create))
-                    using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(false)))
+                    using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
                     {
                         bool isRegion = false;
                         bool isRewrite = false;
@@ -358,7 +358,7 @@ namespace Library.Tools
                     using (FileStream inStream = new FileStream(languageManagerPath, FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
                     using (FileStream outStream = new FileStream(languageManagerPath + ".tmp", FileMode.Create))
-                    using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(false)))
+                    using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
                     {
                         bool isRegion = false;
                         bool isRewrite = false;
@@ -458,7 +458,7 @@ namespace Library.Tools
                         using (FileStream inStream = new FileStream(sourcePath, FileMode.Open))
                         using (StreamReader reader = new StreamReader(inStream))
                         using (FileStream outStream = new FileStream(targetPath, FileMode.Create))
-                        using (StreamWriter writer = new StreamWriter(outStream, new UTF8Encoding(false)))
+                        using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
                         {
                             StringBuilder sb = new StringBuilder(reader.ReadToEnd());
 
@@ -837,7 +837,7 @@ namespace Library.Tools
                 }
 
                 using (FileStream stream = new FileStream(path, FileMode.Create))
-                using (StreamWriter writer = new StreamWriter(stream, new UTF8Encoding(false)))
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
                 {
                     writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
                     writer.WriteLine("<Configuration>");

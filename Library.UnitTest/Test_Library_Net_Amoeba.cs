@@ -78,7 +78,7 @@ namespace Library.UnitTest
             box.Boxes.Add(new Box() { Name = "Box" });
             box.Seeds.Add(new Seed() { Name = "Seed" });
 
-            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
             box.CreateCertificate(digitalSignature);
 
             Box box2;
@@ -139,7 +139,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_Seed()
         {
-            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.EcDsaP521_Sha256 })
+            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
                 var seed = new Seed();
                 seed.Name = "aaaa.zip";
@@ -187,7 +187,7 @@ namespace Library.UnitTest
             box.Seeds.Add(new Seed() { Name = "Seed" });
             box.Boxes.Add(new Box() { Name = "Box" });
 
-            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
             box.CreateCertificate(digitalSignature);
 
             var box2 = box.Clone();
@@ -282,7 +282,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_Link()
         {
-            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
             var link = new Link();
             link.TrustSignatures.Add(digitalSignature.ToString());
@@ -626,7 +626,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var signatures = new SignatureCollection();
 

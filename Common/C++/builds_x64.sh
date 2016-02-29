@@ -2,6 +2,10 @@
 cwd=`dirname "${0}"`
 expr "${0}" : "/.*" > /dev/null || cwd=`(cd "${cwd}" && pwd)`
 
+export CFLAGS="-shared -m64 -fPIC -Wall -O2 -pipe -D LINUX"
+export CXXFLAGS="-shared -m64 -fPIC -Wall -O2 -pipe -D LINUX" 
+export BUILD="../build/x64"
+
 cd ${cwd}/Library/Library
 make 
 

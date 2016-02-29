@@ -19,7 +19,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_Sigunature()
         {
-            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.EcDsaP521_Sha256 })
+            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
                 var signature = Signature.GetSignature(new DigitalSignature("123", a));
 
@@ -28,7 +28,7 @@ namespace Library.UnitTest
                 Assert.IsTrue(Signature.GetHash(signature).Length == 32);
             }
 
-            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.EcDsaP521_Sha256 })
+            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
                 string signature;
 
@@ -47,7 +47,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_DigitalSigunature()
         {
-            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.EcDsaP521_Sha256 })
+            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
                 DigitalSignature sigunature = new DigitalSignature("123", a);
 

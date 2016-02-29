@@ -14,4 +14,8 @@ private:
 
 const Crc32_Castagnoli _crc32_castagnoli;
 
+extern "C" {
+
 uint32_t compute_Crc32_Castagnoli(uint32_t x, byte* source, int32_t length);
+
+}

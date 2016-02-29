@@ -141,7 +141,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_Metadata()
         {
-            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.EcDsaP521_Sha256 })
+            foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
                 var id = new byte[32];
                 _random.NextBytes(id);
@@ -489,7 +489,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var signatures = new SignatureCollection();
 
@@ -517,7 +517,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var metadatas1 = new List<BroadcastMetadata>();
 
@@ -550,7 +550,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var signatures = new SignatureCollection();
 
@@ -578,7 +578,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var metadatas1 = new List<UnicastMetadata>();
 
@@ -642,7 +642,7 @@ namespace Library.UnitTest
                         queue.Enqueue(e);
                     };
 
-                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.EcDsaP521_Sha256);
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
                     var metadatas1 = new List<MulticastMetadata>();
 

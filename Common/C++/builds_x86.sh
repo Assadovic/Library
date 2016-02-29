@@ -1,0 +1,16 @@
+#!/bin/sh
+cwd=`dirname "${0}"`
+expr "${0}" : "/.*" > /dev/null || cwd=`(cd "${cwd}" && pwd)`
+
+export CFLAGS="-shared -m32 -mfpmath=sse -march=pentium4 -fPIC -Wall -O2 -pipe -D LINUX"
+export CXXFLAGS="-shared -m32 -mfpmath=sse -march=pentium4 -fPIC -Wall -O2 -pipe -D LINUX"
+export BUILD="../build/x86"
+
+cd ${cwd}/Library/Library
+make 
+
+cd ${cwd}/Library_Correction/Library_Correction
+make
+
+cd ${cwd}/Library_Security/Library_Security
+make
