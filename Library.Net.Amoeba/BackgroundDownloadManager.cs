@@ -307,8 +307,6 @@ namespace Library.Net.Amoeba
                                 }
                             }
 
-                            List<Key> keyList = new List<Key>();
-
                             foreach (var group in item.Index.Groups.ToArray().Randomize())
                             {
                                 if (_existManager.GetCount(group) >= group.InformationLength) continue;

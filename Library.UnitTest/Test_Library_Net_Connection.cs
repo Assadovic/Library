@@ -296,8 +296,8 @@ namespace Library.UnitTest
                 {
                     try
                     {
-                        var clientConnectTask = secureClient.ConnectAsync(new TimeSpan(0, 0, 20));
-                        var serverConnectTask = secureServer.ConnectAsync(new TimeSpan(0, 0, 20));
+                        var clientConnectTask = secureClient.ConnectAsync(new TimeSpan(0, 0, 30));
+                        var serverConnectTask = secureServer.ConnectAsync(new TimeSpan(0, 0, 30));
 
                         Task.WaitAll(clientConnectTask, serverConnectTask);
 
@@ -319,8 +319,8 @@ namespace Library.UnitTest
                             stream.Write(buffer, 0, buffer.Length);
                             stream.Seek(0, SeekOrigin.Begin);
 
-                            var clientSendTask = secureClient.SendAsync(stream, new TimeSpan(0, 0, 20));
-                            var serverReceiveTask = secureServer.ReceiveAsync(new TimeSpan(0, 0, 20));
+                            var clientSendTask = secureClient.SendAsync(stream, new TimeSpan(0, 0, 30));
+                            var serverReceiveTask = secureServer.ReceiveAsync(new TimeSpan(0, 0, 30));
 
                             Task.WaitAll(clientConnectTask, serverReceiveTask);
 
@@ -341,8 +341,8 @@ namespace Library.UnitTest
                             stream.Write(buffer, 0, buffer.Length);
                             stream.Seek(0, SeekOrigin.Begin);
 
-                            var serverSendTask = secureServer.SendAsync(stream, new TimeSpan(0, 0, 20));
-                            var clientReceiveTask = secureClient.ReceiveAsync(new TimeSpan(0, 0, 20));
+                            var serverSendTask = secureServer.SendAsync(stream, new TimeSpan(0, 0, 30));
+                            var clientReceiveTask = secureClient.ReceiveAsync(new TimeSpan(0, 0, 30));
 
                             Task.WaitAll(serverSendTask, clientReceiveTask);
 

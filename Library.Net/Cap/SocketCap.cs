@@ -12,7 +12,6 @@ namespace Library.Net
 
         private readonly object _sendLock = new object();
         private readonly object _receiveLock = new object();
-        private readonly object _thisLock = new object();
 
         private volatile bool _connect;
 
@@ -25,8 +24,8 @@ namespace Library.Net
 
             _socket = socket;
             _socket.Blocking = true;
-            _socket.ReceiveBufferSize = 1024 * 32;
-            _socket.SendBufferSize = 1024 * 32;
+            _socket.ReceiveBufferSize = 1024 * 1024 * 32;
+            _socket.SendBufferSize = 1024 * 1024 * 32;
 
             _connect = true;
         }

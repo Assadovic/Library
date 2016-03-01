@@ -492,8 +492,6 @@ namespace Library.Net
         {
             lock (this.ThisLock)
             {
-                List<INode> tempNodeList = new List<INode>();
-
                 for (int i = _nodesList.Length - 1; i >= 0; i--)
                 {
                     if (_nodesList[i] != null)
