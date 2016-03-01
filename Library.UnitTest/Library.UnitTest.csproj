@@ -67,8 +67,8 @@
     </Reference>
     <Reference Include="System.Xml.Linq">
     </Reference>
-    <Reference Include="nunit.framework, Version=3.0.5813.39031, Culture=neutral, PublicKeyToken=2638cd05610744eb">
-      <HintPath>..\packages\NUnit.3.0.1\lib\net45\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -100,10 +100,6 @@
     <Compile Include="Setup.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Library.Collections\Library.Collections.csproj">
-      <Project>{197C654F-2461-446A-B531-4A789F14BE19}</Project>
-      <Name>Library.Collections</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Library.Compression\Library.Compression.csproj">
       <Project>{51ECCC57-56CB-44A0-9A43-DB596F982FC8}</Project>
       <Name>Library.Compression</Name>
@@ -147,6 +143,10 @@
     <ProjectReference Include="..\Library.Net.Upnp\Library.Net.Upnp.csproj">
       <Project>{7688AECF-92BD-4212-AAD8-6CD6D42BA6E3}</Project>
       <Name>Library.Net.Upnp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Library.Collections\Library.Collections.csproj">
+      <Project>{197C654F-2461-446A-B531-4A789F14BE19}</Project>
+      <Name>Library.Collections</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

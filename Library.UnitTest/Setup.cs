@@ -11,7 +11,7 @@ namespace Library.UnitTest
     [SetUpFixture]
     public class Setup
     {
-        [OneTimeSetUp]
+        [SetUp]
         public void Init()
         {
             Directory.SetCurrentDirectory(TestContext.CurrentContext.TestDirectory);
