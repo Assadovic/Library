@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Library.Net.Outopos")]
@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("5aa52eb2-1037-4319-97dc-9bbe976d1ce6")]
-[assembly: AssemblyVersion("0.0.0.845")] // CztTb3TOmiU8Ey0GF4cUYNoRz8gl8kVOgWP705XRO84
+[assembly: AssemblyVersion("0.0.0.849")] // 0_2VNBmSeBXSRnu9VS0icxOnCXm7OrmDP2JFCIToBtg
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Library.UnitTest")]
