@@ -128,7 +128,7 @@ namespace Library.Tools
                         }
                     }
 
-                    string assemblyInfoFilePath = args[2];
+                    string assemblyInfoFilePath = Path.Combine(baseDirectory, args[2]).Replace('\\', '/');
 
                     filePaths.Remove(assemblyInfoFilePath);
                     filePaths.Sort();

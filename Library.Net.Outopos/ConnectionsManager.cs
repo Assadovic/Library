@@ -105,7 +105,7 @@ namespace Library.Net.Outopos
 
         private const int _maxNodeCount = 128;
         private const int _maxBlockLinkCount = 8192;
-        private const int _maxBlockRequestCount = 8192;
+        private const int _maxBlockRequestCount = 2048;
         private const int _maxMetadataRequestCount = 1024;
         private const int _maxMetadataCount = 1024;
 

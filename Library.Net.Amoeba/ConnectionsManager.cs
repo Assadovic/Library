@@ -100,7 +100,7 @@ namespace Library.Net.Amoeba
 
         private const int _maxNodeCount = 128;
         private const int _maxBlockLinkCount = 8192;
-        private const int _maxBlockRequestCount = 8192;
+        private const int _maxBlockRequestCount = 2048;
         private const int _maxSeedRequestCount = 1024;
         private const int _maxSeedCount = 1024;
 
