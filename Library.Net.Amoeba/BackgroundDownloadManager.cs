@@ -560,13 +560,20 @@ namespace Library.Net.Amoeba
                             {
                                 foreach (var group in item.Index.Groups.ToArray())
                                 {
-                                    keys.AddRange(_cacheManager.ParityDecoding(group, (object state2) =>
+                                    var tokenSource = new CancellationTokenSource();
+                                    var task = _cacheManager.ParityDecoding(group, tokenSource.Token);
+
+                                    while (!task.IsCompleted)
                                     {
-                                        return (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item));
-                                    }));
+                                        if (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item)) tokenSource.Cancel();
+
+                                        Thread.Sleep(1000);
+                                    }
+
+                                    keys.AddRange(task.Result);
                                 }
                             }
-                            catch (StopException)
+                            catch (Exception)
                             {
                                 continue;
                             }

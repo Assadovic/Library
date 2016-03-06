@@ -151,7 +151,7 @@ namespace Library.Net.Outopos
 
                                 var miner = new Miner(CashAlgorithm.Version1, item.MiningLimit, item.MiningTime);
 
-                                var task = Task.Factory.StartNew(() =>
+                                var task = Task.Run(() =>
                                 {
                                     if (item.Type == "BroadcastMessage")
                                     {

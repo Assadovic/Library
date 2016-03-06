@@ -24,7 +24,7 @@ namespace Library.Net.Proxy
 
         public virtual Task<Socket> CreateAsync(TimeSpan timeout)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 return this.Create(timeout);
             });

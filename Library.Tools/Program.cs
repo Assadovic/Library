@@ -933,7 +933,7 @@ namespace Library.Tools
 
             foreach (var path in System.IO.Directory.GetDirectories(directory))
             {
-                if (!directoryFilter.Contains(System.IO.Path.GetFileName(path)))
+                if (!directoryFilter.Contains(Path.GetFileName(path)))
                 {
                     list.AddRange(Program.GetFiles(path));
                 }
@@ -941,7 +941,7 @@ namespace Library.Tools
 
             foreach (var path in System.IO.Directory.GetFiles(directory))
             {
-                if (fileFilter.Contains(System.IO.Path.GetExtension(path)))
+                if (fileFilter.Contains(Path.GetExtension(path)))
                 {
                     list.Add(path);
                 }

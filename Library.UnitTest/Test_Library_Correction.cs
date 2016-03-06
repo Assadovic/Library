@@ -131,14 +131,14 @@ namespace Library.UnitTest
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
 
-                    var task1 = Task.Factory.StartNew(() =>
+                    var task1 = Task.Run(() =>
                     {
                         reedSolomon8.Encode(buffList, buffList2, intList, 1024 * 32);
                     });
 
                     Thread.Sleep(1000 * 1);
 
-                    var task2 = Task.Factory.StartNew(() =>
+                    var task2 = Task.Run(() =>
                     {
                         reedSolomon8.Cancel();
                     });
@@ -183,14 +183,14 @@ namespace Library.UnitTest
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
 
-                    var task1 = Task.Factory.StartNew(() =>
+                    var task1 = Task.Run(() =>
                     {
                         pc.Decode(buffList2.ToArray(), intList, 1024 * 32);
                     });
 
                     Thread.Sleep(1000 * 1);
 
-                    var task2 = Task.Factory.StartNew(() =>
+                    var task2 = Task.Run(() =>
                     {
                         pc.Cancel();
                     });

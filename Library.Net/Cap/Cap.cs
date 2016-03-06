@@ -23,7 +23,7 @@ namespace Library.Net
 
         public virtual Task ReceiveAsync(byte[] buffer, int offset, int size, TimeSpan timeout)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Receive(buffer, offset, size, timeout);
             });
@@ -36,7 +36,7 @@ namespace Library.Net
 
         public virtual Task ReceiveAsync(byte[] buffer, TimeSpan timeout)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Receive(buffer, timeout);
             });
@@ -46,7 +46,7 @@ namespace Library.Net
 
         public virtual Task SendAsync(byte[] buffer, int offset, int size, TimeSpan timeout)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Send(buffer, offset, size, timeout);
             });
@@ -59,7 +59,7 @@ namespace Library.Net
 
         public virtual Task SendAsync(byte[] buffer, TimeSpan timeout)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Send(buffer, timeout);
             });

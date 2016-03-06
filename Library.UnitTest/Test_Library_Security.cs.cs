@@ -249,7 +249,7 @@ namespace Library.UnitTest
                 {
                     Miner miner = new Miner(CashAlgorithm.Version1, -1, new TimeSpan(1, 0, 0));
 
-                    var task = Task.Factory.StartNew(() =>
+                    var task = Task.Run(() =>
                     {
                         Cash cash = null;
 

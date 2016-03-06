@@ -21,7 +21,7 @@ namespace Library.UnitTest
             {
                 WaitQueue<string> queue = new WaitQueue<string>();
 
-                var task1 = Task.Factory.StartNew(() =>
+                var task1 = Task.Run(() =>
                 {
                     Assert.AreEqual(queue.WaitDequeue(TimeSpan.Zero), false);
 
@@ -33,7 +33,7 @@ namespace Library.UnitTest
                     Assert.AreEqual(queue.Dequeue(), "Test");
                 });
 
-                var task2 = Task.Factory.StartNew(() =>
+                var task2 = Task.Run(() =>
                 {
                     Thread.Sleep(1000 * 3);
 
@@ -65,7 +65,7 @@ namespace Library.UnitTest
                 queue.Enqueue("2", TimeSpan.Zero);
                 queue.Enqueue("3", TimeSpan.Zero);
 
-                var task1 = Task.Factory.StartNew(() =>
+                var task1 = Task.Run(() =>
                 {
                     Assert.AreEqual(queue.WaitEnqueue(TimeSpan.Zero), false);
 
@@ -77,7 +77,7 @@ namespace Library.UnitTest
                     });
                 });
 
-                var task2 = Task.Factory.StartNew(() =>
+                var task2 = Task.Run(() =>
                 {
                     Thread.Sleep(1000 * 1);
 

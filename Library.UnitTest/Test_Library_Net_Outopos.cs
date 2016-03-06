@@ -13,6 +13,7 @@ using System.Runtime.Serialization;
 using Library.Io;
 using System.Xml;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Library.UnitTest
 {
@@ -292,7 +293,7 @@ namespace Library.UnitTest
                     {
                         var id = new byte[32];
                         _random.NextBytes(id);
-                        var uris = new string[] { "net.tcp://localhost:9000", "net.tcp://localhost:9001", "net.tcp://localhost:9002" };
+                        var uris = new string[] { "tcp:localhost:9000", "tcp:localhost:9001", "tcp:localhost:9002" };
 
                         serverNode = new Node(id, uris);
                     }
@@ -300,7 +301,7 @@ namespace Library.UnitTest
                     {
                         var id = new byte[32];
                         _random.NextBytes(id);
-                        var uris = new string[] { "net.tcp://localhost:9000", "net.tcp://localhost:9001", "net.tcp://localhost:9002" };
+                        var uris = new string[] { "tcp:localhost:9000", "tcp:localhost:9001", "tcp:localhost:9002" };
 
                         clientNode = new Node(id, uris);
                     }
@@ -318,21 +319,10 @@ namespace Library.UnitTest
                     serverConnectionManager = new ConnectionManager(tcpServer, serverSessionId, serverNode, ConnectDirection.In, _bufferManager);
                     clientConnectionManager = new ConnectionManager(tcpClient, clientSessionId, clientNode, ConnectDirection.Out, _bufferManager);
 
-                    Thread serverThread = new Thread(new ThreadStart(() =>
-                    {
-                        serverConnectionManager.Connect();
-                    }));
+                    var serverTask = Task.Run(() => serverConnectionManager.Connect());
+                    var clientTask = Task.Run(() => clientConnectionManager.Connect());
 
-                    Thread clientThread = new Thread(new ThreadStart(() =>
-                    {
-                        clientConnectionManager.Connect();
-                    }));
-
-                    serverThread.Start();
-                    clientThread.Start();
-
-                    serverThread.Join();
-                    clientThread.Join();
+                    Task.WaitAll(serverTask, clientTask);
 
                     Assert.IsTrue(CollectionUtilities.Equals(serverConnectionManager.SesstionId, clientSessionId), "ConnectionManager SessionId #1");
                     Assert.IsTrue(CollectionUtilities.Equals(clientConnectionManager.SesstionId, serverSessionId), "ConnectionManager SessionId #2");

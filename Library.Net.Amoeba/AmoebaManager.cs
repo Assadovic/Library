@@ -868,18 +868,18 @@ namespace Library.Net.Amoeba
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                _clientManager.Load(System.IO.Path.Combine(directoryPath, "ClientManager"));
-                _serverManager.Load(System.IO.Path.Combine(directoryPath, "ServerManager"));
-                _bitmapManager.Load(System.IO.Path.Combine(directoryPath, "BitmapManager"));
-                _cacheManager.Load(System.IO.Path.Combine(directoryPath, "CacheManager"));
-                _connectionsManager.Load(System.IO.Path.Combine(directoryPath, "ConnectionsManager"));
+                _clientManager.Load(Path.Combine(directoryPath, "ClientManager"));
+                _serverManager.Load(Path.Combine(directoryPath, "ServerManager"));
+                _bitmapManager.Load(Path.Combine(directoryPath, "BitmapManager"));
+                _cacheManager.Load(Path.Combine(directoryPath, "CacheManager"));
+                _connectionsManager.Load(Path.Combine(directoryPath, "ConnectionsManager"));
 
                 List<Task> tasks = new List<Task>();
 
-                tasks.Add(Task.Factory.StartNew(() => _downloadManager.Load(System.IO.Path.Combine(directoryPath, "DownloadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _uploadManager.Load(System.IO.Path.Combine(directoryPath, "UploadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _backgroundDownloadManager.Load(System.IO.Path.Combine(directoryPath, "BackgroundDownloadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _backgroundUploadManager.Load(System.IO.Path.Combine(directoryPath, "BackgroundUploadManager"))));
+                tasks.Add(Task.Run(() => _downloadManager.Load(Path.Combine(directoryPath, "DownloadManager"))));
+                tasks.Add(Task.Run(() => _uploadManager.Load(Path.Combine(directoryPath, "UploadManager"))));
+                tasks.Add(Task.Run(() => _backgroundDownloadManager.Load(Path.Combine(directoryPath, "BackgroundDownloadManager"))));
+                tasks.Add(Task.Run(() => _backgroundUploadManager.Load(Path.Combine(directoryPath, "BackgroundUploadManager"))));
 
                 Task.WaitAll(tasks.ToArray());
 
@@ -900,18 +900,18 @@ namespace Library.Net.Amoeba
 
                 List<Task> tasks = new List<Task>();
 
-                tasks.Add(Task.Factory.StartNew(() => _backgroundUploadManager.Save(System.IO.Path.Combine(directoryPath, "BackgroundUploadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _backgroundDownloadManager.Save(System.IO.Path.Combine(directoryPath, "BackgroundDownloadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _uploadManager.Save(System.IO.Path.Combine(directoryPath, "UploadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _downloadManager.Save(System.IO.Path.Combine(directoryPath, "DownloadManager"))));
+                tasks.Add(Task.Run(() => _backgroundUploadManager.Save(Path.Combine(directoryPath, "BackgroundUploadManager"))));
+                tasks.Add(Task.Run(() => _backgroundDownloadManager.Save(Path.Combine(directoryPath, "BackgroundDownloadManager"))));
+                tasks.Add(Task.Run(() => _uploadManager.Save(Path.Combine(directoryPath, "UploadManager"))));
+                tasks.Add(Task.Run(() => _downloadManager.Save(Path.Combine(directoryPath, "DownloadManager"))));
 
                 Task.WaitAll(tasks.ToArray());
 
-                _connectionsManager.Save(System.IO.Path.Combine(directoryPath, "ConnectionsManager"));
-                _cacheManager.Save(System.IO.Path.Combine(directoryPath, "CacheManager"));
-                _bitmapManager.Save(System.IO.Path.Combine(directoryPath, "BitmapManager"));
-                _serverManager.Save(System.IO.Path.Combine(directoryPath, "ServerManager"));
-                _clientManager.Save(System.IO.Path.Combine(directoryPath, "ClientManager"));
+                _connectionsManager.Save(Path.Combine(directoryPath, "ConnectionsManager"));
+                _cacheManager.Save(Path.Combine(directoryPath, "CacheManager"));
+                _bitmapManager.Save(Path.Combine(directoryPath, "BitmapManager"));
+                _serverManager.Save(Path.Combine(directoryPath, "ServerManager"));
+                _clientManager.Save(Path.Combine(directoryPath, "ClientManager"));
 
                 stopwatch.Stop();
                 Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), stopwatch.ElapsedMilliseconds);

@@ -622,7 +622,7 @@ namespace Library.Net.Amoeba
                                 }
                                 else
                                 {
-                                    if (System.IO.Path.IsPathRooted(item.Path))
+                                    if (Path.IsPathRooted(item.Path))
                                     {
                                         downloadDirectory = item.Path;
                                     }
@@ -732,15 +732,22 @@ namespace Library.Net.Amoeba
                             {
                                 foreach (var group in item.Index.Groups.ToArray())
                                 {
-                                    keys.AddRange(_cacheManager.ParityDecoding(group, (object state2) =>
+                                    var tokenSource = new CancellationTokenSource();
+                                    var task = _cacheManager.ParityDecoding(group, tokenSource.Token);
+
+                                    while (!task.IsCompleted)
                                     {
-                                        return (this.DecodeState == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
-                                    }));
+                                        if (this.DecodeState == ManagerState.Stop || !_settings.DownloadItems.Contains(item)) tokenSource.Cancel();
+
+                                        Thread.Sleep(1000);
+                                    }
+
+                                    keys.AddRange(task.Result);
 
                                     item.DecodingBytes += group.Length;
                                 }
                             }
-                            catch (StopException)
+                            catch (Exception)
                             {
                                 continue;
                             }
@@ -845,7 +852,7 @@ namespace Library.Net.Amoeba
                                 }
                                 else
                                 {
-                                    if (System.IO.Path.IsPathRooted(item.Path))
+                                    if (Path.IsPathRooted(item.Path))
                                     {
                                         downloadDirectory = item.Path;
                                     }

@@ -70,7 +70,7 @@ namespace Library.Security
 
                 try
                 {
-                    var task = Task.Factory.StartNew(() =>
+                    var task = Task.Run(() =>
                     {
                         var key = minerUtilities.Create_1(Sha256.ComputeHash(stream), this.Limit, this.ComputationTime);
                         return new Cash(CashAlgorithm.Version1, key);

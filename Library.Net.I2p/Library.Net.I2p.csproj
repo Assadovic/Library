@@ -49,8 +49,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="I2pConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SamV3Bridge.cs" />
+    <Compile Include="SamBase.cs" />
+    <Compile Include="SamManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\Library.Net.I2p.License">
@@ -61,6 +63,12 @@
     <Content Include="Properties\Library.Net.I2p.Readme">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Library\Library.csproj">
+      <Project>{63eadc1f-9a8a-4945-a562-da666d0bcb7b}</Project>
+      <Name>Library</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

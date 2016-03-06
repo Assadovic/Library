@@ -37,7 +37,7 @@ namespace Library.Net.Connections
 
         public virtual Task ConnectAsync(TimeSpan timeout, Information options)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Connect(timeout, options);
             });
@@ -58,7 +58,7 @@ namespace Library.Net.Connections
 
         public virtual Task CloseAsync(TimeSpan timeout, Information options)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Close(timeout, options);
             });
@@ -79,7 +79,7 @@ namespace Library.Net.Connections
 
         public virtual Task<Stream> ReceiveAsync(TimeSpan timeout, Information options)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 return this.Receive(timeout, options);
             });
@@ -100,7 +100,7 @@ namespace Library.Net.Connections
 
         public virtual Task SendAsync(Stream stream, TimeSpan timeout, Information options)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 this.Send(stream, timeout, options);
             });

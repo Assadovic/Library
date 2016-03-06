@@ -562,15 +562,15 @@ namespace Library.Net.Outopos
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                _clientManager.Load(System.IO.Path.Combine(directoryPath, "ClientManager"));
-                _serverManager.Load(System.IO.Path.Combine(directoryPath, "ServerManager"));
-                _cacheManager.Load(System.IO.Path.Combine(directoryPath, "CacheManager"));
-                _connectionsManager.Load(System.IO.Path.Combine(directoryPath, "ConnectionManager"));
+                _clientManager.Load(Path.Combine(directoryPath, "ClientManager"));
+                _serverManager.Load(Path.Combine(directoryPath, "ServerManager"));
+                _cacheManager.Load(Path.Combine(directoryPath, "CacheManager"));
+                _connectionsManager.Load(Path.Combine(directoryPath, "ConnectionManager"));
 
                 List<Task> tasks = new List<Task>();
 
-                tasks.Add(Task.Factory.StartNew(() => _downloadManager.Load(System.IO.Path.Combine(directoryPath, "DownloadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _uploadManager.Load(System.IO.Path.Combine(directoryPath, "UploadManager"))));
+                tasks.Add(Task.Run(() => _downloadManager.Load(Path.Combine(directoryPath, "DownloadManager"))));
+                tasks.Add(Task.Run(() => _uploadManager.Load(Path.Combine(directoryPath, "UploadManager"))));
 
                 Task.WaitAll(tasks.ToArray());
 
@@ -591,15 +591,15 @@ namespace Library.Net.Outopos
 
                 List<Task> tasks = new List<Task>();
 
-                tasks.Add(Task.Factory.StartNew(() => _uploadManager.Save(System.IO.Path.Combine(directoryPath, "UploadManager"))));
-                tasks.Add(Task.Factory.StartNew(() => _downloadManager.Save(System.IO.Path.Combine(directoryPath, "DownloadManager"))));
+                tasks.Add(Task.Run(() => _uploadManager.Save(Path.Combine(directoryPath, "UploadManager"))));
+                tasks.Add(Task.Run(() => _downloadManager.Save(Path.Combine(directoryPath, "DownloadManager"))));
 
                 Task.WaitAll(tasks.ToArray());
 
-                _connectionsManager.Save(System.IO.Path.Combine(directoryPath, "ConnectionManager"));
-                _cacheManager.Save(System.IO.Path.Combine(directoryPath, "CacheManager"));
-                _serverManager.Save(System.IO.Path.Combine(directoryPath, "ServerManager"));
-                _clientManager.Save(System.IO.Path.Combine(directoryPath, "ClientManager"));
+                _connectionsManager.Save(Path.Combine(directoryPath, "ConnectionManager"));
+                _cacheManager.Save(Path.Combine(directoryPath, "CacheManager"));
+                _serverManager.Save(Path.Combine(directoryPath, "ServerManager"));
+                _clientManager.Save(Path.Combine(directoryPath, "ClientManager"));
 
                 stopwatch.Stop();
                 Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), stopwatch.ElapsedMilliseconds);
