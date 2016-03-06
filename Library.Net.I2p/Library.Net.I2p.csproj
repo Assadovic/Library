@@ -65,6 +65,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Library.Collections\Library.Collections.csproj">
+      <Project>{197c654f-2461-446a-b531-4a789f14be19}</Project>
+      <Name>Library.Collections</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Library\Library.csproj">
       <Project>{63eadc1f-9a8a-4945-a562-da666d0bcb7b}</Project>
       <Name>Library</Name>

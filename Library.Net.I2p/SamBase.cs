@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using Library;
 
 namespace Library.Net.I2p
@@ -133,6 +134,8 @@ namespace Library.Net.I2p
     abstract class SamBase
     {
         private Socket _socket;
+
+        private Stream _stream;
         private StreamReader _reader;
         private StreamWriter _writer;
 
@@ -141,16 +144,15 @@ namespace Library.Net.I2p
             _socket = socket;
 
             {
-                var stream = new NetworkStream(socket);
-                _reader = new StreamReader(stream, new UTF8Encoding(false), false, 1024 * 32);
-                _writer = new StreamWriter(stream, new UTF8Encoding(false), 1024 * 32);
+                _stream = new NetworkStream(socket);
+                _stream.ReadTimeout = Timeout.Infinite;
+                _stream.WriteTimeout = Timeout.Infinite;
+
+                _reader = new StreamReader(_stream, new UTF8Encoding(false), false, 1024 * 32);
+                _writer = new StreamWriter(_stream, new UTF8Encoding(false), 1024 * 32);
                 _writer.NewLine = "\n";
             }
         }
-
-        public Socket Socket { get { return _socket; } }
-
-        public bool IsConnected { get { return (_socket != null && _socket.Connected); } }
 
         private void Send(SamCommand samCommand)
         {
@@ -164,6 +166,15 @@ namespace Library.Net.I2p
             if (line == null) return null;
 
             return new SamCommand(line);
+        }
+
+        public Socket GetSocket()
+        {
+            _stream.Dispose();
+            _reader.Dispose();
+            _writer.Dispose();
+
+            return _socket;
         }
 
         public void Handshake()
@@ -331,16 +342,7 @@ namespace Library.Net.I2p
                 string result;
 
                 {
-                    result = _reader.ReadLine();
-                }
-
-                {
-                    string line = null;
-
-                    do
-                    {
-                        line = _reader.ReadLine();
-                    } while (!string.IsNullOrEmpty(line));
+                    result = _reader.ReadLine().Split(' ')[0];
                 }
 
                 return result;
