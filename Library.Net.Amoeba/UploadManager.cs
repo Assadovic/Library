@@ -398,17 +398,19 @@ namespace Library.Net.Amoeba
 
                                     try
                                     {
-                                        var tokenSource = new CancellationTokenSource();
-                                        var task = _cacheManager.ParityEncoding(new KeyCollection(tempKeys), item.HashAlgorithm, item.BlockLength, CorrectionAlgorithm.None, tokenSource.Token);
-
-                                        while (!task.IsCompleted)
+                                        using (var tokenSource = new CancellationTokenSource())
                                         {
-                                            if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) tokenSource.Cancel();
+                                            var task = _cacheManager.ParityEncoding(new KeyCollection(tempKeys), item.HashAlgorithm, item.BlockLength, CorrectionAlgorithm.None, tokenSource.Token);
 
-                                            Thread.Sleep(1000);
+                                            while (!task.IsCompleted)
+                                            {
+                                                if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) tokenSource.Cancel();
+
+                                                Thread.Sleep(1000);
+                                            }
+
+                                            group = task.Result;
                                         }
-
-                                        group = task.Result;
                                     }
                                     catch (Exception)
                                     {
@@ -521,17 +523,19 @@ namespace Library.Net.Amoeba
 
                         try
                         {
-                            var tokenSource = new CancellationTokenSource();
-                            var task = _cacheManager.ParityEncoding(keys, item.HashAlgorithm, item.BlockLength, item.CorrectionAlgorithm, tokenSource.Token);
-
-                            while (!task.IsCompleted)
+                            using (var tokenSource = new CancellationTokenSource())
                             {
-                                if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) tokenSource.Cancel();
+                                var task = _cacheManager.ParityEncoding(keys, item.HashAlgorithm, item.BlockLength, item.CorrectionAlgorithm, tokenSource.Token);
 
-                                Thread.Sleep(1000);
+                                while (!task.IsCompleted)
+                                {
+                                    if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) tokenSource.Cancel();
+
+                                    Thread.Sleep(1000);
+                                }
+
+                                group = task.Result;
                             }
-
-                            group = task.Result;
                         }
                         catch (Exception)
                         {

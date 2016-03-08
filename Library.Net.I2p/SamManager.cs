@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Library;
-using Library.Collections;
 
 namespace Library.Net.I2p
 {
@@ -27,7 +26,7 @@ namespace Library.Net.I2p
         private Thread _writerThread;
 
         private Thread _acceptThread;
-        private WaitQueue<AcceptResult> _acceptResultQueue = new WaitQueue<AcceptResult>(3);
+        private ConcurrentQueue<AcceptResult> _acceptResultQueue = new ConcurrentQueue<AcceptResult>();
         private CancellationTokenSource _acceptTokenSource = new CancellationTokenSource();
 
         private volatile bool _disposed;
@@ -167,6 +166,9 @@ namespace Library.Net.I2p
             {
                 while (this.IsConnected)
                 {
+                    Thread.Sleep(1000);
+                    if (_acceptResultQueue.Count >= 3) continue;
+
                     Socket socket = null;
 
                     try
@@ -192,9 +194,6 @@ namespace Library.Net.I2p
             catch (Exception)
             {
 
-            }
-            finally
-            {
             }
         }
 
@@ -228,18 +227,20 @@ namespace Library.Net.I2p
                 {
                     socket = this.GetSocket();
 
-                    CancellationTokenSource tokenSource = new CancellationTokenSource();
-                    tokenSource.CancelAfter(60 * 1000);
-
-                    using (tokenSource.Token.Register(() => socket.Dispose()))
+                    using (CancellationTokenSource tokenSource = new CancellationTokenSource())
                     {
-                        var samSession = new SamSession(socket);
-                        samSession.Start(_caption);
+                        tokenSource.CancelAfter(60 * 1000);
 
-                        _sessionSocket = samSession.GetSocket();
-                        _sessionId = samSession.SessionId;
+                        using (tokenSource.Token.Register(() => socket.Dispose()))
+                        {
+                            var samSession = new SamSession(socket);
+                            samSession.Start(_caption);
 
-                        address = I2pConverter.Base32Address.FromDestinationBase64(samSession.DestinationBase64);
+                            _sessionSocket = samSession.GetSocket();
+                            _sessionId = samSession.SessionId;
+
+                            address = I2pConverter.Base32Address.FromDestinationBase64(samSession.DestinationBase64);
+                        }
                     }
 
                     _readerThread.Start();
@@ -265,15 +266,17 @@ namespace Library.Net.I2p
             {
                 socket = this.GetSocket();
 
-                CancellationTokenSource tokenSource = new CancellationTokenSource();
-                tokenSource.CancelAfter(10 * 1000);
-
-                using (tokenSource.Token.Register(() => socket.Dispose()))
+                using (CancellationTokenSource tokenSource = new CancellationTokenSource())
                 {
-                    SamConnect samConnect = new SamConnect(socket);
-                    samConnect.Start(_sessionId, destination);
+                    tokenSource.CancelAfter(10 * 1000);
 
-                    return samConnect.GetSocket();
+                    using (tokenSource.Token.Register(() => socket.Dispose()))
+                    {
+                        SamConnect samConnect = new SamConnect(socket);
+                        samConnect.Start(_sessionId, destination);
+
+                        return samConnect.GetSocket();
+                    }
                 }
             }
             catch (Exception)
@@ -291,19 +294,20 @@ namespace Library.Net.I2p
 
             try
             {
-                while (_acceptResultQueue.Count > 0)
+                for (;;)
                 {
-                    var item = _acceptResultQueue.Dequeue(new TimeSpan(0, 0, 0));
+                    AcceptResult result;
+                    if (!_acceptResultQueue.TryDequeue(out result)) break;
 
-                    if (!item.Socket.Connected)
+                    if (!result.Socket.Connected)
                     {
-                        item.Socket.Dispose();
+                        result.Socket.Dispose();
 
                         continue;
                     }
 
-                    destination = item.Destination;
-                    return item.Socket;
+                    destination = result.Destination;
+                    return result.Socket;
                 }
             }
             catch (Exception)
@@ -343,7 +347,8 @@ namespace Library.Net.I2p
                 _writerThread = null;
 
                 _acceptTokenSource.Cancel();
-                _acceptResultQueue.Dispose();
+                _acceptTokenSource.Dispose();
+                _acceptTokenSource = null;
 
                 if (_acceptThread != null && _acceptThread.IsAlive) _acceptThread.Join();
                 _acceptThread = null;

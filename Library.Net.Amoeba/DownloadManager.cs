@@ -732,17 +732,19 @@ namespace Library.Net.Amoeba
                             {
                                 foreach (var group in item.Index.Groups.ToArray())
                                 {
-                                    var tokenSource = new CancellationTokenSource();
-                                    var task = _cacheManager.ParityDecoding(group, tokenSource.Token);
-
-                                    while (!task.IsCompleted)
+                                    using (var tokenSource = new CancellationTokenSource())
                                     {
-                                        if (this.DecodeState == ManagerState.Stop || !_settings.DownloadItems.Contains(item)) tokenSource.Cancel();
+                                        var task = _cacheManager.ParityDecoding(group, tokenSource.Token);
 
-                                        Thread.Sleep(1000);
+                                        while (!task.IsCompleted)
+                                        {
+                                            if (this.DecodeState == ManagerState.Stop || !_settings.DownloadItems.Contains(item)) tokenSource.Cancel();
+
+                                            Thread.Sleep(1000);
+                                        }
+
+                                        keys.AddRange(task.Result);
                                     }
-
-                                    keys.AddRange(task.Result);
 
                                     item.DecodingBytes += group.Length;
                                 }

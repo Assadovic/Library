@@ -283,17 +283,19 @@ namespace Library.Net.Amoeba
 
                         try
                         {
-                            var tokenSource = new CancellationTokenSource();
-                            var task = _cacheManager.ParityEncoding(keys, item.HashAlgorithm, item.BlockLength, item.CorrectionAlgorithm, tokenSource.Token);
-
-                            while (!task.IsCompleted)
+                            using (var tokenSource = new CancellationTokenSource())
                             {
-                                if (this.State == ManagerState.Stop || !_settings.BackgroundUploadItems.Contains(item)) tokenSource.Cancel();
+                                var task = _cacheManager.ParityEncoding(keys, item.HashAlgorithm, item.BlockLength, item.CorrectionAlgorithm, tokenSource.Token);
 
-                                Thread.Sleep(1000);
+                                while (!task.IsCompleted)
+                                {
+                                    if (this.State == ManagerState.Stop || !_settings.BackgroundUploadItems.Contains(item)) tokenSource.Cancel();
+
+                                    Thread.Sleep(1000);
+                                }
+
+                                group = task.Result;
                             }
-
-                            group = task.Result;
                         }
                         catch (Exception)
                         {

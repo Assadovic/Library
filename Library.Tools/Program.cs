@@ -633,6 +633,41 @@ namespace Library.Tools
 
                     }
                 }
+                else if (args.Length >= 2 && args[0] == "LineCount")
+                {
+                    string basePath = args[1];
+                    int count = 0;
+
+                    var list = new List<KeyValuePair<int, string>>();
+
+                    foreach (var path in Program.GetFiles(basePath))
+                    {
+                        int tcount = 0;
+                        using (StreamReader reader = new StreamReader(path))
+                        {
+                            tcount = reader.ReadToEnd().Count(n => n == '\n');
+                        }
+
+                        list.Add(new KeyValuePair<int, string>(tcount, path));
+                        count += tcount;
+                    }
+
+                    list.Sort((KeyValuePair<int, string> kvp1, KeyValuePair<int, string> kvp2) =>
+                    {
+                        return kvp1.Key.CompareTo(kvp2.Key);
+                    });
+
+                    using (var writer = new StreamWriter("LineCount.txt", false, Encoding.UTF8))
+                    {
+                        foreach (var item in list)
+                        {
+                            var text = item.Value.Substring(basePath.Length).Replace(@"\", "/");
+                            writer.WriteLine(string.Format("{0}\t{1}", item.Key, text));
+                        }
+
+                        writer.WriteLine(string.Format("Total\t{0}", count));
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -928,12 +963,12 @@ namespace Library.Tools
         private static IEnumerable<string> GetFiles(string directory)
         {
             List<string> list = new List<string>();
-            List<string> directoryFilter = new List<string>() { "bin", "obj", ".hg", "test-results" };
-            List<string> fileFilter = new List<string>() { ".c", ".cpp", ".cs", ".xaml", ".xml" };
+            List<string> ignoreDirectoryNames = new List<string>() { "bin", "obj", ".git", "test-results", "packages" };
+            List<string> targetFileExtensions = new List<string>() { ".h", ".c", ".cpp", ".cs", ".xaml", ".xml" };
 
             foreach (var path in System.IO.Directory.GetDirectories(directory))
             {
-                if (!directoryFilter.Contains(Path.GetFileName(path)))
+                if (!ignoreDirectoryNames.Contains(Path.GetFileName(path)))
                 {
                     list.AddRange(Program.GetFiles(path));
                 }
@@ -941,7 +976,7 @@ namespace Library.Tools
 
             foreach (var path in System.IO.Directory.GetFiles(directory))
             {
-                if (fileFilter.Contains(Path.GetExtension(path)))
+                if (targetFileExtensions.Contains(Path.GetExtension(path)))
                 {
                     list.Add(path);
                 }
