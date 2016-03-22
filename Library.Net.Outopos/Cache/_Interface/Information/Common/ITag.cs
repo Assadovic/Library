@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Library.Net.Outopos
+﻿namespace Library.Net.Outopos
 {
     public interface ITag
     {

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using Library.Compression;
 using Library.Security;
 
 namespace Library.Net.Amoeba
@@ -60,44 +58,23 @@ namespace Library.Net.Amoeba
 
             _clientManager.CreateCapEvent = (object sender, string uri) =>
             {
-                if (_createCapEvent != null)
-                {
-                    return _createCapEvent(this, uri);
-                }
-
-                return null;
+                return _createCapEvent?.Invoke(this, uri);
             };
 
             _serverManager.AcceptCapEvent = (object sender, out string uri) =>
             {
                 uri = null;
-
-                if (_acceptCapEvent != null)
-                {
-                    return _acceptCapEvent(this, out uri);
-                }
-
-                return null;
+                return _acceptCapEvent?.Invoke(this, out uri);
             };
 
             _clientManager.CheckUriEvent = (object sender, string uri) =>
             {
-                if (_checkUriEvent != null)
-                {
-                    return _checkUriEvent(this, uri);
-                }
-
-                return true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
 
             _serverManager.CheckUriEvent = (object sender, string uri) =>
             {
-                if (_checkUriEvent != null)
-                {
-                    return _checkUriEvent(this, uri);
-                }
-
-                return true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
         }
 

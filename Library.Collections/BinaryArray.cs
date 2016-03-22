@@ -20,8 +20,14 @@ namespace Library.Collections
             _length = length;
             _bufferManager = bufferManager;
 
-            _buffer = _bufferManager.TakeBuffer((_length + (8 - 1)) / 8);
+            _buffer = _bufferManager.TakeBuffer((int)BinaryArray.Roundup(_length, 8));
             Unsafe.Zero(_buffer);
+        }
+
+        private static long Roundup(long value, long unit)
+        {
+            if (value % unit == 0) return value;
+            else return ((value / unit) + 1) * unit;
         }
 
         public int Length

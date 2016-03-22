@@ -4,8 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using System.Threading;
-using Library.Net;
 using Library.Net.Connections;
 using Library.Net.Proxy;
 
@@ -72,22 +70,12 @@ namespace Library.Net.Amoeba
 
         protected virtual Cap OnCreateCapEvent(string uri)
         {
-            if (_createCapEvent != null)
-            {
-                return _createCapEvent(this, uri);
-            }
-
-            return null;
+            return _createCapEvent?.Invoke(this, uri);
         }
 
         protected virtual bool OnCheckUriEvent(string uri)
         {
-            if (_checkUriEvent != null)
-            {
-                return _checkUriEvent(this, uri);
-            }
-
-            return true;
+            return _checkUriEvent?.Invoke(this, uri) ?? true;
         }
 
         private static IEnumerable<KeyValuePair<string, string>> Decode(string option)

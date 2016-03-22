@@ -1,7 +1,4 @@
-﻿using System;
-using Library.Security;
-
-namespace Library.Net.Outopos
+﻿namespace Library.Net.Outopos
 {
     interface IMulticastOptions : IComputeHash
     {

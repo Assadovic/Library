@@ -16,7 +16,7 @@ namespace Library.Net.Connections
 
         public static byte[] Encrypt(byte[] publicKey, byte[] value)
         {
-            using (var rsa = new RSACryptoServiceProvider(2048))
+            using (var rsa = new RSACryptoServiceProvider())
             {
                 rsa.FromXmlString(Encoding.ASCII.GetString(publicKey));
                 return rsa.Encrypt(value, true);
@@ -25,7 +25,7 @@ namespace Library.Net.Connections
 
         public static byte[] Decrypt(byte[] privateKey, byte[] value)
         {
-            using (var rsa = new RSACryptoServiceProvider(2048))
+            using (var rsa = new RSACryptoServiceProvider())
             {
                 rsa.FromXmlString(Encoding.ASCII.GetString(privateKey));
                 return rsa.Decrypt(value, true);

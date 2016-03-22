@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
-using Library.Net;
 using Library.Net.Connections;
 
 namespace Library.Net.Outopos
@@ -29,7 +28,7 @@ namespace Library.Net.Outopos
         private volatile ManagerState _state = ManagerState.Stop;
 
         private AcceptCapEventHandler _acceptCapEvent;
-        private CheckUriEventHandler _uriFilterEvent;
+        private CheckUriEventHandler _checkUriEvent;
 
         private readonly SafeInteger _blockedCount = new SafeInteger();
 
@@ -81,7 +80,7 @@ namespace Library.Net.Outopos
             {
                 lock (this.ThisLock)
                 {
-                    _uriFilterEvent = value;
+                    _checkUriEvent = value;
                 }
             }
         }
@@ -100,23 +99,12 @@ namespace Library.Net.Outopos
         protected virtual Cap OnAcceptCapEvent(out string uri)
         {
             uri = null;
-
-            if (_acceptCapEvent != null)
-            {
-                return _acceptCapEvent(this, out uri);
-            }
-
-            return null;
+            return _acceptCapEvent?.Invoke(this, out uri);
         }
 
         protected virtual bool OnCheckUriEvent(string uri)
         {
-            if (_uriFilterEvent != null)
-            {
-                return _uriFilterEvent(this, uri);
-            }
-
-            return true;
+            return _checkUriEvent?.Invoke(this, uri) ?? true;
         }
 
         public Connection AcceptConnection(out string uri, BandwidthLimit bandwidthLimit)

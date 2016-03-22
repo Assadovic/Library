@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Threading;
@@ -460,26 +459,17 @@ namespace Library.Net.Amoeba
 
         protected virtual void OnSetKeyEvent(IEnumerable<Key> keys)
         {
-            if (_setKeyEvent != null)
-            {
-                _setKeyEvent(this, keys);
-            }
+            _setKeyEvent?.Invoke(this, keys);
         }
 
         protected virtual void OnRemoveShareEvent(string path)
         {
-            if (_removeShareEvent != null)
-            {
-                _removeShareEvent(this, path);
-            }
+            _removeShareEvent?.Invoke(this, path);
         }
 
         protected virtual void OnRemoveKeyEvent(IEnumerable<Key> keys)
         {
-            if (_removeKeyEvent != null)
-            {
-                _removeKeyEvent(this, keys);
-            }
+            _removeKeyEvent?.Invoke(this, keys);
         }
 
         public int GetLength(Key key)
@@ -1070,7 +1060,7 @@ namespace Library.Net.Amoeba
 
         public Task<Group> ParityEncoding(KeyCollection keys, HashAlgorithm hashAlgorithm, int blockLength, CorrectionAlgorithm correctionAlgorithm, CancellationToken token)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 lock (_convertLock)
                 {

@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading;
-using Library;
-using Library.Collections;
 
 namespace Library.Net.Outopos
 {
@@ -68,7 +63,7 @@ namespace Library.Net.Outopos
                     {
                         var buffer = new byte[4096];
 
-                        for (long i = ((size + (buffer.Length - 1)) / buffer.Length) - 1, remain = size; i >= 0; i--, remain -= buffer.Length)
+                        for (long i = (size / buffer.Length), remain = size; i >= 0; i--, remain -= buffer.Length)
                         {
                             _bitmapStream.Write(buffer, 0, (int)Math.Min(remain, buffer.Length));
                             _bitmapStream.Flush();

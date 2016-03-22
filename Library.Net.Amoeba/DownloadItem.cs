@@ -1,6 +1,4 @@
 ﻿using System.Runtime.Serialization;
-using System.Xml;
-using Library.Io;
 
 namespace Library.Net.Amoeba
 {

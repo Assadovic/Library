@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Library.Security;
 
@@ -53,64 +52,33 @@ namespace Library.Net.Outopos
 
             _clientManager.CreateCapEvent = (object sender, string uri) =>
             {
-                if (_createCapEvent != null)
-                {
-                    return _createCapEvent(this, uri);
-                }
-
-                return null;
+                return _createCapEvent?.Invoke(this, uri);
             };
 
             _serverManager.AcceptCapEvent = (object sender, out string uri) =>
             {
                 uri = null;
-
-                if (_acceptCapEvent != null)
-                {
-                    return _acceptCapEvent(this, out uri);
-                }
-
-                return null;
+                return _acceptCapEvent?.Invoke(this, out uri);
             };
 
             _clientManager.CheckUriEvent = (object sender, string uri) =>
             {
-                if (_checkUriEvent != null)
-                {
-                    return _checkUriEvent(this, uri);
-                }
-
-                return true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
 
             _serverManager.CheckUriEvent = (object sender, string uri) =>
             {
-                if (_checkUriEvent != null)
-                {
-                    return _checkUriEvent(this, uri);
-                }
-
-                return true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
 
             _connectionsManager.GetLockSignaturesEvent = (object sender) =>
             {
-                if (_getLockSignaturesEvent != null)
-                {
-                    return _getLockSignaturesEvent(this);
-                }
-
-                return null;
+                return _getLockSignaturesEvent?.Invoke(this);
             };
 
             _connectionsManager.GetLockTagsEvent = (object sender) =>
             {
-                if (_getLockTagsEvent != null)
-                {
-                    return _getLockTagsEvent(this);
-                }
-
-                return null;
+                return _getLockTagsEvent?.Invoke(this);
             };
         }
 

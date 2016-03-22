@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Xml;
-using Library.Io;
 using Library.Security;
 
 namespace Library.Net.Amoeba

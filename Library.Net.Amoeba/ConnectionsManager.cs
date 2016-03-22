@@ -412,12 +412,7 @@ namespace Library.Net.Amoeba
 
         protected virtual IEnumerable<string> OnLockSignaturesEvent()
         {
-            if (_getLockSignaturesEvent != null)
-            {
-                return _getLockSignaturesEvent(this);
-            }
-
-            return null;
+            return _getLockSignaturesEvent?.Invoke(this);
         }
 
         private static bool Check(Node node)
@@ -2137,10 +2132,7 @@ namespace Library.Net.Amoeba
 
         protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
         {
-            if (_uploadedEvent != null)
-            {
-                _uploadedEvent(this, keys);
-            }
+            _uploadedEvent?.Invoke(this, keys);
         }
 
         public void SetBaseNode(Node baseNode)

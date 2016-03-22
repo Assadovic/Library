@@ -54,7 +54,7 @@ namespace Library
             if (offset < 0 || value.Length < offset) throw new ArgumentOutOfRangeException("offset");
             if (length < 0 || (value.Length - offset) < length) throw new ArgumentOutOfRangeException("length");
 
-			var charArray = System.Convert.ToBase64String(value, offset, length).ToCharArray();
+            var charArray = System.Convert.ToBase64String(value, offset, length).ToCharArray();
             var charLength = charArray.Length;
 
             fixed (char* p_charArray = charArray)
@@ -92,15 +92,15 @@ namespace Library
             switch (value.Length % 4)
             {
                 case 1:
-					charArray = new char[value.Length + 3];
-					break;
-				case 2:
-					charArray = new char[value.Length + 2];
-					break;
+                    charArray = new char[value.Length + 3];
+                    break;
+                case 2:
+                    charArray = new char[value.Length + 2];
+                    break;
                 case 3:
                     charArray = new char[value.Length + 1];
                     break;
-				default:
+                default:
                     charArray = new char[value.Length];
                     break;
             }

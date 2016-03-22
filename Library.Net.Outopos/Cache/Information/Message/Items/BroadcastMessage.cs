@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
-using System.Text;
 using Library.Io;
 using Library.Security;
 
@@ -192,7 +191,6 @@ namespace Library.Net.Outopos
                 || (this.TrustSignatures == null) != (other.TrustSignatures == null)
                 || (this.DeleteSignatures == null) != (other.DeleteSignatures == null)
                 || (this.Tags == null) != (other.Tags == null)
-                || (this.Tags == null) != (other.Tags == null)
 
                 || this.Certificate != other.Certificate)
             {
@@ -207,11 +205,6 @@ namespace Library.Net.Outopos
             if (this.DeleteSignatures != null && other.DeleteSignatures != null)
             {
                 if (!CollectionUtilities.Equals(this.DeleteSignatures, other.DeleteSignatures)) return false;
-            }
-
-            if (this.Tags != null && other.Tags != null)
-            {
-                if (!CollectionUtilities.Equals(this.Tags, other.Tags)) return false;
             }
 
             if (this.Tags != null && other.Tags != null)

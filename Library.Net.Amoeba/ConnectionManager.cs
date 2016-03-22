@@ -603,58 +603,37 @@ namespace Library.Net.Amoeba
 
         protected virtual void OnPullNodes(PullNodesEventArgs e)
         {
-            if (this.PullNodesEvent != null)
-            {
-                this.PullNodesEvent(this, e);
-            }
+            this.PullNodesEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlocksLink(PullBlocksLinkEventArgs e)
         {
-            if (this.PullBlocksLinkEvent != null)
-            {
-                this.PullBlocksLinkEvent(this, e);
-            }
+            this.PullBlocksLinkEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlocksRequest(PullBlocksRequestEventArgs e)
         {
-            if (this.PullBlocksRequestEvent != null)
-            {
-                this.PullBlocksRequestEvent(this, e);
-            }
+            this.PullBlocksRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlock(PullBlockEventArgs e)
         {
-            if (this.PullBlockEvent != null)
-            {
-                this.PullBlockEvent(this, e);
-            }
+            this.PullBlockEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullSeedsRequest(PullSeedsRequestEventArgs e)
         {
-            if (this.PullSeedsRequestEvent != null)
-            {
-                this.PullSeedsRequestEvent(this, e);
-            }
+            this.PullSeedsRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullSeeds(PullSeedsEventArgs e)
         {
-            if (this.PullSeedsEvent != null)
-            {
-                this.PullSeedsEvent(this, e);
-            }
+            this.PullSeedsEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullCancel(EventArgs e)
         {
-            if (this.PullCancelEvent != null)
-            {
-                this.PullCancelEvent(this, e);
-            }
+            this.PullCancelEvent?.Invoke(this, e);
         }
 
         protected virtual void OnClose(EventArgs e)
@@ -662,10 +641,7 @@ namespace Library.Net.Amoeba
             if (_onClose) return;
             _onClose = true;
 
-            if (this.CloseEvent != null)
-            {
-                this.CloseEvent(this, e);
-            }
+            this.CloseEvent?.Invoke(this, e);
         }
 
         public void PushNodes(IEnumerable<Node> nodes)

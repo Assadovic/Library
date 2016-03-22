@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
-using Library;
 using Library.Collections;
 using Library.Net.Connections;
 using Library.Security;
@@ -383,22 +382,12 @@ namespace Library.Net.Outopos
 
         protected virtual IEnumerable<string> OnLockSignaturesEvent()
         {
-            if (_getLockSignaturesEvent != null)
-            {
-                return _getLockSignaturesEvent(this);
-            }
-
-            return null;
+            return _getLockSignaturesEvent?.Invoke(this);
         }
 
         protected virtual IEnumerable<Tag> OnLockTagsEvent()
         {
-            if (_getLockTagsEvent != null)
-            {
-                return _getLockTagsEvent(this);
-            }
-
-            return null;
+            return _getLockTagsEvent?.Invoke(this);
         }
 
         private static bool Check(Node node)

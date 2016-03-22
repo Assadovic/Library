@@ -414,11 +414,13 @@ namespace Library.Net.Amoeba
                                     }
                                     catch (Exception)
                                     {
-                                        continue;
+                                        break;
                                     }
 
                                     groups.Add(group);
                                 }
+
+                                if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) continue;
 
                                 lock (this.ThisLock)
                                 {
@@ -477,7 +479,15 @@ namespace Library.Net.Amoeba
 
                             this.CheckState(item);
 
-                            _cacheManager.SetSeed(item.Seed.Clone(), item.Indexes.Select(n => n.Clone()).ToArray());
+                            if (item.Type == UploadType.Upload)
+                            {
+                                _cacheManager.SetSeed(item.Seed.Clone(), item.Indexes.Select(n => n.Clone()).ToArray());
+                            }
+                            else if (item.Type == UploadType.Share)
+                            {
+                                _cacheManager.SetSeed(item.Seed.Clone(), item.FilePath, item.Indexes.Select(n => n.Clone()).ToArray());
+                            }
+
                             item.Indexes.Clear();
 
                             foreach (var key in item.LockedKeys)

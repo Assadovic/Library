@@ -686,90 +686,57 @@ namespace Library.Net.Outopos
 
         protected virtual void OnPullNodes(PullNodesEventArgs e)
         {
-            if (this.PullNodesEvent != null)
-            {
-                this.PullNodesEvent(this, e);
-            }
+            this.PullNodesEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlocksLink(PullBlocksLinkEventArgs e)
         {
-            if (this.PullBlocksLinkEvent != null)
-            {
-                this.PullBlocksLinkEvent(this, e);
-            }
+            this.PullBlocksLinkEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlocksRequest(PullBlocksRequestEventArgs e)
         {
-            if (this.PullBlocksRequestEvent != null)
-            {
-                this.PullBlocksRequestEvent(this, e);
-            }
+            this.PullBlocksRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBlock(PullBlockEventArgs e)
         {
-            if (this.PullBlockEvent != null)
-            {
-                this.PullBlockEvent(this, e);
-            }
+            this.PullBlockEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBroadcastMetadatasRequest(PullBroadcastMetadatasRequestEventArgs e)
         {
-            if (this.PullBroadcastMetadatasRequestEvent != null)
-            {
-                this.PullBroadcastMetadatasRequestEvent(this, e);
-            }
+            this.PullBroadcastMetadatasRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullBroadcastMetadatas(PullBroadcastMetadatasEventArgs e)
         {
-            if (this.PullBroadcastMetadatasEvent != null)
-            {
-                this.PullBroadcastMetadatasEvent(this, e);
-            }
+            this.PullBroadcastMetadatasEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullUnicastMetadatasRequest(PullUnicastMetadatasRequestEventArgs e)
         {
-            if (this.PullUnicastMetadatasRequestEvent != null)
-            {
-                this.PullUnicastMetadatasRequestEvent(this, e);
-            }
+            this.PullUnicastMetadatasRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullUnicastMetadatas(PullUnicastMetadatasEventArgs e)
         {
-            if (this.PullUnicastMetadatasEvent != null)
-            {
-                this.PullUnicastMetadatasEvent(this, e);
-            }
+            this.PullUnicastMetadatasEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullMulticastMetadatasRequest(PullMulticastMetadatasRequestEventArgs e)
         {
-            if (this.PullMulticastMetadatasRequestEvent != null)
-            {
-                this.PullMulticastMetadatasRequestEvent(this, e);
-            }
+            this.PullMulticastMetadatasRequestEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullMulticastMetadatas(PullMulticastMetadatasEventArgs e)
         {
-            if (this.PullMulticastMetadatasEvent != null)
-            {
-                this.PullMulticastMetadatasEvent(this, e);
-            }
+            this.PullMulticastMetadatasEvent?.Invoke(this, e);
         }
 
         protected virtual void OnPullCancel(EventArgs e)
         {
-            if (this.PullCancelEvent != null)
-            {
-                this.PullCancelEvent(this, e);
-            }
+            this.PullCancelEvent?.Invoke(this, e);
         }
 
         protected virtual void OnClose(EventArgs e)
@@ -777,10 +744,7 @@ namespace Library.Net.Outopos
             if (_onClose) return;
             _onClose = true;
 
-            if (this.CloseEvent != null)
-            {
-                this.CloseEvent(this, e);
-            }
+            this.CloseEvent?.Invoke(this, e);
         }
 
         public void PushNodes(IEnumerable<Node> nodes)
