@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using Library;
-using Library.Io;
 using Library.Security;
 
 namespace Library.Net.Connections
@@ -30,12 +26,28 @@ namespace Library.Net.Connections
         public static int GetHashCode(byte[] buffer)
         {
             if (buffer == null) throw new ArgumentNullException("buffer");
+            if (buffer.Length == 0) return 0;
 
             return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
                 new ArraySegment<byte>[]
                 {
                     new ArraySegment<byte>(_vector),
                     new ArraySegment<byte>(buffer),
+                }), 0));
+        }
+
+        public static int GetHashCode(byte[] buffer, int offset, int count)
+        {
+            if (buffer == null) throw new ArgumentNullException("buffer");
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (count == 0) return 0;
+
+            return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
+                new ArraySegment<byte>[]
+                {
+                    new ArraySegment<byte>(_vector),
+                    new ArraySegment<byte>(buffer, offset, count),
                 }), 0));
         }
 
