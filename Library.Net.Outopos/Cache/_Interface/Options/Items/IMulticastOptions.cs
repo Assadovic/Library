@@ -3,6 +3,5 @@
     interface IMulticastOptions : IComputeHash
     {
         Key Key { get; }
-        int Cost { get; }
     }
 }

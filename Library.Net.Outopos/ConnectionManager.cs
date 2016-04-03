@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using Library.Collections;
 using Library.Io;
@@ -121,17 +122,16 @@ namespace Library.Net.Outopos
             MulticastMetadatas = 13,
         }
 
-        private byte[] _mySessionId;
-        private byte[] _otherSessionId;
-        private Connection _connection;
         private ProtocolVersion _protocolVersion;
         private ProtocolVersion _myProtocolVersion;
         private ProtocolVersion _otherProtocolVersion;
+        private Connection _connection;
+        private byte[] _mySessionId;
+        private byte[] _otherSessionId;
         private Node _baseNode;
         private Node _otherNode;
-        private BufferManager _bufferManager;
-
         private ConnectDirection _direction;
+        private BufferManager _bufferManager;
 
         private bool _onClose;
 
@@ -175,13 +175,12 @@ namespace Library.Net.Outopos
 
         public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
+            _myProtocolVersion = ProtocolVersion.Version2;
             _connection = connection;
             _mySessionId = mySessionId;
             _baseNode = baseNode;
             _direction = direction;
             _bufferManager = bufferManager;
-
-            _myProtocolVersion = ProtocolVersion.Version2;
         }
 
         public byte[] SesstionId
@@ -375,7 +374,7 @@ namespace Library.Net.Outopos
                         _responseStopwatch.Start();
                         this.Ping(_pingHash);
 
-                        ThreadPool.QueueUserWorkItem(this.Pull);
+                        Task.Factory.StartNew(this.PullThread, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
                         _aliveTimer = new WatchTimer(this.AliveTimer, new TimeSpan(0, 0, 30));
                     }
                     else
@@ -526,9 +525,9 @@ namespace Library.Net.Outopos
             }
         }
 
-        private void Pull(object state)
+        private void PullThread()
         {
-            Thread.CurrentThread.Name = "ConnectionManager_Pull";
+            Thread.CurrentThread.Name = "ConnectionManager_PullThread";
             Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
             try
@@ -948,8 +947,7 @@ namespace Library.Net.Outopos
                     stream.WriteByte((byte)SerializeId.BroadcastMetadatas);
                     stream.Flush();
 
-                    var message = new BroadcastMetadatasMessage(
-                        broadcastMetadats);
+                    var message = new BroadcastMetadatasMessage(broadcastMetadats);
 
                     stream = new UniteStream(stream, message.Export(_bufferManager));
 
@@ -1023,8 +1021,7 @@ namespace Library.Net.Outopos
                     stream.WriteByte((byte)SerializeId.UnicastMetadatas);
                     stream.Flush();
 
-                    var message = new UnicastMetadatasMessage(
-                        UnicastMetadatas);
+                    var message = new UnicastMetadatasMessage(UnicastMetadatas);
 
                     stream = new UniteStream(stream, message.Export(_bufferManager));
 
@@ -1162,7 +1159,7 @@ namespace Library.Net.Outopos
                 Node = 0,
             }
 
-            private NodeCollection _nodes;
+            private volatile NodeCollection _nodes;
 
             public NodesMessage(IEnumerable<Node> nodes)
             {
@@ -1232,7 +1229,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "Nodes")]
             private NodeCollection ProtectedNodes
             {
                 get
@@ -1252,7 +1248,7 @@ namespace Library.Net.Outopos
                 Key = 0,
             }
 
-            private KeyCollection _keys;
+            private volatile KeyCollection _keys;
 
             public BlocksLinkMessage(IEnumerable<Key> keys)
             {
@@ -1322,7 +1318,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "Keys")]
             private KeyCollection ProtectedKeys
             {
                 get
@@ -1342,7 +1337,7 @@ namespace Library.Net.Outopos
                 Key = 0,
             }
 
-            private KeyCollection _keys;
+            private volatile KeyCollection _keys;
 
             public BlocksRequestMessage(IEnumerable<Key> keys)
             {
@@ -1412,7 +1407,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "Keys")]
             private KeyCollection ProtectedKeys
             {
                 get
@@ -1433,8 +1427,10 @@ namespace Library.Net.Outopos
                 Value = 1,
             }
 
-            private Key _key;
+            private volatile Key _key;
             private ArraySegment<byte> _value;
+
+            private volatile object _thisLock;
 
             public BlockMessage(Key key, ArraySegment<byte> value)
             {
@@ -1444,7 +1440,7 @@ namespace Library.Net.Outopos
 
             protected override void Initialize()
             {
-
+                _thisLock = new object();
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -1541,11 +1537,17 @@ namespace Library.Net.Outopos
             {
                 get
                 {
-                    return _value;
+                    lock (_thisLock)
+                    {
+                        return _value;
+                    }
                 }
                 private set
                 {
-                    _value = value;
+                    lock (_thisLock)
+                    {
+                        _value = value;
+                    }
                 }
             }
         }
@@ -1557,7 +1559,7 @@ namespace Library.Net.Outopos
                 Signature = 0,
             }
 
-            private SignatureCollection _signatures;
+            private volatile SignatureCollection _signatures;
 
             public BroadcastMetadatasRequestMessage(IEnumerable<string> signatures)
             {
@@ -1624,7 +1626,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "Signatures")]
             private SignatureCollection ProtectedSignatures
             {
                 get
@@ -1644,7 +1645,7 @@ namespace Library.Net.Outopos
                 BroadcastMetadata = 0,
             }
 
-            private LockedList<BroadcastMetadata> _broadcastMetadatas;
+            private volatile LockedList<BroadcastMetadata> _broadcastMetadatas;
 
             public BroadcastMetadatasMessage(IEnumerable<BroadcastMetadata> broadcastMetadatas)
             {
@@ -1714,7 +1715,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "BroadcastMetadatas")]
             private LockedList<BroadcastMetadata> ProtectedBroadcastMetadatas
             {
                 get
@@ -1734,7 +1734,7 @@ namespace Library.Net.Outopos
                 Signature = 0,
             }
 
-            private SignatureCollection _signatures;
+            private volatile SignatureCollection _signatures;
 
             public UnicastMetadatasRequestMessage(IEnumerable<string> signatures)
             {
@@ -1801,7 +1801,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "Signatures")]
             private SignatureCollection ProtectedSignatures
             {
                 get
@@ -1821,7 +1820,7 @@ namespace Library.Net.Outopos
                 UnicastMetadata = 0,
             }
 
-            private LockedList<UnicastMetadata> _unicastMetadatas;
+            private volatile LockedList<UnicastMetadata> _unicastMetadatas;
 
             public UnicastMetadatasMessage(IEnumerable<UnicastMetadata> unicastMetadatas)
             {
@@ -1891,7 +1890,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            [DataMember(Name = "UnicastMetadatas")]
             private LockedList<UnicastMetadata> ProtectedUnicastMetadatas
             {
                 get
@@ -1911,7 +1909,7 @@ namespace Library.Net.Outopos
                 Tag = 0,
             }
 
-            private TagCollection _tags;
+            private volatile TagCollection _tags;
 
             public MulticastMetadatasRequestMessage(IEnumerable<Tag> tags)
             {
@@ -2001,7 +1999,7 @@ namespace Library.Net.Outopos
                 MulticastMetadata = 0,
             }
 
-            private LockedList<MulticastMetadata> _multicastMetadatas;
+            private volatile LockedList<MulticastMetadata> _multicastMetadatas;
 
             public MulticastMetadatasMessage(IEnumerable<MulticastMetadata> multicastMetadatas)
             {

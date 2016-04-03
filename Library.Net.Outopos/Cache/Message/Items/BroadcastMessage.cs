@@ -34,8 +34,6 @@ namespace Library.Net.Outopos
 
         private volatile Certificate _certificate;
 
-        private volatile object _thisLock;
-
         public static readonly int MaxTrustSignatureCount = 1024;
         public static readonly int MaxDeleteSignatureCount = 1024;
         public static readonly int MaxTagCount = 256;
@@ -55,7 +53,7 @@ namespace Library.Net.Outopos
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -259,18 +257,12 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (_thisLock)
-                {
-                    return _creationTime;
-                }
+                return _creationTime;
             }
             private set
             {
-                lock (_thisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 

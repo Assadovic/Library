@@ -26,8 +26,6 @@ namespace Library.Security
 
         private volatile int _hashCode;
 
-        private volatile object _thisLock;
-
         public static readonly int MaxPublickeyLength = 1024 * 8;
         public static readonly int MaxPrivatekeyLength = 1024 * 8;
 
@@ -49,7 +47,7 @@ namespace Library.Security
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -194,18 +192,12 @@ namespace Library.Security
         {
             get
             {
-                lock (_thisLock)
-                {
-                    return _creationTime;
-                }
+                return _creationTime;
             }
             set
             {
-                lock (_thisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 

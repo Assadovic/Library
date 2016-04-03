@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using Library.Io;
 using Library.Net.Connections;
@@ -88,17 +89,16 @@ namespace Library.Net.Amoeba
             Seeds = 9,
         }
 
-        private byte[] _mySessionId;
-        private byte[] _otherSessionId;
-        private Connection _connection;
         private ProtocolVersion _protocolVersion;
         private ProtocolVersion _myProtocolVersion;
         private ProtocolVersion _otherProtocolVersion;
+        private Connection _connection;
+        private byte[] _mySessionId;
+        private byte[] _otherSessionId;
         private Node _baseNode;
         private Node _otherNode;
-        private BufferManager _bufferManager;
-
         private ConnectDirection _direction;
+        private BufferManager _bufferManager;
 
         private bool _onClose;
 
@@ -136,13 +136,12 @@ namespace Library.Net.Amoeba
 
         public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
+            _myProtocolVersion = ProtocolVersion.Version2;
             _connection = connection;
             _mySessionId = mySessionId;
             _baseNode = baseNode;
             _direction = direction;
             _bufferManager = bufferManager;
-
-            _myProtocolVersion = ProtocolVersion.Version2;
         }
 
         public byte[] SesstionId
@@ -336,7 +335,7 @@ namespace Library.Net.Amoeba
                         _responseStopwatch.Start();
                         this.Ping(_pingHash);
 
-                        ThreadPool.QueueUserWorkItem(this.Pull);
+                        Task.Factory.StartNew(this.PullThread, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
                         _aliveTimer = new WatchTimer(this.AliveTimer, new TimeSpan(0, 0, 30));
                     }
                     else
@@ -487,9 +486,9 @@ namespace Library.Net.Amoeba
             }
         }
 
-        private void Pull(object state)
+        private void PullThread()
         {
-            Thread.CurrentThread.Name = "ConnectionManager_Pull";
+            Thread.CurrentThread.Name = "ConnectionManager_PullThread";
             Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
             try
@@ -909,7 +908,7 @@ namespace Library.Net.Amoeba
                 Node = 0,
             }
 
-            private NodeCollection _nodes;
+            private volatile NodeCollection _nodes;
 
             public NodesMessage(IEnumerable<Node> nodes)
             {
@@ -979,7 +978,6 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            [DataMember(Name = "Nodes")]
             private NodeCollection ProtectedNodes
             {
                 get
@@ -999,7 +997,7 @@ namespace Library.Net.Amoeba
                 Key = 0,
             }
 
-            private KeyCollection _keys;
+            private volatile KeyCollection _keys;
 
             public BlocksLinkMessage(IEnumerable<Key> keys)
             {
@@ -1069,7 +1067,6 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            [DataMember(Name = "Keys")]
             private KeyCollection ProtectedKeys
             {
                 get
@@ -1089,7 +1086,7 @@ namespace Library.Net.Amoeba
                 Key = 0,
             }
 
-            private KeyCollection _keys;
+            private volatile KeyCollection _keys;
 
             public BlocksRequestMessage(IEnumerable<Key> keys)
             {
@@ -1159,7 +1156,6 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            [DataMember(Name = "Keys")]
             private KeyCollection ProtectedKeys
             {
                 get
@@ -1180,8 +1176,10 @@ namespace Library.Net.Amoeba
                 Value = 1,
             }
 
-            private Key _key;
+            private volatile Key _key;
             private ArraySegment<byte> _value;
+
+            private volatile object _thisLock;
 
             public BlockMessage(Key key, ArraySegment<byte> value)
             {
@@ -1191,7 +1189,7 @@ namespace Library.Net.Amoeba
 
             protected override void Initialize()
             {
-
+                _thisLock = new object();
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -1288,11 +1286,17 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    return _value;
+                    lock (_thisLock)
+                    {
+                        return _value;
+                    }
                 }
                 private set
                 {
-                    _value = value;
+                    lock (_thisLock)
+                    {
+                        _value = value;
+                    }
                 }
             }
         }
@@ -1304,7 +1308,7 @@ namespace Library.Net.Amoeba
                 Signature = 0,
             }
 
-            private SignatureCollection _signatures;
+            private volatile SignatureCollection _signatures;
 
             public SeedsRequestMessage(IEnumerable<string> signatures)
             {
@@ -1371,7 +1375,6 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            [DataMember(Name = "Signatures")]
             private SignatureCollection ProtectedSignatures
             {
                 get
@@ -1391,7 +1394,7 @@ namespace Library.Net.Amoeba
                 Seed = 0,
             }
 
-            private SeedCollection _seeds;
+            private volatile SeedCollection _seeds;
 
             public SeedsMessage(IEnumerable<Seed> seeds)
             {
@@ -1461,7 +1464,6 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            [DataMember(Name = "Seeds")]
             private SeedCollection ProtectedSeeds
             {
                 get

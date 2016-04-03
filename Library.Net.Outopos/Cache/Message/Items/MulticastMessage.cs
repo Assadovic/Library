@@ -6,41 +6,41 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "UnicastMetadata", Namespace = "http://Library/Net/Outopos")]
-    class UnicastMetadata : ImmutableCertificateItemBase<UnicastMetadata>, IUnicastHeader, IUnicastOptions
+    [DataContract(Name = "MulticastMessage", Namespace = "http://Library/Net/Outopos")]
+    public sealed class MulticastMessage : ImmutableCertificateItemBase<MulticastMessage>, IMulticastHeader, IMulticastContent
     {
         private enum SerializeId : byte
         {
-            Signature = 0,
+            Tag = 0,
             CreationTime = 1,
 
-            Key = 2,
+            Comment = 2,
 
             Certificate = 3,
         }
 
-        private volatile string _signature;
+        private volatile Tag _tag;
         private DateTime _creationTime;
 
-        private volatile Key _key;
+        private volatile string _comment;
 
         private volatile Certificate _certificate;
 
-        private volatile object _thisLock;
+        public static readonly int MaxCommentLength = 1024 * 8;
 
-        internal UnicastMetadata(string signature, DateTime creationTime, Key key, DigitalSignature digitalSignature)
+        internal MulticastMessage(Tag tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
         {
-            this.Signature = signature;
+            this.Tag = tag;
             this.CreationTime = creationTime;
 
-            this.Key = key;
+            this.Comment = comment;
 
             this.CreateCertificate(digitalSignature);
         }
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -63,18 +63,18 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Signature)
+                    if (id == (byte)SerializeId.Tag)
                     {
-                        this.Signature = ItemUtilities.GetString(rangeStream);
+                        this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);
                     }
                     else if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Key)
+                    else if (id == (byte)SerializeId.Comment)
                     {
-                        this.Key = Key.Import(rangeStream, bufferManager);
+                        this.Comment = ItemUtilities.GetString(rangeStream);
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -89,10 +89,13 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Signature
-            if (this.Signature != null)
+            // Tag
+            if (this.Tag != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
+                using (var stream = this.Tag.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
+                }
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
@@ -100,13 +103,10 @@ namespace Library.Net.Outopos
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
-            // Key
-            if (this.Key != null)
+            // Comment
+            if (this.Comment != null)
             {
-                using (var stream = this.Key.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
-                }
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
             }
 
             // Certificate
@@ -124,26 +124,25 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            if (this.Key == null) return 0;
-            else return this.Key.GetHashCode();
+            return this.CreationTime.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is UnicastMetadata)) return false;
+            if ((object)obj == null || !(obj is MulticastMessage)) return false;
 
-            return this.Equals((UnicastMetadata)obj);
+            return this.Equals((MulticastMessage)obj);
         }
 
-        public override bool Equals(UnicastMetadata other)
+        public override bool Equals(MulticastMessage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Signature != other.Signature
+            if (this.Tag != other.Tag
                 || this.CreationTime != other.CreationTime
 
-                || this.Key != other.Key
+                || this.Comment != other.Comment
 
                 || this.Certificate != other.Certificate)
             {
@@ -190,18 +189,18 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IUnicastHeader
+        #region IMulticastHeader
 
-        [DataMember(Name = "Signature")]
-        public string Signature
+        [DataMember(Name = "Tag")]
+        public Tag Tag
         {
             get
             {
-                return _signature;
+                return _tag;
             }
             private set
             {
-                _signature = value;
+                _tag = value;
             }
         }
 
@@ -210,65 +209,37 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (_thisLock)
-                {
-                    return _creationTime;
-                }
+                return _creationTime;
             }
             private set
             {
-                lock (_thisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 
         #endregion
 
-        #region IUnicastMetadata
+        #region IMulticastContent
 
-        [DataMember(Name = "Key")]
-        public Key Key
+        [DataMember(Name = "Comment")]
+        public string Comment
         {
             get
             {
-                return _key;
+                return _comment;
             }
             private set
             {
-                _key = value;
-            }
-        }
-
-        #endregion
-
-        #region IComputeHash
-
-        private volatile byte[] _sha256_hash;
-
-        public byte[] CreateHash(HashAlgorithm hashAlgorithm)
-        {
-            if (_sha256_hash == null)
-            {
-                using (var stream = this.Export(BufferManager.Instance))
+                if (value != null && value.Length > MulticastMessage.MaxCommentLength)
                 {
-                    _sha256_hash = Sha256.ComputeHash(stream);
+                    throw new ArgumentException();
+                }
+                else
+                {
+                    _comment = value;
                 }
             }
-
-            if (hashAlgorithm == HashAlgorithm.Sha256)
-            {
-                return _sha256_hash;
-            }
-
-            return null;
-        }
-
-        public bool VerifyHash(byte[] hash, HashAlgorithm hashAlgorithm)
-        {
-            return Unsafe.Equals(this.CreateHash(hashAlgorithm), hash);
         }
 
         #endregion

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Library.Collections;
 using Library.Net.Connections;
 using Library.Security;
@@ -498,7 +499,7 @@ namespace Library.Net.Outopos
                 messageManager.SessionId = connectionManager.SesstionId;
                 messageManager.LastPullTime = DateTime.UtcNow;
 
-                ThreadPool.QueueUserWorkItem(this.ConnectionManagerThread, connectionManager);
+                Task.Factory.StartNew(this.ConnectionManagerThread, connectionManager, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
             }
         }
 
@@ -823,7 +824,7 @@ namespace Library.Net.Outopos
                     refreshStopwatch.Restart();
 
                     // トラストにより必要なMetadataを選択し、不要なMetadataを削除する。
-                    ThreadPool.QueueUserWorkItem((object wstate) =>
+                    Task.Run(() =>
                     {
                         if (_refreshThreadRunning) return;
                         _refreshThreadRunning = true;
@@ -2869,6 +2870,10 @@ namespace Library.Net.Outopos
 
                     _serverManager.Start();
 
+                    _connectionsManagerThread = new Thread(this.ConnectionsManagerThread);
+                    _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
+                    _connectionsManagerThread.Priority = ThreadPriority.Lowest;
+                    _connectionsManagerThread.Start();
                     _createConnection1Thread = new Thread(this.CreateConnectionThread);
                     _createConnection1Thread.Name = "ConnectionsManager_CreateConnection1Thread";
                     _createConnection1Thread.Priority = ThreadPriority.Lowest;
@@ -2893,10 +2898,6 @@ namespace Library.Net.Outopos
                     _acceptConnection3Thread.Name = "ConnectionsManager_AcceptConnection3Thread";
                     _acceptConnection3Thread.Priority = ThreadPriority.Lowest;
                     _acceptConnection3Thread.Start();
-                    _connectionsManagerThread = new Thread(this.ConnectionsManagerThread);
-                    _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
-                    _connectionsManagerThread.Priority = ThreadPriority.Lowest;
-                    _connectionsManagerThread.Start();
                 }
             }
         }

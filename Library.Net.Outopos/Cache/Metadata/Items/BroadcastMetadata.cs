@@ -6,43 +6,35 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "MulticastMessage", Namespace = "http://Library/Net/Outopos")]
-    public sealed class MulticastMessage : ImmutableCertificateItemBase<MulticastMessage>, IMulticastHeader, IMulticastContent
+    [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
+    class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
     {
         private enum SerializeId : byte
         {
-            Tag = 0,
-            CreationTime = 1,
+            CreationTime = 0,
 
-            Comment = 2,
+            Key = 1,
 
-            Certificate = 3,
+            Certificate = 2,
         }
 
-        private volatile Tag _tag;
         private DateTime _creationTime;
-
-        private volatile string _comment;
+        private volatile Key _key;
 
         private volatile Certificate _certificate;
 
-        private volatile object _thisLock;
-
-        public static readonly int MaxCommentLength = 1024 * 8;
-
-        internal MulticastMessage(Tag tag, DateTime creationTime, string comment, DigitalSignature digitalSignature)
+        internal BroadcastMetadata(DateTime creationTime, Key key, DigitalSignature digitalSignature)
         {
-            this.Tag = tag;
             this.CreationTime = creationTime;
 
-            this.Comment = comment;
+            this.Key = key;
 
             this.CreateCertificate(digitalSignature);
         }
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -65,18 +57,14 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Tag)
-                    {
-                        this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);
-                    }
-                    else if (id == (byte)SerializeId.CreationTime)
+                    if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Comment)
+                    else if (id == (byte)SerializeId.Key)
                     {
-                        this.Comment = ItemUtilities.GetString(rangeStream);
+                        this.Key = Key.Import(rangeStream, bufferManager);
                     }
 
                     else if (id == (byte)SerializeId.Certificate)
@@ -91,24 +79,19 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Tag
-            if (this.Tag != null)
-            {
-                using (var stream = this.Tag.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
-                }
-            }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
-            // Comment
-            if (this.Comment != null)
+            // Key
+            if (this.Key != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
+                using (var stream = this.Key.Export(bufferManager))
+                {
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                }
             }
 
             // Certificate
@@ -126,25 +109,25 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            return this.CreationTime.GetHashCode();
+            if (this.Key == null) return 0;
+            else return this.Key.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is MulticastMessage)) return false;
+            if ((object)obj == null || !(obj is BroadcastMetadata)) return false;
 
-            return this.Equals((MulticastMessage)obj);
+            return this.Equals((BroadcastMetadata)obj);
         }
 
-        public override bool Equals(MulticastMessage other)
+        public override bool Equals(BroadcastMetadata other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Tag != other.Tag
-                || this.CreationTime != other.CreationTime
+            if (this.CreationTime != other.CreationTime
 
-                || this.Comment != other.Comment
+                || this.Key != other.Key
 
                 || this.Certificate != other.Certificate)
             {
@@ -191,63 +174,66 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IMulticastHeader
-
-        [DataMember(Name = "Tag")]
-        public Tag Tag
-        {
-            get
-            {
-                return _tag;
-            }
-            private set
-            {
-                _tag = value;
-            }
-        }
+        #region IBroadcastHeader
 
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime
         {
             get
             {
-                lock (_thisLock)
-                {
-                    return _creationTime;
-                }
+                return _creationTime;
             }
             private set
             {
-                lock (_thisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 
         #endregion
 
-        #region IMulticastContent
+        #region IBroadcastOptions
 
-        [DataMember(Name = "Comment")]
-        public string Comment
+        [DataMember(Name = "Key")]
+        public Key Key
         {
             get
             {
-                return _comment;
+                return _key;
             }
             private set
             {
-                if (value != null && value.Length > MulticastMessage.MaxCommentLength)
+                _key = value;
+            }
+        }
+
+        #endregion
+
+        #region IComputeHash
+
+        private volatile byte[] _sha256_hash;
+
+        public byte[] CreateHash(HashAlgorithm hashAlgorithm)
+        {
+            if (_sha256_hash == null)
+            {
+                using (var stream = this.Export(BufferManager.Instance))
                 {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _comment = value;
+                    _sha256_hash = Sha256.ComputeHash(stream);
                 }
             }
+
+            if (hashAlgorithm == HashAlgorithm.Sha256)
+            {
+                return _sha256_hash;
+            }
+
+            return null;
+        }
+
+        public bool VerifyHash(byte[] hash, HashAlgorithm hashAlgorithm)
+        {
+            return Unsafe.Equals(this.CreateHash(hashAlgorithm), hash);
         }
 
         #endregion

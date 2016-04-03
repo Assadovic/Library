@@ -6,27 +6,29 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
-    class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
+    [DataContract(Name = "UnicastMetadata", Namespace = "http://Library/Net/Outopos")]
+    class UnicastMetadata : ImmutableCertificateItemBase<UnicastMetadata>, IUnicastHeader, IUnicastOptions
     {
         private enum SerializeId : byte
         {
-            CreationTime = 0,
+            Signature = 0,
+            CreationTime = 1,
 
-            Key = 1,
+            Key = 2,
 
-            Certificate = 2,
+            Certificate = 3,
         }
 
+        private volatile string _signature;
         private DateTime _creationTime;
+
         private volatile Key _key;
 
         private volatile Certificate _certificate;
 
-        private volatile object _thisLock;
-
-        internal BroadcastMetadata(DateTime creationTime, Key key, DigitalSignature digitalSignature)
+        internal UnicastMetadata(string signature, DateTime creationTime, Key key, DigitalSignature digitalSignature)
         {
+            this.Signature = signature;
             this.CreationTime = creationTime;
 
             this.Key = key;
@@ -36,7 +38,7 @@ namespace Library.Net.Outopos
 
         protected override void Initialize()
         {
-            _thisLock = new object();
+
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -59,7 +61,11 @@ namespace Library.Net.Outopos
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.CreationTime)
+                    if (id == (byte)SerializeId.Signature)
+                    {
+                        this.Signature = ItemUtilities.GetString(rangeStream);
+                    }
+                    else if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
@@ -81,6 +87,11 @@ namespace Library.Net.Outopos
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
+            // Signature
+            if (this.Signature != null)
+            {
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
+            }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
@@ -117,17 +128,18 @@ namespace Library.Net.Outopos
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is BroadcastMetadata)) return false;
+            if ((object)obj == null || !(obj is UnicastMetadata)) return false;
 
-            return this.Equals((BroadcastMetadata)obj);
+            return this.Equals((UnicastMetadata)obj);
         }
 
-        public override bool Equals(BroadcastMetadata other)
+        public override bool Equals(UnicastMetadata other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.CreationTime != other.CreationTime
+            if (this.Signature != other.Signature
+                || this.CreationTime != other.CreationTime
 
                 || this.Key != other.Key
 
@@ -176,31 +188,38 @@ namespace Library.Net.Outopos
             }
         }
 
-        #region IBroadcastHeader
+        #region IUnicastHeader
+
+        [DataMember(Name = "Signature")]
+        public string Signature
+        {
+            get
+            {
+                return _signature;
+            }
+            private set
+            {
+                _signature = value;
+            }
+        }
 
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime
         {
             get
             {
-                lock (_thisLock)
-                {
-                    return _creationTime;
-                }
+                return _creationTime;
             }
             private set
             {
-                lock (_thisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 
         #endregion
 
-        #region IBroadcastOptions
+        #region IUnicastMetadata
 
         [DataMember(Name = "Key")]
         public Key Key

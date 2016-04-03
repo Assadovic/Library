@@ -96,9 +96,8 @@ namespace Library.Security
 
         public static int Verify(Cash cash, Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-
             if (cash == null) return 0;
+            if (stream == null) throw new ArgumentNullException("stream");
 
             if (cash.CashAlgorithm == CashAlgorithm.Version1)
             {

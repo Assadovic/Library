@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Library.Collections;
 
 namespace Library.Net.Outopos
@@ -60,7 +61,7 @@ namespace Library.Net.Outopos
                     if (_checkedFlag) return;
                     _checkedFlag = true;
 
-                    ThreadPool.QueueUserWorkItem((object wstate) =>
+                    Task.Run(() =>
                     {
                         var lockedNodes = new HashSet<Node>();
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Library.Collections;
 
 namespace Library.Net.Amoeba
@@ -52,7 +53,7 @@ namespace Library.Net.Amoeba
                     if (_checkedFlag) return;
                     _checkedFlag = true;
 
-                    ThreadPool.QueueUserWorkItem((object wstate) =>
+                    Task.Run(() =>
                     {
                         var lockedNodes = new HashSet<Node>();
 
