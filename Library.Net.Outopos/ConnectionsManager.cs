@@ -3022,17 +3022,38 @@ namespace Library.Net.Outopos
 
                     foreach (var metadata in this.BroadcastMetadatas)
                     {
-                        _metadataManager.SetMetadata(metadata);
+                        try
+                        {
+                            _metadataManager.SetMetadata(metadata);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
                     }
 
                     foreach (var metadata in this.UnicastMetadatas)
                     {
-                        _metadataManager.SetMetadata(metadata);
+                        try
+                        {
+                            _metadataManager.SetMetadata(metadata);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
                     }
 
                     foreach (var metadata in this.MulticastMetadatas)
                     {
-                        _metadataManager.SetMetadata(metadata);
+                        try
+                        {
+                            _metadataManager.SetMetadata(metadata);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
                     }
 
                     this.BroadcastMetadatas.Clear();
