@@ -73,7 +73,7 @@ namespace Library.Net.Amoeba
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // Id
             if (this.Id != null)

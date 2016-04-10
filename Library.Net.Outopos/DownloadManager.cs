@@ -110,7 +110,7 @@ namespace Library.Net.Outopos
 
                     if (!_cache_Metadata_BroadcastMessage_Pairs.TryGetValue(metadata, out broadcastMessage))
                     {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
+                        var buffer = new ArraySegment<byte>();
 
                         try
                         {
@@ -147,8 +147,8 @@ namespace Library.Net.Outopos
 
         public IEnumerable<UnicastMessage> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
         {
-            if (signature == null) throw new ArgumentNullException("signature");
-            if (exchangePrivateKey == null) throw new ArgumentNullException("exchangePrivateKey");
+            if (signature == null) throw new ArgumentNullException(nameof(signature));
+            if (exchangePrivateKey == null) throw new ArgumentNullException(nameof(exchangePrivateKey));
 
             lock (this.ThisLock)
             {
@@ -184,7 +184,7 @@ namespace Library.Net.Outopos
 
                     if (!dic.TryGetValue(metadata, out unicastMessage))
                     {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
+                        var buffer = new ArraySegment<byte>();
 
                         try
                         {
@@ -222,7 +222,7 @@ namespace Library.Net.Outopos
 
         public IEnumerable<MulticastMessage> GetMulticastMessages(Tag tag, int limit)
         {
-            if (tag == null) throw new ArgumentNullException("tag");
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
 
             lock (this.ThisLock)
             {
@@ -258,7 +258,7 @@ namespace Library.Net.Outopos
 
                     if (!dic.TryGetValue(metadata, out multicastMessage))
                     {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
+                        var buffer = new ArraySegment<byte>();
 
                         try
                         {

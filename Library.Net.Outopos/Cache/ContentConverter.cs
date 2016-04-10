@@ -33,11 +33,11 @@ namespace Library.Net.Outopos
 
         private static Stream Compress(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             var targetStream = new RangeStream(stream, true);
 
-            List<KeyValuePair<byte, Stream>> list = new List<KeyValuePair<byte, Stream>>();
+            var list = new List<KeyValuePair<byte, Stream>>();
 
             try
             {
@@ -116,7 +116,7 @@ namespace Library.Net.Outopos
                 list[i].Value.Dispose();
             }
 
-            BufferStream metadataStream = new BufferStream(_bufferManager);
+            var metadataStream = new BufferStream(_bufferManager);
             metadataStream.WriteByte((byte)list[0].Key);
 
             return new UniteStream(metadataStream, list[0].Value);
@@ -124,13 +124,13 @@ namespace Library.Net.Outopos
 
         private static Stream Decompress(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {
                 var targetStream = new RangeStream(stream, true);
 
-                byte type = (byte)targetStream.ReadByte();
+                var type = (byte)targetStream.ReadByte();
 
                 if (type == (byte)ConvertCompressionAlgorithm.None)
                 {
@@ -202,8 +202,8 @@ namespace Library.Net.Outopos
 
         private static Stream Encrypt(Stream stream, IExchangeEncrypt publicKey)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (publicKey == null) throw new ArgumentNullException("publicKey");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
 
             try
             {
@@ -277,12 +277,12 @@ namespace Library.Net.Outopos
 
         private static Stream Decrypt(Stream stream, IExchangeDecrypt privateKey)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (privateKey == null) throw new ArgumentNullException("privateKey");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
 
             try
             {
-                byte type = (byte)stream.ReadByte();
+                var type = (byte)stream.ReadByte();
 
                 if (type == (byte)ConvertCryptoAlgorithm.Aes256)
                 {
@@ -359,21 +359,21 @@ namespace Library.Net.Outopos
 
         private static Stream AddPadding(Stream stream, int size)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {
                 byte[] seedBuffer = new byte[4];
                 _random.GetBytes(seedBuffer);
-                Random random = new Random(NetworkConverter.ToInt32(seedBuffer));
+                var random = new Random(NetworkConverter.ToInt32(seedBuffer));
 
-                BufferStream metadataStream = new BufferStream(_bufferManager);
+                var metadataStream = new BufferStream(_bufferManager);
                 byte[] lengthBuffer = NetworkConverter.GetBytes((int)stream.Length);
                 metadataStream.Write(lengthBuffer, 0, lengthBuffer.Length);
 
                 int paddingLength = size - ((int)stream.Length + 4);
 
-                BufferStream paddingStream = new BufferStream(_bufferManager);
+                var paddingStream = new BufferStream(_bufferManager);
 
                 {
                     byte[] buffer = null;
@@ -408,7 +408,7 @@ namespace Library.Net.Outopos
 
         private static Stream RemovePadding(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {
@@ -426,15 +426,15 @@ namespace Library.Net.Outopos
 
         private static Stream AddType(Stream stream, string type)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
-            List<Stream> streams = new List<Stream>();
+            var streams = new List<Stream>();
             Encoding encoding = new UTF8Encoding(false);
 
             // Type
             if (type != null)
             {
-                BufferStream bufferStream = new BufferStream(_bufferManager);
+                var bufferStream = new BufferStream(_bufferManager);
                 bufferStream.SetLength(4);
                 bufferStream.Seek(4, SeekOrigin.Begin);
 
@@ -457,7 +457,7 @@ namespace Library.Net.Outopos
 
         private static Stream RemoveType(Stream stream, string type)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             Encoding encoding = new UTF8Encoding(false);
 
@@ -478,19 +478,19 @@ namespace Library.Net.Outopos
 
         private static Stream AddHash(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             try
             {
                 var targetStream = new RangeStream(stream, true);
 
-                BufferStream metadataStream = new BufferStream(_bufferManager);
+                var metadataStream = new BufferStream(_bufferManager);
                 metadataStream.WriteByte((byte)ConvertHashAlgorithm.Sha256);
 
                 targetStream.Seek(0, SeekOrigin.Begin);
                 var hash = Sha256.ComputeHash(targetStream);
 
-                BufferStream hashStream = new BufferStream(_bufferManager);
+                var hashStream = new BufferStream(_bufferManager);
                 hashStream.Write(hash, 0, hash.Length);
 
                 return new UniteStream(metadataStream, targetStream, hashStream);
@@ -503,9 +503,9 @@ namespace Library.Net.Outopos
 
         private static Stream RemoveHash(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
-            byte type = (byte)stream.ReadByte();
+            var type = (byte)stream.ReadByte();
 
             if (type == (byte)ConvertHashAlgorithm.Sha256)
             {
@@ -543,7 +543,7 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToBroadcastMessageBlock(BroadcastMessage message)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (message == null) throw new ArgumentNullException(nameof(message));
 
             ArraySegment<byte> value;
 
@@ -560,7 +560,7 @@ namespace Library.Net.Outopos
 
         public static BroadcastMessage FromBroadcastMessageBlock(ArraySegment<byte> message)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", "message");
+            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
 
             try
             {
@@ -579,7 +579,7 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToMulticastMessageBlock(MulticastMessage message)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            if (message == null) throw new ArgumentNullException(nameof(message));
 
             ArraySegment<byte> value;
 
@@ -596,7 +596,7 @@ namespace Library.Net.Outopos
 
         public static MulticastMessage FromMulticastMessageBlock(ArraySegment<byte> message)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", "message");
+            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
 
             try
             {
@@ -615,8 +615,8 @@ namespace Library.Net.Outopos
 
         public static ArraySegment<byte> ToUnicastMessageBlock(UnicastMessage message, IExchangeEncrypt publicKey)
         {
-            if (message == null) throw new ArgumentNullException("message");
-            if (publicKey == null) throw new ArgumentNullException("publicKey");
+            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
 
             ArraySegment<byte> value;
 
@@ -636,8 +636,8 @@ namespace Library.Net.Outopos
 
         public static UnicastMessage FromUnicastMessageBlock(ArraySegment<byte> message, IExchangeDecrypt privateKey)
         {
-            if (message.Array == null) throw new ArgumentException("message.Array", "message");
-            if (privateKey == null) throw new ArgumentNullException("privateKey");
+            if (message.Array == null) throw new ArgumentException("message.Array", nameof(message));
+            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
 
             try
             {

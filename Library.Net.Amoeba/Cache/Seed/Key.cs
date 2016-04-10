@@ -70,7 +70,7 @@ namespace Library.Net.Amoeba
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // Hash
             if (this.Hash != null)

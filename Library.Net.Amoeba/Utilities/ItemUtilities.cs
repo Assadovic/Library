@@ -25,7 +25,7 @@ namespace Library.Net.Amoeba
 
         public static int GetHashCode(byte[] buffer)
         {
-            if (buffer == null) throw new ArgumentNullException("buffer");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             if (buffer.Length == 0) return 0;
 
             return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(
@@ -38,9 +38,9 @@ namespace Library.Net.Amoeba
 
         public static int GetHashCode(byte[] buffer, int offset, int count)
         {
-            if (buffer == null) throw new ArgumentNullException("buffer");
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
             if (count == 0) return 0;
 
             return (BitConverter.ToInt32(Crc32_Castagnoli.ComputeHash(

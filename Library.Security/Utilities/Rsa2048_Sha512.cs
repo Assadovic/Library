@@ -22,7 +22,7 @@ namespace Library.Security
             {
                 rsa.FromXmlString(Encoding.ASCII.GetString(privateKey));
 
-                RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
+                var rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
                 rsaFormatter.SetHashAlgorithm("SHA256");
 
                 using (var Sha256 = SHA256.Create())
@@ -40,7 +40,7 @@ namespace Library.Security
                 {
                     rsa.FromXmlString(Encoding.ASCII.GetString(publicKey));
 
-                    RSAPKCS1SignatureDeformatter rsaDeformatter = new RSAPKCS1SignatureDeformatter(rsa);
+                    var rsaDeformatter = new RSAPKCS1SignatureDeformatter(rsa);
                     rsaDeformatter.SetHashAlgorithm("SHA256");
 
                     using (var Sha256 = SHA256.Create())

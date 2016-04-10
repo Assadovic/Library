@@ -108,8 +108,8 @@ namespace Library.Net.Amoeba
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
 
             int writeLength = 0;
 

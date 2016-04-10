@@ -50,7 +50,7 @@ namespace Library.Net.Connections
 
         private void WatchThread()
         {
-            Stopwatch sw = new Stopwatch();
+            var sw = new Stopwatch();
             sw.Start();
 
             try
@@ -143,7 +143,7 @@ namespace Library.Net.Connections
                     }
                     else if (_out < (_totalOutSize + size))
                     {
-                        int s = (int)(_out - _totalOutSize);
+                        var s = (int)(_out - _totalOutSize);
 
                         _totalOutSize += s;
 
@@ -180,7 +180,7 @@ namespace Library.Net.Connections
                     }
                     else if (_in < (_totalInSize + size))
                     {
-                        int s = (int)(_in - _totalInSize);
+                        var s = (int)(_in - _totalInSize);
 
                         _totalInSize += s;
 

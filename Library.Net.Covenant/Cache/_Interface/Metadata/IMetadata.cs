@@ -1,14 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Library.Net.Covenant
 {
-    public interface IMetadata
+    [DataContract(Name = "MetadataType", Namespace = "http://Library/Net/Covenant")]
+    enum MetadataType : byte
     {
-        string Name { get; }
-        IEnumerable<string> Keywords { get; }
-        long Length { get; }
+        [EnumMember(Value = "Trust")]
+        Trust = 0,
+
+        [EnumMember(Value = "Box")]
+        Box = 1,
+    }
+
+    interface IMetadata : IComputeHash
+    {
         DateTime CreationTime { get; }
+        MetadataType Type { get; }
         Key Key { get; }
     }
 }

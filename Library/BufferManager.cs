@@ -116,7 +116,7 @@ namespace Library
 
                     foreach (var weakReference in _buffers.Extract())
                     {
-                        byte[] buffer = weakReference.Target as byte[];
+                        var buffer = weakReference.Target as byte[];
                         if (buffer == null) continue;
 
                         size += buffer.Length;
@@ -140,7 +140,7 @@ namespace Library
                         while (_buffers[i].Count > 0)
                         {
                             var weakReference = _buffers[i].First.Value;
-                            byte[] buffer = weakReference.Target as byte[];
+                            var buffer = weakReference.Target as byte[];
                             _buffers[i].RemoveFirst();
 
                             if (buffer != null) return buffer;
@@ -157,7 +157,7 @@ namespace Library
         public void ReturnBuffer(byte[] buffer)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (buffer == null) throw new ArgumentNullException("buffer");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             lock (_thisLock)
             {

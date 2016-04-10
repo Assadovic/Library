@@ -82,9 +82,9 @@ namespace Library.Net.Outopos
         {
             try
             {
-                Dictionary<string, string> pair = new Dictionary<string, string>();
-                List<char> kl = new List<char>();
-                List<char> vl = new List<char>();
+                var pair = new Dictionary<string, string>();
+                var kl = new List<char>();
+                var vl = new List<char>();
                 bool keyFlag = true;
                 bool wordFlag = false;
 
@@ -238,7 +238,7 @@ namespace Library.Net.Outopos
 
         public Connection CreateConnection(string uri, BandwidthLimit bandwidthLimit)
         {
-            List<IDisposable> garbages = new List<IDisposable>();
+            var garbages = new List<IDisposable>();
 
             try
             {

@@ -146,7 +146,7 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("UploadingCount", _settings.UploadItems
                         .Count(n => !(n.State == UploadState.Completed || n.State == UploadState.Error))));
@@ -162,11 +162,11 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var item in _ids)
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         contexts.Add(new InformationContext("Id", item.Key));
                         contexts.Add(new InformationContext("Priority", item.Value.Priority));
@@ -692,7 +692,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                UploadItem item = new UploadItem();
+                var item = new UploadItem();
 
                 item.State = UploadState.ComputeHash;
                 item.Type = UploadType.Upload;
@@ -734,7 +734,7 @@ namespace Library.Net.Amoeba
                     .Where(n => n.Type == UploadType.Share)
                     .Any(n => n.FilePath == filePath)) return;
 
-                UploadItem item = new UploadItem();
+                var item = new UploadItem();
 
                 item.State = UploadState.ComputeHash;
                 item.Type = UploadType.Share;

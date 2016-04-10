@@ -286,9 +286,9 @@ namespace Library.Net.Outopos
             {
                 try
                 {
-                    TimeSpan timeout = new TimeSpan(0, 0, 30);
+                    var timeout = new TimeSpan(0, 0, 30);
 
-                    Stopwatch stopwatch = new Stopwatch();
+                    var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
                     using (BufferStream stream = new BufferStream(_bufferManager))
@@ -532,7 +532,7 @@ namespace Library.Net.Outopos
 
             try
             {
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
 
                 for (;;)
                 {
@@ -546,7 +546,7 @@ namespace Library.Net.Outopos
                         {
                             if (stream.Length == 0) continue;
 
-                            byte type = (byte)stream.ReadByte();
+                            var type = (byte)stream.ReadByte();
 
                             using (Stream stream2 = new RangeStream(stream, 1, stream.Length - 1, true))
                             {
@@ -1201,7 +1201,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Nodes
                 foreach (var value in this.Nodes)
@@ -1290,7 +1290,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Keys
                 foreach (var value in this.Keys)
@@ -1379,7 +1379,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Keys
                 foreach (var value in this.Keys)
@@ -1499,7 +1499,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Key
                 if (this.Key != null)
@@ -1601,7 +1601,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Signatures
                 foreach (var value in this.Signatures)
@@ -1687,7 +1687,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // BroadcastMetadatas
                 foreach (var value in this.BroadcastMetadatas)
@@ -1776,7 +1776,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Signatures
                 foreach (var value in this.Signatures)
@@ -1862,7 +1862,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // UnicastMetadatas
                 foreach (var value in this.UnicastMetadatas)
@@ -1951,7 +1951,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Tags
                 foreach (var value in this.Tags)
@@ -2041,7 +2041,7 @@ namespace Library.Net.Outopos
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // MulticastMetadatas
                 foreach (var value in this.MulticastMetadatas)

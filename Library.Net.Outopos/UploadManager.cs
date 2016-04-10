@@ -43,11 +43,11 @@ namespace Library.Net.Outopos
             {
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var item in _settings.UploadItems.ToArray())
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         contexts.Add(new InformationContext("Type", item.Type));
 
@@ -115,7 +115,7 @@ namespace Library.Net.Outopos
                     {
                         if (item != null)
                         {
-                            ArraySegment<byte> buffer = new ArraySegment<byte>();
+                            var buffer = new ArraySegment<byte>();
 
                             try
                             {

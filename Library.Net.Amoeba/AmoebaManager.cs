@@ -120,7 +120,7 @@ namespace Library.Net.Amoeba
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
                     contexts.AddRange(_serverManager.Information);
                     contexts.AddRange(_cacheManager.Information);
                     contexts.AddRange(_connectionsManager.Information);
@@ -842,7 +842,7 @@ namespace Library.Net.Amoeba
                 if (_isLoaded) throw new AmoebaManagerException("AmoebaManager was already loaded.");
                 _isLoaded = true;
 
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
                 _clientManager.Load(Path.Combine(directoryPath, "ClientManager"));
@@ -851,7 +851,7 @@ namespace Library.Net.Amoeba
                 _cacheManager.Load(Path.Combine(directoryPath, "CacheManager"));
                 _connectionsManager.Load(Path.Combine(directoryPath, "ConnectionsManager"));
 
-                List<Task> tasks = new List<Task>();
+                var tasks = new List<Task>();
 
                 tasks.Add(Task.Run(() => _downloadManager.Load(Path.Combine(directoryPath, "DownloadManager"))));
                 tasks.Add(Task.Run(() => _uploadManager.Load(Path.Combine(directoryPath, "UploadManager"))));
@@ -872,10 +872,10 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                List<Task> tasks = new List<Task>();
+                var tasks = new List<Task>();
 
                 tasks.Add(Task.Run(() => _backgroundUploadManager.Save(Path.Combine(directoryPath, "BackgroundUploadManager"))));
                 tasks.Add(Task.Run(() => _backgroundDownloadManager.Save(Path.Combine(directoryPath, "BackgroundDownloadManager"))));

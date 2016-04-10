@@ -1,54 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading;
-using Library.Collections;
 using Library.Io;
 using Library.Security;
 
 namespace Library.Net.Covenant
 {
     [DataContract(Name = "Metadata", Namespace = "http://Library/Net/Covenant")]
-    public sealed class Metadata : ImmutableWarrantItemBase<Metadata>, IMetadata
+    class Metadata : ImmutableCertificateItemBase<Metadata>, IMetadata
     {
         private enum SerializeId : byte
         {
-            Name = 0,
-            Keyword = 1,
-            Length = 2,
-            CreationTime = 3,
-            Key = 4,
+            CreationTime = 0,
+            Type = 1,
+            Key = 2,
 
-            Cash = 5,
-            Certificate = 6,
+            Certificate = 3,
         }
 
-        private volatile string _name;
-        private volatile KeywordCollection _keywords;
-        private long _length;
         private DateTime _creationTime;
+        private MetadataType _type;
         private volatile Key _key;
 
-        private volatile Cash _cash;
         private volatile Certificate _certificate;
 
-        private volatile int _hashCode;
-
-        public static readonly int MaxNameLength = 256;
-        public static readonly int MaxKeywordCount = 3;
-
-        public Metadata(string name, IEnumerable<string> keywords, long length, DateTime creationTime, Key key, HashAlgorithm hashAlgorithm, Miner miner, DigitalSignature digitalSignature)
+        internal Metadata(DateTime creationTime, MetadataType type, Key key, DigitalSignature digitalSignature)
         {
-            this.Name = name;
-            if (keywords != null) this.ProtectedKeywords.AddRange(keywords);
-            this.Length = length;
             this.CreationTime = creationTime;
+            this.Type = type;
             this.Key = key;
 
-            this.CreateCash(miner, digitalSignature?.ToString());
             this.CreateCertificate(digitalSignature);
         }
 
@@ -77,31 +58,19 @@ namespace Library.Net.Covenant
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.Name)
-                    {
-                        this.Name = ItemUtilities.GetString(rangeStream);
-                    }
-                    else if (id == (byte)SerializeId.Keyword)
-                    {
-                        this.ProtectedKeywords.Add(ItemUtilities.GetString(rangeStream));
-                    }
-                    else if (id == (byte)SerializeId.Length)
-                    {
-                        this.Length = ItemUtilities.GetLong(rangeStream);
-                    }
-                    else if (id == (byte)SerializeId.CreationTime)
+                    if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                    }
+                    if (id == (byte)SerializeId.Type)
+                    {
+                        this.Type = (MetadataType)Enum.Parse(typeof(MetadataType), ItemUtilities.GetString(rangeStream));
                     }
                     else if (id == (byte)SerializeId.Key)
                     {
                         this.Key = Key.Import(rangeStream, bufferManager);
                     }
 
-                    else if (id == (byte)SerializeId.Cash)
-                    {
-                        this.Cash = Cash.Import(rangeStream, bufferManager);
-                    }
                     else if (id == (byte)SerializeId.Certificate)
                     {
                         this.Certificate = Certificate.Import(rangeStream, bufferManager);
@@ -114,25 +83,15 @@ namespace Library.Net.Covenant
         {
             BufferStream bufferStream = new BufferStream(bufferManager);
 
-            // Name
-            if (this.Name != null)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
-            }
-            // Keywords
-            foreach (var value in this.Keywords)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Keyword, value);
-            }
-            // Length
-            if (this.Length != 0)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Length, this.Length);
-            }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+            }
+            // Type
+            if (this.Type != 0)
+            {
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Type, this.Type.ToString());
             }
             // Key
             if (this.Key != null)
@@ -143,14 +102,6 @@ namespace Library.Net.Covenant
                 }
             }
 
-            // Cash
-            if (this.Cash != null)
-            {
-                using (var stream = this.Cash.Export(bufferManager))
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Cash, stream);
-                }
-            }
             // Certificate
             if (this.Certificate != null)
             {
@@ -166,7 +117,8 @@ namespace Library.Net.Covenant
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            if (this.Key == null) return 0;
+            else return this.Key.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -181,76 +133,16 @@ namespace Library.Net.Covenant
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Name != other.Name
-                || (this.Keywords == null) != (other.Keywords == null)
-                || this.Length != other.Length
-                || this.CreationTime != other.CreationTime
+            if (this.CreationTime != other.CreationTime
+                || this.Type != other.Type
                 || this.Key != other.Key
 
-                || this.Cash != other.Cash
                 || this.Certificate != other.Certificate)
             {
                 return false;
             }
 
-            if (this.Keywords != null && other.Keywords != null)
-            {
-                if (!CollectionUtilities.Equals(this.Keywords, other.Keywords)) return false;
-            }
-
             return true;
-        }
-
-        public override string ToString()
-        {
-            return this.Name;
-        }
-
-        protected override void CreateCash(Miner miner, string signature)
-        {
-            base.CreateCash(miner, signature);
-        }
-
-        protected override int VerifyCash(string signature)
-        {
-            return base.VerifyCash(signature);
-        }
-
-        protected override Stream GetCashStream(string signature)
-        {
-            var tempCertificate = this.Certificate;
-            this.Certificate = null;
-
-            var tempCash = this.Cash;
-            this.Cash = null;
-
-            try
-            {
-                var stream = this.Export(BufferManager.Instance);
-
-                stream.Seek(0, SeekOrigin.End);
-                ItemUtilities.Write(stream, (byte)SerializeId.Certificate, signature);
-                stream.Seek(0, SeekOrigin.Begin);
-
-                return stream;
-            }
-            finally
-            {
-                this.Certificate = tempCertificate;
-                this.Cash = tempCash;
-            }
-        }
-
-        protected override Cash Cash
-        {
-            get
-            {
-                return _cash;
-            }
-            set
-            {
-                _cash = value;
-            }
         }
 
         protected override void CreateCertificate(DigitalSignature digitalSignature)
@@ -292,64 +184,6 @@ namespace Library.Net.Covenant
 
         #region IMetadata
 
-        [DataMember(Name = "Name")]
-        public string Name
-        {
-            get
-            {
-                return _name;
-            }
-            private set
-            {
-                if (value != null && value.Length > Metadata.MaxNameLength)
-                {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _name = value;
-                }
-            }
-        }
-
-        private volatile ReadOnlyCollection<string> _readOnlyKeywords;
-
-        public IEnumerable<string> Keywords
-        {
-            get
-            {
-                if (_readOnlyKeywords == null)
-                    _readOnlyKeywords = new ReadOnlyCollection<string>(this.ProtectedKeywords.ToArray());
-
-                return _readOnlyKeywords;
-            }
-        }
-
-        [DataMember(Name = "Keywords")]
-        private KeywordCollection ProtectedKeywords
-        {
-            get
-            {
-                if (_keywords == null)
-                    _keywords = new KeywordCollection(Metadata.MaxKeywordCount);
-
-                return _keywords;
-            }
-        }
-
-        [DataMember(Name = "Length")]
-        public long Length
-        {
-            get
-            {
-                return _length;
-            }
-            private set
-            {
-                _length = value;
-            }
-        }
-
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime
         {
@@ -364,6 +198,26 @@ namespace Library.Net.Covenant
             }
         }
 
+        [DataMember(Name = "Type")]
+        public MetadataType Type
+        {
+            get
+            {
+                return _type;
+            }
+            private set
+            {
+                if (!Enum.IsDefined(typeof(MetadataType), value))
+                {
+                    throw new ArgumentException();
+                }
+                else
+                {
+                    _type = value;
+                }
+            }
+        }
+
         [DataMember(Name = "Key")]
         public Key Key
         {
@@ -374,16 +228,36 @@ namespace Library.Net.Covenant
             private set
             {
                 _key = value;
+            }
+        }
 
-                if (value != null)
+        #endregion
+
+        #region IComputeHash
+
+        private volatile byte[] _sha256_hash;
+
+        public byte[] CreateHash(HashAlgorithm hashAlgorithm)
+        {
+            if (_sha256_hash == null)
+            {
+                using (var stream = this.Export(BufferManager.Instance))
                 {
-                    _hashCode = value.GetHashCode();
-                }
-                else
-                {
-                    _hashCode = 0;
+                    _sha256_hash = Sha256.ComputeHash(stream);
                 }
             }
+
+            if (hashAlgorithm == HashAlgorithm.Sha256)
+            {
+                return _sha256_hash;
+            }
+
+            return null;
+        }
+
+        public bool VerifyHash(byte[] hash, HashAlgorithm hashAlgorithm)
+        {
+            return Unsafe.Equals(this.CreateHash(hashAlgorithm), hash);
         }
 
         #endregion

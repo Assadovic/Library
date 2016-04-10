@@ -69,11 +69,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException("destinationHost");
+                throw new ArgumentNullException(nameof(destinationHost));
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -85,7 +85,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -97,7 +97,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -153,7 +153,7 @@ namespace Library.Net.Proxy
         {
             try
             {
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
                 // send connection command to proxy host for the specified destination host and port
@@ -313,7 +313,7 @@ namespace Library.Net.Proxy
         {
             if (response == null)
             {
-                throw new ArgumentNullException("response");
+                throw new ArgumentNullException(nameof(response));
             }
 
             // extract the reply code
@@ -327,7 +327,7 @@ namespace Library.Net.Proxy
             }
 
             // convert the ip address to an IPAddress object
-            IPAddress ipAddr = new IPAddress(ipBytes);
+            var ipAddr = new IPAddress(ipBytes);
 
             // extract the port number big endian (2 bytes)
             byte[] portBytes = new byte[2];

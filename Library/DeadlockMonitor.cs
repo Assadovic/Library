@@ -26,7 +26,7 @@ namespace Library
         /// <returns>An IDisposable that can be used to release the lock.</returns>
         public static IDisposable Lock(object monitor)
         {
-            if (monitor == null) throw new ArgumentNullException("monitor");
+            if (monitor == null) throw new ArgumentNullException(nameof(monitor));
 
             IDisposable cookie = new DeadlockMonitorCookie(monitor);
             Enter(monitor);
@@ -81,8 +81,8 @@ namespace Library
         /// <returns>true if the current thread acquires the lock without blocking; otherwise, false.</returns>
         public static bool TryEnter(object monitor, TimeSpan timeout)
         {
-            long totalMilliseconds = (long)timeout.TotalMilliseconds;
-            if (totalMilliseconds < -1 || totalMilliseconds > Int32.MaxValue) throw new ArgumentOutOfRangeException("timeout");
+            var totalMilliseconds = (long)timeout.TotalMilliseconds;
+            if (totalMilliseconds < -1 || totalMilliseconds > Int32.MaxValue) throw new ArgumentOutOfRangeException(nameof(timeout));
 
             return TryEnter(monitor, (int)totalMilliseconds);
         }
@@ -94,8 +94,8 @@ namespace Library
         public static bool TryEnter(object monitor, int millisecondsTimeout)
         {
             // Validate arguments
-            if (monitor == null) throw new ArgumentNullException("monitor");
-            if (millisecondsTimeout < 0 && millisecondsTimeout != Timeout.Infinite) throw new ArgumentOutOfRangeException("millisecondsTimeout");
+            if (monitor == null) throw new ArgumentNullException(nameof(monitor));
+            if (millisecondsTimeout < 0 && millisecondsTimeout != Timeout.Infinite) throw new ArgumentOutOfRangeException(nameof(millisecondsTimeout));
 
             // Keep track of whether we actually acquired the monitor or not
             bool thisThreadOwnsMonitor = false;
@@ -159,7 +159,7 @@ namespace Library
         public static void Exit(object monitor)
         {
             // Validate arguments
-            if (monitor == null) throw new ArgumentNullException("monitor");
+            if (monitor == null) throw new ArgumentNullException(nameof(monitor));
 
             // Take the global lock to manipulate shared state
             lock (_globalLock)
@@ -210,7 +210,7 @@ namespace Library
             CreateThreadAndLockTables(out locksHeldByThreads, out threadsWaitingOnLocks);
 
             // As we iterate over the wait graph, we'll need to store the list of threads still left to examine
-            Queue<CycleComponentNode> threadsToFollow = new Queue<CycleComponentNode>(locksHeldByThreads.Count);
+            var threadsToFollow = new Queue<CycleComponentNode>(locksHeldByThreads.Count);
 
             // But rather than just storing the thread, we also store the threads in the cycle that got us to this thread.
             // The top of the stack is the actual thread to be examined.
@@ -257,7 +257,7 @@ namespace Library
             CycleComponentNode currentChain,
             Dictionary<Thread, List<MonitorState>> locksHeldByThreads)
         {
-            StringBuilder desc = new StringBuilder();
+            var desc = new StringBuilder();
 
             for (CycleComponentNode node = currentChain; node != null; node = node.Next)
             {

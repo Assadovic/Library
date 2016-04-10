@@ -76,7 +76,7 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)

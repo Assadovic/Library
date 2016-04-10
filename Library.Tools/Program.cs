@@ -22,7 +22,7 @@ namespace Library.Tools
             {
                 if (args.Length >= 4 && args[0] == "Define")
                 {
-                    List<string> list = new List<string>();
+                    var list = new List<string>();
 
                     using (FileStream inStream = new FileStream(args[3], FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
@@ -95,7 +95,7 @@ namespace Library.Tools
                     string projectFilePath = args[1];
 
                     string baseDirectory = Path.GetDirectoryName(projectFilePath);
-                    List<string> filePaths = new List<string>();
+                    var filePaths = new List<string>();
 
                     using (Stream stream = new FileStream(projectFilePath, FileMode.Open))
                     using (XmlTextReader xml = new XmlTextReader(stream))
@@ -133,7 +133,7 @@ namespace Library.Tools
                     filePaths.Remove(assemblyInfoFilePath);
                     filePaths.Sort();
 
-                    Regex regex = new Regex(@"^( *)\[( *)assembly( *):( *)AssemblyVersion( *)\(( *)" + "\"" + @"(\d*)\.(\d*)\.(\d*)\.(\d*)" + "\"" + @"( *)\)( *)\](.*)$");
+                    var regex = new Regex(@"^( *)\[( *)assembly( *):( *)AssemblyVersion( *)\(( *)" + "\"" + @"(\d*)\.(\d*)\.(\d*)\.(\d*)" + "\"" + @"( *)\)( *)\](.*)$");
                     byte[] hash = Program.GetHash(filePaths);
 
                     using (var readerStream = new StreamReader(assemblyInfoFilePath))
@@ -189,9 +189,9 @@ namespace Library.Tools
                 {
                     string settingsPath = args[1];
 
-                    StringBuilder builder = new StringBuilder();
-                    StringBuilder builder2 = new StringBuilder();
-                    Regex regex = new Regex("new Library\\.Configuration\\.SettingContent<(.*)>\\(\\) { Name = \"(.*)\", Value = .* },(.*)$");
+                    var builder = new StringBuilder();
+                    var builder2 = new StringBuilder();
+                    var regex = new Regex("new Library\\.Configuration\\.SettingContent<(.*)>\\(\\) { Name = \"(.*)\", Value = .* },(.*)$");
 
                     using (FileStream inStream = new FileStream(settingsPath, FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
@@ -313,7 +313,7 @@ namespace Library.Tools
                 {
                     string languageManagerPath = args[1];
                     string languageXmlPath = Path.Combine(args[2], "English.xml");
-                    StringBuilder builder = new StringBuilder();
+                    var builder = new StringBuilder();
 
                     using (FileStream stream = new FileStream(languageXmlPath, FileMode.Open))
                     using (XmlTextReader xml = new XmlTextReader(stream))
@@ -402,7 +402,7 @@ namespace Library.Tools
                     string pathListPath = args[1];
                     string wordListPath = args[2];
 
-                    Dictionary<string, string> pathDic = new Dictionary<string, string>();
+                    var pathDic = new Dictionary<string, string>();
 
                     using (FileStream inStream = new FileStream(pathListPath, FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
@@ -426,7 +426,7 @@ namespace Library.Tools
                         }
                     }
 
-                    Dictionary<string, string> wordDic = new Dictionary<string, string>();
+                    var wordDic = new Dictionary<string, string>();
 
                     using (FileStream inStream = new FileStream(wordListPath, FileMode.Open))
                     using (StreamReader reader = new StreamReader(inStream))
@@ -460,7 +460,7 @@ namespace Library.Tools
                         using (FileStream outStream = new FileStream(targetPath, FileMode.Create))
                         using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
                         {
-                            StringBuilder sb = new StringBuilder(reader.ReadToEnd());
+                            var sb = new StringBuilder(reader.ReadToEnd());
 
                             foreach (var word in wordDic)
                             {
@@ -473,7 +473,7 @@ namespace Library.Tools
                 }
                 else if (args.Length >= 3 && args[0] == "Run")
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo();
+                    var startInfo = new ProcessStartInfo();
                     startInfo.FileName = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), args[1]));
                     startInfo.WorkingDirectory = Path.GetFullPath(Path.GetFullPath(args[2]));
 
@@ -678,10 +678,10 @@ namespace Library.Tools
 
         private static void Define(string path, bool on, string name)
         {
-            Regex regex = new Regex(@"(.*)#(.*)define(\s*)(?<name>\S*)(.*)");
+            var regex = new Regex(@"(.*)#(.*)define(\s*)(?<name>\S*)(.*)");
 
-            List<string> items = new List<string>();
-            StringBuilder content = new StringBuilder();
+            var items = new List<string>();
+            var content = new StringBuilder();
 
             if (on)
             {
@@ -795,13 +795,13 @@ namespace Library.Tools
 
             if (!Directory.Exists(directoryPath)) return;
 
-            Dictionary<string, Dictionary<string, string>> _dic = new Dictionary<string, Dictionary<string, string>>();
+            var _dic = new Dictionary<string, Dictionary<string, string>>();
 
             foreach (string path in Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories))
             {
                 if (languageXmlPath == path) continue;
 
-                Dictionary<string, string> dic = new Dictionary<string, string>();
+                var dic = new Dictionary<string, string>();
 
                 using (XmlTextReader xml = new XmlTextReader(path))
                 {
@@ -831,7 +831,7 @@ namespace Library.Tools
             {
                 if (languageXmlPath == path) continue;
 
-                StringBuilder builder = new StringBuilder();
+                var builder = new StringBuilder();
 
                 using (FileStream stream = new FileStream(languageXmlPath, FileMode.Open))
                 using (XmlTextReader xml = new XmlTextReader(stream))
@@ -962,9 +962,9 @@ namespace Library.Tools
 
         private static IEnumerable<string> GetFiles(string directory)
         {
-            List<string> list = new List<string>();
-            List<string> ignoreDirectoryNames = new List<string>() { "bin", "obj", ".git", "test-results", "packages" };
-            List<string> targetFileExtensions = new List<string>() { ".h", ".c", ".cpp", ".cs", ".xaml", ".xml" };
+            var list = new List<string>();
+            var ignoreDirectoryNames = new List<string>() { "bin", "obj", ".git", "test-results", "packages" };
+            var targetFileExtensions = new List<string>() { ".h", ".c", ".cpp", ".cs", ".xaml", ".xml" };
 
             foreach (var path in System.IO.Directory.GetDirectories(directory))
             {
@@ -989,10 +989,10 @@ namespace Library.Tools
         {
             try
             {
-                List<char> charList = new List<char>();
+                var charList = new List<char>();
                 bool wordFlag = false;
 
-                List<string> stringList = new List<string>();
+                var stringList = new List<string>();
 
                 for (int i = 0; i < option.Length; i++)
                 {
@@ -1075,7 +1075,7 @@ namespace Library.Tools
         {
             if (text == null) return null;
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             var list = SecurityElement.Escape(text).ToCharArray();
 

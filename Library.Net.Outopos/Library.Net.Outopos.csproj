@@ -78,7 +78,7 @@
     <Compile Include="Cache\_Interface\Content\Items\IMulticastContent.cs" />
     <Compile Include="Cache\_Interface\Content\Items\IUnicastContent.cs" />
     <Compile Include="OutoposConverter.cs" />
-    <Compile Include="Cache\Message\Items\SignatureMessage.cs" />
+    <Compile Include="Cache\Message\Items\UnicastMessage.cs" />
     <Compile Include="Cache\Message\Items\BroadcastMessage.cs" />
     <Compile Include="Cache\Metadata\Key.cs" />
     <Compile Include="Cache\Metadata\KeyCollection.cs" />

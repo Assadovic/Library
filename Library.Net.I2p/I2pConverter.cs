@@ -24,16 +24,16 @@ namespace Library.Net.I2p
 
             public static int ToCharArray(byte[] inArray, int offsetIn, int lengthIn, char[] outArray, int offsetOut)
             {
-                if (inArray == null) throw new ArgumentNullException("inArray");
-                if (offsetIn < 0 || inArray.Length < offsetIn) throw new ArgumentOutOfRangeException("offsetIn");
-                if (lengthIn < 0 || inArray.Length < lengthIn) throw new ArgumentOutOfRangeException("lengthIn");
+                if (inArray == null) throw new ArgumentNullException(nameof(inArray));
+                if (offsetIn < 0 || inArray.Length < offsetIn) throw new ArgumentOutOfRangeException(nameof(offsetIn));
+                if (lengthIn < 0 || inArray.Length < lengthIn) throw new ArgumentOutOfRangeException(nameof(lengthIn));
                 if (inArray.Length - offsetIn < lengthIn) throw new ArgumentOutOfRangeException();
-                if (outArray == null) throw new ArgumentNullException("outArray");
-                if (offsetOut < 0 || outArray.Length < offsetOut) throw new ArgumentOutOfRangeException("offsetOut");
+                if (outArray == null) throw new ArgumentNullException(nameof(outArray));
+                if (offsetOut < 0 || outArray.Length < offsetOut) throw new ArgumentOutOfRangeException(nameof(offsetOut));
 
                 int lengthOut = Base32.CalculateLength(lengthIn);
 
-                if (lengthOut < 0 || outArray.Length < lengthOut) throw new ArgumentOutOfRangeException("offsetOut");
+                if (lengthOut < 0 || outArray.Length < lengthOut) throw new ArgumentOutOfRangeException(nameof(offsetOut));
                 if (outArray.Length - offsetOut < lengthOut) throw new ArgumentOutOfRangeException();
 
                 int positionIn = offsetIn;

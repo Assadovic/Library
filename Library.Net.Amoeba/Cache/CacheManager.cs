@@ -219,7 +219,7 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("SeedCount", _settings.SeedsInformation.Count));
                     contexts.Add(new InformationContext("ShareCount", _settings.ShareIndex.Count));
@@ -238,11 +238,11 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var item in _ids)
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         contexts.Add(new InformationContext("Id", item.Key));
                         contexts.Add(new InformationContext("Path", item.Value));
@@ -284,7 +284,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
                 sw.Start();
 
                 var pathList = new HashSet<string>();
@@ -571,7 +571,7 @@ namespace Library.Net.Amoeba
 
         public void Resize(long size)
         {
-            if (size < 0) throw new ArgumentOutOfRangeException("size");
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
             lock (this.ThisLock)
             {
@@ -654,7 +654,7 @@ namespace Library.Net.Amoeba
             {
                 _bitmapManager.SetLength(this.Size / CacheManager.SectorSize);
 
-                List<Key> keys = new List<Key>();
+                var keys = new List<Key>();
 
                 foreach (var pair in _settings.ClusterIndex)
                 {
@@ -707,7 +707,7 @@ namespace Library.Net.Amoeba
                 foreach (var item in list)
                 {
                     checkedBlockCount++;
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
+                    var buffer = new ArraySegment<byte>();
 
                     try
                     {
@@ -763,7 +763,7 @@ namespace Library.Net.Amoeba
                 foreach (var item in list)
                 {
                     checkedBlockCount++;
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
+                    var buffer = new ArraySegment<byte>();
 
                     try
                     {
@@ -817,17 +817,17 @@ namespace Library.Net.Amoeba
 
         public KeyCollection Share(Stream inStream, string path, HashAlgorithm hashAlgorithm, int blockLength)
         {
-            if (inStream == null) throw new ArgumentNullException("inStream");
+            if (inStream == null) throw new ArgumentNullException(nameof(inStream));
 
             byte[] buffer = _bufferManager.TakeBuffer(blockLength);
 
-            KeyCollection keys = new KeyCollection();
-            ShareInfo shareInfo = new ShareInfo();
+            var keys = new KeyCollection();
+            var shareInfo = new ShareInfo();
             shareInfo.BlockLength = blockLength;
 
             while (inStream.Position < inStream.Length)
             {
-                int length = (int)Math.Min(inStream.Length - inStream.Position, blockLength);
+                var length = (int)Math.Min(inStream.Length - inStream.Position, blockLength);
                 inStream.Read(buffer, 0, length);
 
                 Key key = null;
@@ -872,7 +872,7 @@ namespace Library.Net.Amoeba
             {
                 string path = _ids[id];
 
-                List<Key> keys = new List<Key>();
+                var keys = new List<Key>();
                 keys.AddRange(_settings.ShareIndex[path].Indexes.Keys);
 
                 _settings.ShareIndex.Remove(path);
@@ -888,7 +888,7 @@ namespace Library.Net.Amoeba
         public KeyCollection Encoding(Stream inStream,
             CompressionAlgorithm compressionAlgorithm, CryptoAlgorithm cryptoAlgorithm, byte[] cryptoKey, int blockLength, HashAlgorithm hashAlgorithm)
         {
-            if (inStream == null) throw new ArgumentNullException("inStream");
+            if (inStream == null) throw new ArgumentNullException(nameof(inStream));
             if (!Enum.IsDefined(typeof(CompressionAlgorithm), compressionAlgorithm)) throw new ArgumentException("CompressAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(CryptoAlgorithm), cryptoAlgorithm)) throw new ArgumentException("CryptoAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(HashAlgorithm), hashAlgorithm)) throw new ArgumentException("HashAlgorithm に存在しない列挙");
@@ -991,7 +991,7 @@ namespace Library.Net.Amoeba
         public void Decoding(Stream outStream,
             CompressionAlgorithm compressionAlgorithm, CryptoAlgorithm cryptoAlgorithm, byte[] cryptoKey, KeyCollection keys)
         {
-            if (outStream == null) throw new ArgumentNullException("outStream");
+            if (outStream == null) throw new ArgumentNullException(nameof(outStream));
             if (!Enum.IsDefined(typeof(CompressionAlgorithm), compressionAlgorithm)) throw new ArgumentException("CompressAlgorithm に存在しない列挙");
             if (!Enum.IsDefined(typeof(CryptoAlgorithm), cryptoAlgorithm)) throw new ArgumentException("CryptoAlgorithm に存在しない列挙");
 
@@ -1066,7 +1066,7 @@ namespace Library.Net.Amoeba
                 {
                     if (correctionAlgorithm == CorrectionAlgorithm.None)
                     {
-                        Group group = new Group();
+                        var group = new Group();
                         group.CorrectionAlgorithm = correctionAlgorithm;
                         group.InformationLength = keys.Count;
                         group.BlockLength = blockLength;
@@ -1079,11 +1079,11 @@ namespace Library.Net.Amoeba
                     {
 
 #if DEBUG
-                        Stopwatch sw = new Stopwatch();
+                        var sw = new Stopwatch();
                         sw.Start();
 #endif
 
-                        if (keys.Count > 128) throw new ArgumentOutOfRangeException("keys");
+                        if (keys.Count > 128) throw new ArgumentOutOfRangeException(nameof(keys));
 
                         var buffers = new ArraySegment<byte>[keys.Count];
                         var parityBuffers = new ArraySegment<byte>[keys.Count];
@@ -1096,7 +1096,7 @@ namespace Library.Net.Amoeba
                             {
                                 token.ThrowIfCancellationRequested();
 
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -1107,11 +1107,11 @@ namespace Library.Net.Amoeba
 
                                     if (bufferLength > blockLength)
                                     {
-                                        throw new ArgumentOutOfRangeException("blockLength");
+                                        throw new ArgumentOutOfRangeException(nameof(blockLength));
                                     }
                                     else if (bufferLength < blockLength)
                                     {
-                                        ArraySegment<byte> tbuffer = new ArraySegment<byte>(_bufferManager.TakeBuffer(blockLength), 0, blockLength);
+                                        var tbuffer = new ArraySegment<byte>(_bufferManager.TakeBuffer(blockLength), 0, blockLength);
                                         Unsafe.Copy(buffer.Array, buffer.Offset, tbuffer.Array, tbuffer.Offset, buffer.Count);
                                         Unsafe.Zero(tbuffer.Array, tbuffer.Offset + buffer.Count, tbuffer.Count - buffer.Count);
                                         _bufferManager.ReturnBuffer(buffer.Array);
@@ -1151,7 +1151,7 @@ namespace Library.Net.Amoeba
 
                             token.ThrowIfCancellationRequested();
 
-                            KeyCollection parityKeys = new KeyCollection();
+                            var parityKeys = new KeyCollection();
 
                             for (int i = 0; i < parityBuffers.Length; i++)
                             {
@@ -1173,7 +1173,7 @@ namespace Library.Net.Amoeba
                                 }
                             }
 
-                            Group group = new Group();
+                            var group = new Group();
                             group.CorrectionAlgorithm = correctionAlgorithm;
                             group.InformationLength = buffers.Length;
                             group.BlockLength = blockLength;
@@ -1242,7 +1242,7 @@ namespace Library.Net.Amoeba
 
                                 if (!this.Contains(group.Keys[i])) continue;
 
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -1251,11 +1251,11 @@ namespace Library.Net.Amoeba
 
                                     if (bufferLength > group.BlockLength)
                                     {
-                                        throw new ArgumentOutOfRangeException("group", "BlockLength");
+                                        throw new ArgumentOutOfRangeException(nameof(group), "BlockLength");
                                     }
                                     else if (bufferLength < group.BlockLength)
                                     {
-                                        ArraySegment<byte> tbuffer = new ArraySegment<byte>(_bufferManager.TakeBuffer(group.BlockLength), 0, group.BlockLength);
+                                        var tbuffer = new ArraySegment<byte>(_bufferManager.TakeBuffer(group.BlockLength), 0, group.BlockLength);
                                         Unsafe.Copy(buffer.Array, buffer.Offset, tbuffer.Array, tbuffer.Offset, buffer.Count);
                                         Unsafe.Zero(tbuffer.Array, tbuffer.Offset + buffer.Count, tbuffer.Count - buffer.Count);
                                         _bufferManager.ReturnBuffer(buffer.Array);
@@ -1310,7 +1310,7 @@ namespace Library.Net.Amoeba
                             }
                         }
 
-                        KeyCollection keys = new KeyCollection();
+                        var keys = new KeyCollection();
 
                         for (int i = 0; i < group.InformationLength; i++)
                         {
@@ -1430,7 +1430,7 @@ namespace Library.Net.Amoeba
 
                                     stream.Seek((long)shareInfo.BlockLength * i, SeekOrigin.Begin);
 
-                                    int length = (int)Math.Min(stream.Length - stream.Position, shareInfo.BlockLength);
+                                    var length = (int)Math.Min(stream.Length - stream.Position, shareInfo.BlockLength);
                                     stream.Read(buffer, 0, length);
 
                                     if (key.HashAlgorithm == HashAlgorithm.Sha256)

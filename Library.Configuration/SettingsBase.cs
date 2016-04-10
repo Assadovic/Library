@@ -88,7 +88,7 @@ namespace Library.Configuration
 
         public virtual void Load(string directoryPath)
         {
-            Stopwatch sw = new Stopwatch();
+            var sw = new Stopwatch();
             sw.Start();
 
             if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
@@ -113,7 +113,7 @@ namespace Library.Configuration
                 }
             }
 
-            LockedHashSet<string> successNames = new LockedHashSet<string>();
+            var successNames = new LockedHashSet<string>();
 
             // DataContractSerializerのBinaryバージョン
             foreach (var extension in new string[] { ".v2", ".v2.bak" })
@@ -193,7 +193,7 @@ namespace Library.Configuration
 
         public virtual void Save(string directoryPath)
         {
-            Stopwatch sw = new Stopwatch();
+            var sw = new Stopwatch();
             sw.Start();
 
             if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);

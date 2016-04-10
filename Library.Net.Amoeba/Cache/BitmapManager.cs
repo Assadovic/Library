@@ -113,7 +113,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                if (point >= _length) throw new ArgumentOutOfRangeException("point");
+                if (point >= _length) throw new ArgumentOutOfRangeException(nameof(point));
 
                 var sectorOffset = (point / 8) / BitmapManager.SectorSize;
                 var bufferOffset = (int)((point / 8) % BitmapManager.SectorSize);
@@ -128,7 +128,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                if (point >= _length) throw new ArgumentOutOfRangeException("point");
+                if (point >= _length) throw new ArgumentOutOfRangeException(nameof(point));
 
                 if (state)
                 {

@@ -75,11 +75,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException("destinationHost");
+                throw new ArgumentNullException(nameof(destinationHost));
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -95,7 +95,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -111,7 +111,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -181,7 +181,7 @@ namespace Library.Net.Proxy
         {
             try
             {
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
                 // determine which authentication method the client would like to use
@@ -481,7 +481,7 @@ namespace Library.Net.Proxy
                         ipv4Bytes[i] = response[i + 4];
                     }
 
-                    IPAddress ipv4 = new IPAddress(ipv4Bytes);
+                    var ipv4 = new IPAddress(ipv4Bytes);
                     addr = ipv4.ToString();
                     byte[] portBytesIpv4 = new byte[2];
                     portBytesIpv4[0] = response[9];
@@ -496,7 +496,7 @@ namespace Library.Net.Proxy
                         ipv6Bytes[i] = response[i + 4];
                     }
 
-                    IPAddress ipv6 = new IPAddress(ipv6Bytes);
+                    var ipv6 = new IPAddress(ipv6Bytes);
                     addr = ipv6.ToString();
                     byte[] portBytesIpv6 = new byte[2];
                     portBytesIpv6[0] = response[21];

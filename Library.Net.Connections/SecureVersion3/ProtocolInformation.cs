@@ -91,7 +91,7 @@ namespace Library.Net.Connections.SecureVersion3
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // KeyExchangeAlgorithm
             if (this.KeyExchangeAlgorithm != 0)

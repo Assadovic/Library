@@ -11,7 +11,7 @@ using Library.Io;
 namespace Library.Net.Covenant
 {
     [DataContract(Name = "QueryProfile", Namespace = "http://Library/Net/Covenant")]
-    public sealed class QueryProfile : ItemBase<QueryProfile>
+    public sealed class QueryProfile : ItemBase<QueryProfile>, IQueryProfile
     {
         private enum SerializeId : byte
         {
@@ -110,6 +110,8 @@ namespace Library.Net.Covenant
             return true;
         }
 
+        #region IQueryProfile
+
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime
         {
@@ -143,5 +145,7 @@ namespace Library.Net.Covenant
                 }
             }
         }
+
+        #endregion
     }
 }

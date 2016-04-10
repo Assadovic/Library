@@ -72,11 +72,11 @@ namespace Library.Net.Proxy
         {
             if (String.IsNullOrEmpty(destinationHost))
             {
-                throw new ArgumentNullException("destinationHost");
+                throw new ArgumentNullException(nameof(destinationHost));
             }
             else if (destinationPort <= 0 || destinationPort > 65535)
             {
-                throw new ArgumentOutOfRangeException("destinationPort", "port must be greater than zero and less than 65535");
+                throw new ArgumentOutOfRangeException(nameof(destinationPort), "port must be greater than zero and less than 65535");
             }
 
             _destinationHost = destinationHost;
@@ -92,7 +92,7 @@ namespace Library.Net.Proxy
         {
             if (socket == null)
             {
-                throw new ArgumentNullException("socket");
+                throw new ArgumentNullException(nameof(socket));
             }
 
             _tcpClient = new TcpClient();
@@ -132,7 +132,7 @@ namespace Library.Net.Proxy
         {
             try
             {
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
                 // send connection command to proxy host for the specified destination host and port
@@ -176,7 +176,7 @@ namespace Library.Net.Proxy
 
             // create an byte response array  
             byte[] response = new byte[_tcpClient.ReceiveBufferSize];
-            StringBuilder sbuilder = new StringBuilder();
+            var sbuilder = new StringBuilder();
             int bytes = 0;
             long total = 0;
 

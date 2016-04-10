@@ -266,8 +266,8 @@ namespace Library.Net.Connections
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_connect) throw new ConnectionException();
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (stream.Length == 0) throw new ArgumentOutOfRangeException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream.Length == 0) throw new ArgumentOutOfRangeException(nameof(stream));
 
             lock (_sendLock)
             {
@@ -290,7 +290,7 @@ namespace Library.Net.Connections
                             {
                                 for (;;)
                                 {
-                                    int sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, sendBuffer.Length);
+                                    var sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, sendBuffer.Length);
                                     if (sendLength == 0) break;
 
                                     if (_bandwidthLimit != null)

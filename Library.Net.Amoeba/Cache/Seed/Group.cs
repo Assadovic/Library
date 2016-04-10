@@ -90,7 +90,7 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Keys
                 foreach (var value in this.Keys)

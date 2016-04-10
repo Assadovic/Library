@@ -119,7 +119,7 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("DownloadingCount", _settings.DownloadItems
                         .Count(n => !(n.State == DownloadState.Completed || n.State == DownloadState.Error))));
@@ -135,11 +135,11 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var item in _ids)
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         contexts.Add(new InformationContext("Id", item.Key));
                         contexts.Add(new InformationContext("Priority", item.Value.Priority));
@@ -336,7 +336,7 @@ namespace Library.Net.Amoeba
 
         private void DownloadManagerThread()
         {
-            Random random = new Random();
+            var random = new Random();
             int round = 0;
 
             for (;;)
@@ -411,7 +411,7 @@ namespace Library.Net.Amoeba
                         {
                             item.State = DownloadState.Downloading;
 
-                            int limitCount = (int)(256 * Math.Pow(item.Priority, 3));
+                            var limitCount = (int)(256 * Math.Pow(item.Priority, 3));
 
                             foreach (var group in item.Index.Groups.ToArray().Randomize())
                             {
@@ -432,7 +432,7 @@ namespace Library.Net.Amoeba
                             {
                                 if (_existManager.GetCount(group) >= group.InformationLength) continue;
 
-                                List<Key> tempKeys = new List<Key>();
+                                var tempKeys = new List<Key>();
 
                                 foreach (var key in _existManager.GetKeys(group, false))
                                 {
@@ -474,7 +474,7 @@ namespace Library.Net.Amoeba
 
         private void DecodeManagerThread()
         {
-            Random random = new Random();
+            var random = new Random();
 
             for (;;)
             {
@@ -726,7 +726,7 @@ namespace Library.Net.Amoeba
                             item.DecodingBytes = 0;
                             item.DecodeBytes = item.Index.Groups.Sum(n => n.Length);
 
-                            List<Key> keys = new List<Key>();
+                            var keys = new List<Key>();
 
                             try
                             {
@@ -950,7 +950,7 @@ namespace Library.Net.Amoeba
                 {
                     if (_cacheManager.Contains(item.Seed.Key))
                     {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
+                        var buffer = new ArraySegment<byte>();
 
                         try
                         {
@@ -979,7 +979,7 @@ namespace Library.Net.Amoeba
 
                                 if (!_cacheManager.Contains(key)) continue;
 
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -1033,7 +1033,7 @@ namespace Library.Net.Amoeba
                 {
                     if (seed.Key == null) return;
 
-                    DownloadItem item = new DownloadItem();
+                    var item = new DownloadItem();
 
                     item.Rank = 1;
                     item.Seed = seed;

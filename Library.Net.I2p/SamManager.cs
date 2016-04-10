@@ -120,7 +120,7 @@ namespace Library.Net.I2p
                     writer.NewLine = "\n";
                 }
 
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
                 sw.Start();
 
                 while (this.IsConnected)
@@ -177,7 +177,7 @@ namespace Library.Net.I2p
 
                         using (_acceptTokenSource.Token.Register(() => socket.Dispose()))
                         {
-                            SamAccept samAccept = new SamAccept(socket);
+                            var samAccept = new SamAccept(socket);
                             samAccept.Start(_sessionId);
 
                             var destination = I2pConverter.Base32Address.FromDestinationBase64(samAccept.DestinationBase64);
@@ -272,7 +272,7 @@ namespace Library.Net.I2p
 
                     using (tokenSource.Token.Register(() => socket.Dispose()))
                     {
-                        SamConnect samConnect = new SamConnect(socket);
+                        var samConnect = new SamConnect(socket);
                         samConnect.Start(_sessionId, destination);
 
                         return samConnect.GetSocket();

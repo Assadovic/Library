@@ -7,11 +7,12 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Library.Io;
+using Library.Security;
 
 namespace Library.Net.Covenant
 {
     [DataContract(Name = "Location", Namespace = "http://Library/Net/Covenant")]
-    public sealed class Location : ItemBase<Location>
+    sealed class Location : ItemBase<Location>, ILocation
     {
         private enum SerializeId : byte
         {
@@ -133,6 +134,8 @@ namespace Library.Net.Covenant
             return true;
         }
 
+        #region ILocation
+
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime
         {
@@ -184,5 +187,36 @@ namespace Library.Net.Covenant
                 return _uris;
             }
         }
+
+        #endregion
+
+        #region IComputeHash
+
+        private volatile byte[] _sha256_hash;
+
+        public byte[] CreateHash(HashAlgorithm hashAlgorithm)
+        {
+            if (_sha256_hash == null)
+            {
+                using (var stream = this.Export(BufferManager.Instance))
+                {
+                    _sha256_hash = Sha256.ComputeHash(stream);
+                }
+            }
+
+            if (hashAlgorithm == HashAlgorithm.Sha256)
+            {
+                return _sha256_hash;
+            }
+
+            return null;
+        }
+
+        public bool VerifyHash(byte[] hash, HashAlgorithm hashAlgorithm)
+        {
+            return Unsafe.Equals(this.CreateHash(hashAlgorithm), hash);
+        }
+
+        #endregion
     }
 }

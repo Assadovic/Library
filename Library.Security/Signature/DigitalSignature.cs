@@ -109,7 +109,7 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // Nickname
             if (this.Nickname != null)
@@ -191,11 +191,11 @@ namespace Library.Security
         {
             BufferManager bufferManager = BufferManager.Instance;
 
-            List<Stream> streams = new List<Stream>();
+            var streams = new List<Stream>();
             Encoding encoding = new UTF8Encoding(false);
 
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
                 bufferStream.SetLength(5);
                 bufferStream.Seek(5, SeekOrigin.Begin);
 
@@ -215,7 +215,7 @@ namespace Library.Security
             {
                 Stream exportStream = new WrapperStream(stream, true);
 
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
                 bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
                 bufferStream.WriteByte((byte)FileSerializeId.Stream);
 
@@ -236,12 +236,12 @@ namespace Library.Security
         public static bool VerifyFileCertificate(Certificate certificate, string name, Stream stream)
         {
             BufferManager bufferManager = BufferManager.Instance;
-            List<Stream> streams = new List<Stream>();
+            var streams = new List<Stream>();
             Encoding encoding = new UTF8Encoding(false);
 
             // Name
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
                 bufferStream.SetLength(5);
                 bufferStream.Seek(5, SeekOrigin.Begin);
 
@@ -261,7 +261,7 @@ namespace Library.Security
             {
                 Stream exportStream = new WrapperStream(stream, true);
 
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
                 bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
                 bufferStream.WriteByte((byte)FileSerializeId.Stream);
 

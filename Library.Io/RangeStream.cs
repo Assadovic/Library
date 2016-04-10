@@ -15,9 +15,9 @@ namespace Library.Io
 
         public RangeStream(Stream stream, long position, long length, bool leaveInnerStreamOpen)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (position < 0 || stream.Length < position) throw new ArgumentOutOfRangeException("position");
-            if (length < 0 || (stream.Length - position) < length) throw new ArgumentOutOfRangeException("length");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (position < 0 || stream.Length < position) throw new ArgumentOutOfRangeException(nameof(position));
+            if (length < 0 || (stream.Length - position) < length) throw new ArgumentOutOfRangeException(nameof(length));
 
             _stream = stream;
             _position = position;
@@ -88,7 +88,7 @@ namespace Library.Io
             set
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (value < 0 || this.Length < value) throw new ArgumentOutOfRangeException("value");
+                if (value < 0 || this.Length < value) throw new ArgumentOutOfRangeException(nameof(value));
                 if (!_stream.CanSeek) throw new NotSupportedException();
 
                 _stream.Position = value + _position;
@@ -130,7 +130,7 @@ namespace Library.Io
         public override void SetLength(long value)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (value < 0 || _orignalLength < value) throw new ArgumentOutOfRangeException("value");
+            if (value < 0 || _orignalLength < value) throw new ArgumentOutOfRangeException(nameof(value));
 
             _length = value;
         }
@@ -138,8 +138,8 @@ namespace Library.Io
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
             if (count == 0) return 0;
 
             count = (int)Math.Min(count, this.Length - this.Position);

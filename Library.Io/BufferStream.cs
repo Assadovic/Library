@@ -60,7 +60,7 @@ namespace Library.Io
             set
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (value < 0 || this.Length < value) throw new ArgumentOutOfRangeException("value");
+                if (value < 0 || this.Length < value) throw new ArgumentOutOfRangeException(nameof(value));
 
                 _position = value;
             }
@@ -126,8 +126,8 @@ namespace Library.Io
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
 
             count = (int)Math.Min(count, this.Length - this.Position);
             if (count == 0) return 0;
@@ -167,8 +167,8 @@ namespace Library.Io
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
             if (count == 0) return;
 
             if (this.Length < this.Position + count)

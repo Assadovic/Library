@@ -1,4 +1,5 @@
-﻿namespace Library.Net.Outopos
+﻿
+namespace Library.Net.Outopos
 {
     interface IBroadcastOptions : IComputeHash
     {

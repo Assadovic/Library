@@ -51,9 +51,9 @@ namespace Library.Security
 
         public static byte[] ComputeHash(byte[] buffer, int offset, int length)
         {
-            if (buffer == null) throw new ArgumentNullException("buffer");
-            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-            if (length < 0 || (buffer.Length - offset) < length) throw new ArgumentOutOfRangeException("length");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (length < 0 || (buffer.Length - offset) < length) throw new ArgumentOutOfRangeException(nameof(length));
 
             uint x = 0xFFFFFFFF;
 
@@ -73,14 +73,14 @@ namespace Library.Security
         /// <param name="buffer">ハッシュ値を計算するbyte配列</param>
         public static byte[] ComputeHash(byte[] buffer)
         {
-            if (buffer == null) throw new ArgumentNullException("buffer");
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             return Crc32_Castagnoli.ComputeHash(buffer, 0, buffer.Length);
         }
 
         public static byte[] ComputeHash(string value)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             return Crc32_Castagnoli.ComputeHash(_threadLocalEncoding.Value.GetBytes(value));
         }
@@ -89,7 +89,7 @@ namespace Library.Security
         {
             if (value.Array == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             return Crc32_Castagnoli.ComputeHash(value.Array, value.Offset, value.Count);
@@ -97,7 +97,7 @@ namespace Library.Security
 
         public static byte[] ComputeHash(Stream inputStream)
         {
-            if (inputStream == null) throw new ArgumentNullException("inputStream");
+            if (inputStream == null) throw new ArgumentNullException(nameof(inputStream));
 
             uint x = 0xFFFFFFFF;
 
@@ -117,7 +117,7 @@ namespace Library.Security
 
         public static byte[] ComputeHash(IList<ArraySegment<byte>> value)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             uint x = 0xFFFFFFFF;
 

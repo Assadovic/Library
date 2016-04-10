@@ -104,7 +104,7 @@ namespace Library.Net.Outopos
             {
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("UsingSpace", _fileStream.Length));
                     contexts.Add(new InformationContext("LockSpace", _lockSpace));
@@ -310,7 +310,7 @@ namespace Library.Net.Outopos
 
         public void Resize(long size)
         {
-            if (size < 0) throw new ArgumentOutOfRangeException("size");
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
             lock (this.ThisLock)
             {

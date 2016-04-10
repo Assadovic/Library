@@ -69,9 +69,9 @@ namespace Library.Net.I2p
 
         private static string[] Decode(string input)
         {
-            if (input == null) throw new ArgumentNullException("input");
+            if (input == null) throw new ArgumentNullException(nameof(input));
 
-            StringBuilder builder = new StringBuilder(input.Length);
+            var builder = new StringBuilder(input.Length);
 
             int begin = 0;
             int end;

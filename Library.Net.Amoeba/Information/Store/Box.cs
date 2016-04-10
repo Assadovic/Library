@@ -108,7 +108,7 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Name
                 if (this.Name != null)

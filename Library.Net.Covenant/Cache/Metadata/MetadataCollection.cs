@@ -3,7 +3,7 @@ using Library.Collections;
 
 namespace Library.Net.Covenant
 {
-    public sealed class MetadataCollection : LockedList<Metadata>
+    sealed class MetadataCollection : LockedList<Metadata>
     {
         public MetadataCollection() : base() { }
         public MetadataCollection(int capacity) : base(capacity) { }

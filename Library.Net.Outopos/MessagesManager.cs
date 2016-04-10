@@ -46,14 +46,14 @@ namespace Library.Net.Outopos
                     messageManager.PushBlocksRequest.TrimExcess();
                     messageManager.PullBlocksRequest.TrimExcess();
 
-                    messageManager.PushBroadcastSignaturesRequest.TrimExcess();
-                    messageManager.PullBroadcastSignaturesRequest.TrimExcess();
+                    messageManager.PushBroadcastMetadatasRequest.TrimExcess();
+                    messageManager.PullBroadcastMetadatasRequest.TrimExcess();
 
-                    messageManager.PushUnicastSignaturesRequest.TrimExcess();
-                    messageManager.PullUnicastSignaturesRequest.TrimExcess();
+                    messageManager.PushUnicastMetadatasRequest.TrimExcess();
+                    messageManager.PullUnicastMetadatasRequest.TrimExcess();
 
-                    messageManager.PushMulticastTagsRequest.TrimExcess();
-                    messageManager.PullMulticastTagsRequest.TrimExcess();
+                    messageManager.PushMulticastMetadatasRequest.TrimExcess();
+                    messageManager.PullMulticastMetadatasRequest.TrimExcess();
                 }
 
                 if (_messageManagerDictionary.Count > 128)
@@ -195,14 +195,14 @@ namespace Library.Net.Outopos
         private VolatileHashSet<Key> _pushBlocksRequest;
         private VolatileHashSet<Key> _pullBlocksRequest;
 
-        private VolatileHashSet<string> _pushBroadcastSignaturesRequest;
-        private VolatileHashSet<string> _pullBroadcastSignaturesRequest;
+        private VolatileHashSet<string> _pushBroadcastMetadatasRequest;
+        private VolatileHashSet<string> _pullBroadcastMetadatasRequest;
 
-        private VolatileHashSet<string> _pushUnicastSignaturesRequest;
-        private VolatileHashSet<string> _pullUnicastSignaturesRequest;
+        private VolatileHashSet<string> _pushUnicastMetadatasRequest;
+        private VolatileHashSet<string> _pullUnicastMetadatasRequest;
 
-        private VolatileHashSet<Tag> _pushMulticastTagsRequest;
-        private VolatileHashSet<Tag> _pullMulticastTagsRequest;
+        private VolatileHashSet<Tag> _pushMulticastMetadatasRequest;
+        private VolatileHashSet<Tag> _pullMulticastMetadatasRequest;
 
         private readonly object _thisLock = new object();
 
@@ -227,14 +227,14 @@ namespace Library.Net.Outopos
             _pushBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
 
-            _pushBroadcastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-            _pullBroadcastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
+            _pushBroadcastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
+            _pullBroadcastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
 
-            _pushUnicastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-            _pullUnicastSignaturesRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
+            _pushUnicastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
+            _pullUnicastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
 
-            _pushMulticastTagsRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
-            _pullMulticastTagsRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
+            _pushMulticastMetadatasRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
+            _pullMulticastMetadatasRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
         }
 
         public int Id
@@ -407,68 +407,68 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<string> PushBroadcastSignaturesRequest
+        public VolatileHashSet<string> PushBroadcastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pushBroadcastSignaturesRequest;
+                    return _pushBroadcastMetadatasRequest;
                 }
             }
         }
 
-        public VolatileHashSet<string> PullBroadcastSignaturesRequest
+        public VolatileHashSet<string> PullBroadcastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pullBroadcastSignaturesRequest;
+                    return _pullBroadcastMetadatasRequest;
                 }
             }
         }
 
-        public VolatileHashSet<string> PushUnicastSignaturesRequest
+        public VolatileHashSet<string> PushUnicastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pushUnicastSignaturesRequest;
+                    return _pushUnicastMetadatasRequest;
                 }
             }
         }
 
-        public VolatileHashSet<string> PullUnicastSignaturesRequest
+        public VolatileHashSet<string> PullUnicastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pullUnicastSignaturesRequest;
+                    return _pullUnicastMetadatasRequest;
                 }
             }
         }
 
-        public VolatileHashSet<Tag> PushMulticastTagsRequest
+        public VolatileHashSet<Tag> PushMulticastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pushMulticastTagsRequest;
+                    return _pushMulticastMetadatasRequest;
                 }
             }
         }
 
-        public VolatileHashSet<Tag> PullMulticastTagsRequest
+        public VolatileHashSet<Tag> PullMulticastMetadatasRequest
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pullMulticastTagsRequest;
+                    return _pullMulticastMetadatasRequest;
                 }
             }
         }

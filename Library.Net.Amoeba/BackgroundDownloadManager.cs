@@ -218,7 +218,7 @@ namespace Library.Net.Amoeba
 
         private void DownloadManagerThread()
         {
-            Random random = new Random();
+            var random = new Random();
             int round = 0;
 
             for (;;)
@@ -311,7 +311,7 @@ namespace Library.Net.Amoeba
                             {
                                 if (_existManager.GetCount(group) >= group.InformationLength) continue;
 
-                                List<Key> tempKeys = new List<Key>();
+                                var tempKeys = new List<Key>();
 
                                 foreach (var key in _existManager.GetKeys(group, false))
                                 {
@@ -554,7 +554,7 @@ namespace Library.Net.Amoeba
                         }
                         else
                         {
-                            List<Key> keys = new List<Key>();
+                            var keys = new List<Key>();
 
                             try
                             {
@@ -743,7 +743,7 @@ namespace Library.Net.Amoeba
                 {
                     if (_cacheManager.Contains(item.Seed.Key))
                     {
-                        ArraySegment<byte> buffer = new ArraySegment<byte>();
+                        var buffer = new ArraySegment<byte>();
 
                         try
                         {
@@ -772,7 +772,7 @@ namespace Library.Net.Amoeba
 
                                 if (!_cacheManager.Contains(key)) continue;
 
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -802,7 +802,7 @@ namespace Library.Net.Amoeba
 
         private void WatchThread()
         {
-            Stopwatch watchStopwatch = new Stopwatch();
+            var watchStopwatch = new Stopwatch();
 
             try
             {
@@ -930,7 +930,7 @@ namespace Library.Net.Amoeba
 
                 if (seed.Rank == 0)
                 {
-                    BackgroundDownloadItem item = new BackgroundDownloadItem();
+                    var item = new BackgroundDownloadItem();
 
                     item.Rank = 0;
                     item.Seed = seed;
@@ -956,7 +956,7 @@ namespace Library.Net.Amoeba
                 {
                     if (seed.Key == null) return;
 
-                    BackgroundDownloadItem item = new BackgroundDownloadItem();
+                    var item = new BackgroundDownloadItem();
 
                     item.Rank = 1;
                     item.Seed = seed;

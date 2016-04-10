@@ -140,7 +140,7 @@ namespace Library.Net.Connections
                         }
                     }
 
-                    Stopwatch stopwatch = new Stopwatch();
+                    var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
                     using (BufferStream stream = new BufferStream(_bufferManager))
@@ -231,7 +231,7 @@ namespace Library.Net.Connections
                             EcDiffieHellmanP521.CreateKeys(out publicKey, out privateKey);
 
                             {
-                                SecureVersion3.ConnectionSignature connectionSignature = new SecureVersion3.ConnectionSignature();
+                                var connectionSignature = new SecureVersion3.ConnectionSignature();
                                 connectionSignature.ExchangeKey = publicKey;
 
                                 if (_digitalSignature != null)
@@ -286,7 +286,7 @@ namespace Library.Net.Connections
                             Rsa2048.CreateKeys(out publicKey, out privateKey);
 
                             {
-                                SecureVersion3.ConnectionSignature connectionSignature = new SecureVersion3.ConnectionSignature();
+                                var connectionSignature = new SecureVersion3.ConnectionSignature();
                                 connectionSignature.ExchangeKey = publicKey;
 
                                 if (_digitalSignature != null)
@@ -373,7 +373,7 @@ namespace Library.Net.Connections
                                 throw new ConnectionException();
                             }
 
-                            Pbkdf2 pbkdf2 = new Pbkdf2(hmac, seed, xorSessionId, 1024);
+                            var pbkdf2 = new Pbkdf2(hmac, seed, xorSessionId, 1024);
 
                             int cryptoKeyLength;
                             int hmacKeyLength;
@@ -521,7 +521,7 @@ namespace Library.Net.Connections
                                 throw new ConnectionException();
                             }
 
-                            BufferStream bufferStream = new BufferStream(_bufferManager);
+                            var bufferStream = new BufferStream(_bufferManager);
 
                             if (_informationVersion3.CryptoAlgorithm.HasFlag(SecureVersion3.CryptoAlgorithm.Aes256))
                             {
@@ -587,8 +587,8 @@ namespace Library.Net.Connections
         public override void Send(Stream stream, TimeSpan timeout, Information options)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (stream.Length == 0) throw new ArgumentOutOfRangeException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream.Length == 0) throw new ArgumentOutOfRangeException(nameof(stream));
             if (!_connect) throw new ConnectionException();
 
             lock (_sendLock)

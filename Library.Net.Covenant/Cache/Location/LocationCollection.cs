@@ -3,7 +3,7 @@ using Library.Collections;
 
 namespace Library.Net.Covenant
 {
-    public sealed class LocationCollection : LockedList<Location>
+    sealed class LocationCollection : LockedList<Location>
     {
         public LocationCollection() : base() { }
         public LocationCollection(int capacity) : base(capacity) { }

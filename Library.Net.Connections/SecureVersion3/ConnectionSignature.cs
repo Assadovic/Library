@@ -89,7 +89,7 @@ namespace Library.Net.Connections.SecureVersion3
         {
             lock (this.ThisLock)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)

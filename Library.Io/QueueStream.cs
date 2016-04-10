@@ -293,8 +293,8 @@ namespace Library.Io
             public override int Read(byte[] buffer, int offset, int count)
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException("offset");
-                if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException("count");
+                if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
+                if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
 
                 try
                 {
@@ -434,7 +434,7 @@ namespace Library.Io
             {
                 for (;;)
                 {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>();
+                    var buffer = new ArraySegment<byte>();
 
                     try
                     {

@@ -313,11 +313,11 @@ namespace Library.Net.Amoeba
 
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var connectionManager in _connectionManagers.ToArray())
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         var messageManager = _messagesManager[connectionManager.Node];
 
@@ -345,7 +345,7 @@ namespace Library.Net.Amoeba
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("PushNodeCount", (long)_pushNodeCount));
                     contexts.Add(new InformationContext("PushBlockLinkCount", (long)_pushBlockLinkCount));
@@ -749,21 +749,21 @@ namespace Library.Net.Amoeba
 
         private void ConnectionsManagerThread()
         {
-            Stopwatch connectionCheckStopwatch = new Stopwatch();
+            var connectionCheckStopwatch = new Stopwatch();
             connectionCheckStopwatch.Start();
 
-            Stopwatch refreshStopwatch = new Stopwatch();
+            var refreshStopwatch = new Stopwatch();
 
-            Stopwatch pushBlockDiffusionStopwatch = new Stopwatch();
+            var pushBlockDiffusionStopwatch = new Stopwatch();
             pushBlockDiffusionStopwatch.Start();
-            Stopwatch pushBlockUploadStopwatch = new Stopwatch();
+            var pushBlockUploadStopwatch = new Stopwatch();
             pushBlockUploadStopwatch.Start();
-            Stopwatch pushBlockDownloadStopwatch = new Stopwatch();
+            var pushBlockDownloadStopwatch = new Stopwatch();
             pushBlockDownloadStopwatch.Start();
 
-            Stopwatch pushSeedUploadStopwatch = new Stopwatch();
+            var pushSeedUploadStopwatch = new Stopwatch();
             pushSeedUploadStopwatch.Start();
-            Stopwatch pushSeedDownloadStopwatch = new Stopwatch();
+            var pushSeedDownloadStopwatch = new Stopwatch();
             pushSeedDownloadStopwatch.Start();
 
             // 電子署名を検証して破損しているSeedを検索し、削除。
@@ -1160,7 +1160,7 @@ namespace Library.Net.Amoeba
                             var array = messageManager.PullBlocksLink.ToArray();
                             _random.Shuffle(array);
 
-                            int count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
+                            var count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
@@ -1198,7 +1198,7 @@ namespace Library.Net.Amoeba
                             var array = _cacheManager.ExceptFrom(messageManager.PullBlocksRequest.ToArray()).ToArray();
                             _random.Shuffle(array);
 
-                            int count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
+                            var count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
@@ -1272,7 +1272,7 @@ namespace Library.Net.Amoeba
                         {
                             try
                             {
-                                List<Node> requestNodes = new List<Node>();
+                                var requestNodes = new List<Node>();
 
                                 foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 3))
                                 {
@@ -1505,14 +1505,14 @@ namespace Library.Net.Amoeba
             {
                 var messageManager = _messagesManager[connectionManager.Node];
 
-                Stopwatch checkTime = new Stopwatch();
+                var checkTime = new Stopwatch();
                 checkTime.Start();
-                Stopwatch nodeUpdateTime = new Stopwatch();
-                Stopwatch updateTime = new Stopwatch();
+                var nodeUpdateTime = new Stopwatch();
+                var updateTime = new Stopwatch();
                 updateTime.Start();
-                Stopwatch blockDiffusionTime = new Stopwatch();
+                var blockDiffusionTime = new Stopwatch();
                 blockDiffusionTime.Start();
-                Stopwatch seedUpdateTime = new Stopwatch();
+                var seedUpdateTime = new Stopwatch();
                 seedUpdateTime.Start();
 
                 for (;;)
@@ -1723,7 +1723,7 @@ namespace Library.Net.Amoeba
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -1785,7 +1785,7 @@ namespace Library.Net.Amoeba
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {

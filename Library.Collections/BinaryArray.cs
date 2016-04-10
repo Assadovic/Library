@@ -40,7 +40,7 @@ namespace Library.Collections
 
         public void Set(int index, bool value)
         {
-            if (index < 0 || index >= _length) throw new ArgumentOutOfRangeException("index");
+            if (index < 0 || index >= _length) throw new ArgumentOutOfRangeException(nameof(index));
 
             if (value)
             {
@@ -54,7 +54,7 @@ namespace Library.Collections
 
         public bool Get(int index)
         {
-            if (index < 0 || index >= _length) throw new ArgumentOutOfRangeException("index");
+            if (index < 0 || index >= _length) throw new ArgumentOutOfRangeException(nameof(index));
 
             return ((_buffer[index / 8] << (index % 8)) & 0x80) == 0x80;
         }

@@ -36,7 +36,7 @@ namespace Library.Security
 
         internal Certificate(DigitalSignature digitalSignature, Stream stream)
         {
-            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
             byte[] signature;
 
@@ -106,7 +106,7 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // Nickname
             if (this.Nickname != null)

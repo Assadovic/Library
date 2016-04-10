@@ -87,7 +87,7 @@ namespace Library.Net.Upnp
         {
             location = null;
 
-            List<string> querys = new List<string>();
+            var querys = new List<string>();
 
             //querys.Add("M-SEARCH * HTTP/1.1\r\n" +
             //        "Host: 239.255.255.250:1900\r\n" +
@@ -110,8 +110,8 @@ namespace Library.Net.Upnp
                     "MX: 3\r\n" +
                     "\r\n");
 
-            Random random = new Random();
-            List<string> queryResponses = new List<string>();
+            var random = new Random();
+            var queryResponses = new List<string>();
 
             using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
             {
@@ -139,7 +139,7 @@ namespace Library.Net.Upnp
                     {
                         byte[] q = Encoding.ASCII.GetBytes(querys[i]);
 
-                        IPEndPoint endPoint = new IPEndPoint(targetIp, 1900);
+                        var endPoint = new IPEndPoint(targetIp, 1900);
                         socket.SendTo(q, q.Length, SocketFlags.None, endPoint);
                     }
                 }
@@ -168,7 +168,7 @@ namespace Library.Net.Upnp
                     var regexLocation = Regex.Match(queryResponse, "^location.*?:(.*)", RegexOptions.Multiline | RegexOptions.IgnoreCase).Groups[1].Value;
                     if (string.IsNullOrWhiteSpace(regexLocation)) continue;
 
-                    Uri tempLocation = new Uri(regexLocation);
+                    var tempLocation = new Uri(regexLocation);
 
                     Debug.WriteLine("UPnP Router: " + targetIp.ToString());
                     Debug.WriteLine("UPnP Location: " + tempLocation.ToString());
@@ -212,11 +212,11 @@ namespace Library.Net.Upnp
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
-                Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
+                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
                 if (!uri.IsAbsoluteUri)
                 {
-                    Uri baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
+                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
                     uri = new Uri(baseUri, uri);
                 }
 
@@ -293,11 +293,11 @@ namespace Library.Net.Upnp
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
-                Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
+                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
                 if (!uri.IsAbsoluteUri)
                 {
-                    Uri baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
+                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
                     uri = new Uri(baseUri, uri);
                 }
 
@@ -362,11 +362,11 @@ namespace Library.Net.Upnp
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
-                Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
+                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
                 if (!uri.IsAbsoluteUri)
                 {
-                    Uri baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
+                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
                     uri = new Uri(baseUri, uri);
                 }
 
@@ -418,11 +418,11 @@ namespace Library.Net.Upnp
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
 
-                Uri uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
+                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
 
                 if (!uri.IsAbsoluteUri)
                 {
-                    Uri baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
+                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
                     uri = new Uri(baseUri, uri);
                 }
 
@@ -439,7 +439,7 @@ namespace Library.Net.Upnp
                     stream.Write(body, 0, body.Length);
                 }
 
-                List<InformationContext> contexts = new List<InformationContext>();
+                var contexts = new List<InformationContext>();
 
                 using (WebResponse wres = wr.GetResponse())
                 {

@@ -146,7 +146,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
                     contexts.AddRange(_serverManager.Information);
                     contexts.AddRange(_cacheManager.Information);
                     contexts.AddRange(_connectionsManager.Information);
@@ -527,7 +527,7 @@ namespace Library.Net.Outopos
                 if (_isLoaded) throw new OutoposManagerException("OutoposManager was already loaded.");
                 _isLoaded = true;
 
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
                 _clientManager.Load(Path.Combine(directoryPath, "ClientManager"));
@@ -535,7 +535,7 @@ namespace Library.Net.Outopos
                 _cacheManager.Load(Path.Combine(directoryPath, "CacheManager"));
                 _connectionsManager.Load(Path.Combine(directoryPath, "ConnectionManager"));
 
-                List<Task> tasks = new List<Task>();
+                var tasks = new List<Task>();
 
                 tasks.Add(Task.Run(() => _downloadManager.Load(Path.Combine(directoryPath, "DownloadManager"))));
                 tasks.Add(Task.Run(() => _uploadManager.Load(Path.Combine(directoryPath, "UploadManager"))));
@@ -554,10 +554,10 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                Stopwatch stopwatch = new Stopwatch();
+                var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                List<Task> tasks = new List<Task>();
+                var tasks = new List<Task>();
 
                 tasks.Add(Task.Run(() => _uploadManager.Save(Path.Combine(directoryPath, "UploadManager"))));
                 tasks.Add(Task.Run(() => _downloadManager.Save(Path.Combine(directoryPath, "DownloadManager"))));

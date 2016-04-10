@@ -281,11 +281,11 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var connectionManager in _connectionManagers.ToArray())
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         var messageManager = _messagesManager[connectionManager.Node];
 
@@ -313,7 +313,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("PushNodeCount", (long)_pushNodeCount));
                     contexts.Add(new InformationContext("PushBlockLinkCount", (long)_pushBlockLinkCount));
@@ -730,21 +730,21 @@ namespace Library.Net.Outopos
 
         private void ConnectionsManagerThread()
         {
-            Stopwatch connectionCheckStopwatch = new Stopwatch();
+            var connectionCheckStopwatch = new Stopwatch();
             connectionCheckStopwatch.Start();
 
-            Stopwatch refreshStopwatch = new Stopwatch();
+            var refreshStopwatch = new Stopwatch();
 
-            Stopwatch pushBlockDiffusionStopwatch = new Stopwatch();
+            var pushBlockDiffusionStopwatch = new Stopwatch();
             pushBlockDiffusionStopwatch.Start();
-            Stopwatch pushBlockUploadStopwatch = new Stopwatch();
+            var pushBlockUploadStopwatch = new Stopwatch();
             pushBlockUploadStopwatch.Start();
-            Stopwatch pushBlockDownloadStopwatch = new Stopwatch();
+            var pushBlockDownloadStopwatch = new Stopwatch();
             pushBlockDownloadStopwatch.Start();
 
-            Stopwatch pushMetadataUploadStopwatch = new Stopwatch();
+            var pushMetadataUploadStopwatch = new Stopwatch();
             pushMetadataUploadStopwatch.Start();
-            Stopwatch pushMetadataDownloadStopwatch = new Stopwatch();
+            var pushMetadataDownloadStopwatch = new Stopwatch();
             pushMetadataDownloadStopwatch.Start();
 
             for (;;)
@@ -1306,7 +1306,7 @@ namespace Library.Net.Outopos
                                 var array = messageManager.PullBlocksLink.ToArray();
                                 _random.Shuffle(array);
 
-                                int count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
+                                var count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
@@ -1346,7 +1346,7 @@ namespace Library.Net.Outopos
                                 var array = _cacheManager.ExceptFrom(messageManager.PullBlocksRequest.ToArray()).ToArray();
                                 _random.Shuffle(array);
 
-                                int count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
+                                var count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
@@ -1421,7 +1421,7 @@ namespace Library.Net.Outopos
                         {
                             try
                             {
-                                List<Node> requestNodes = new List<Node>();
+                                var requestNodes = new List<Node>();
 
                                 foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 2))
                                 {
@@ -1512,7 +1512,7 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; i < requestNodes.Count; i++)
                             {
-                                messageManagers[requestNodes[i]].PullBroadcastSignaturesRequest.Add(signature);
+                                messageManagers[requestNodes[i]].PullBroadcastMetadatasRequest.Add(signature);
                             }
                         }
                         catch (Exception e)
@@ -1535,7 +1535,7 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; i < requestNodes.Count; i++)
                             {
-                                messageManagers[requestNodes[i]].PullUnicastSignaturesRequest.Add(signature);
+                                messageManagers[requestNodes[i]].PullUnicastMetadatasRequest.Add(signature);
                             }
                         }
                         catch (Exception e)
@@ -1559,7 +1559,7 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; i < requestNodes.Count; i++)
                                 {
-                                    messageManagers[requestNodes[i]].PullMulticastTagsRequest.Add(tag);
+                                    messageManagers[requestNodes[i]].PullMulticastMetadatasRequest.Add(tag);
                                 }
                             }
                             catch (Exception e)
@@ -1606,7 +1606,7 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBroadcastSignaturesRequest.Contains(array[i])))
+                                if (!messageManagers.Values.Any(n => n.PushBroadcastMetadatasRequest.Contains(array[i])))
                                 {
                                     pushBroadcastSignaturesRequestList.Add(array[i]);
 
@@ -1621,14 +1621,14 @@ namespace Library.Net.Outopos
                             var messageManager = pair.Value;
 
                             {
-                                var array = messageManager.PullBroadcastSignaturesRequest.ToArray();
+                                var array = messageManager.PullBroadcastMetadatasRequest.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushBroadcastSignaturesRequest.Contains(array[i])))
+                                    if (!messageManagers.Values.Any(n => n.PushBroadcastMetadatasRequest.Contains(array[i])))
                                     {
                                         pushBroadcastSignaturesRequestList.Add(array[i]);
 
@@ -1649,7 +1649,7 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushUnicastSignaturesRequest.Contains(array[i])))
+                                if (!messageManagers.Values.Any(n => n.PushUnicastMetadatasRequest.Contains(array[i])))
                                 {
                                     pushUnicastSignaturesRequestList.Add(array[i]);
 
@@ -1664,14 +1664,14 @@ namespace Library.Net.Outopos
                             var messageManager = pair.Value;
 
                             {
-                                var array = messageManager.PullUnicastSignaturesRequest.ToArray();
+                                var array = messageManager.PullUnicastMetadatasRequest.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushUnicastSignaturesRequest.Contains(array[i])))
+                                    if (!messageManagers.Values.Any(n => n.PushUnicastMetadatasRequest.Contains(array[i])))
                                     {
                                         pushUnicastSignaturesRequestList.Add(array[i]);
 
@@ -1692,7 +1692,7 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
+                                if (!messageManagers.Values.Any(n => n.PushMulticastMetadatasRequest.Contains(array[i])))
                                 {
                                     pushMulticastTagsRequestList.Add(array[i]);
 
@@ -1707,14 +1707,14 @@ namespace Library.Net.Outopos
                             var messageManager = pair.Value;
 
                             {
-                                var array = messageManager.PullMulticastTagsRequest.ToArray();
+                                var array = messageManager.PullMulticastMetadatasRequest.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
+                                    if (!messageManagers.Values.Any(n => n.PushMulticastMetadatasRequest.Contains(array[i])))
                                     {
                                         pushMulticastTagsRequestList.Add(array[i]);
 
@@ -1897,12 +1897,12 @@ namespace Library.Net.Outopos
             {
                 var messageManager = _messagesManager[connectionManager.Node];
 
-                Stopwatch nodeUpdateTime = new Stopwatch();
-                Stopwatch updateTime = new Stopwatch();
+                var nodeUpdateTime = new Stopwatch();
+                var updateTime = new Stopwatch();
                 updateTime.Start();
-                Stopwatch blockDiffusionTime = new Stopwatch();
+                var blockDiffusionTime = new Stopwatch();
                 blockDiffusionTime.Start();
-                Stopwatch metadataUpdateTime = new Stopwatch();
+                var metadataUpdateTime = new Stopwatch();
                 metadataUpdateTime.Start();
 
                 for (;;)
@@ -2038,7 +2038,7 @@ namespace Library.Net.Outopos
                                 if (_pushBroadcastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBroadcastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBroadcastSignaturesRequest.AddRange(targetList);
+                                    messageManager.PushBroadcastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
@@ -2060,7 +2060,7 @@ namespace Library.Net.Outopos
                                 {
                                     foreach (var item in targetList)
                                     {
-                                        messageManager.PushBroadcastSignaturesRequest.Remove(item);
+                                        messageManager.PushBroadcastMetadatasRequest.Remove(item);
                                     }
 
                                     throw e;
@@ -2078,7 +2078,7 @@ namespace Library.Net.Outopos
                                 if (_pushUnicastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushUnicastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushUnicastSignaturesRequest.AddRange(targetList);
+                                    messageManager.PushUnicastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
@@ -2100,7 +2100,7 @@ namespace Library.Net.Outopos
                                 {
                                     foreach (var item in targetList)
                                     {
-                                        messageManager.PushUnicastSignaturesRequest.Remove(item);
+                                        messageManager.PushUnicastMetadatasRequest.Remove(item);
                                     }
 
                                     throw e;
@@ -2118,7 +2118,7 @@ namespace Library.Net.Outopos
                                 if (_pushMulticastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushMulticastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushMulticastTagsRequest.AddRange(targetList);
+                                    messageManager.PushMulticastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
@@ -2140,7 +2140,7 @@ namespace Library.Net.Outopos
                                 {
                                     foreach (var item in targetList)
                                     {
-                                        messageManager.PushMulticastTagsRequest.Remove(item);
+                                        messageManager.PushMulticastMetadatasRequest.Remove(item);
                                     }
 
                                     throw e;
@@ -2174,7 +2174,7 @@ namespace Library.Net.Outopos
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -2234,7 +2234,7 @@ namespace Library.Net.Outopos
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -2289,7 +2289,7 @@ namespace Library.Net.Outopos
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             {
-                                var signatures = messageManager.PullBroadcastSignaturesRequest.ToArray();
+                                var signatures = messageManager.PullBroadcastMetadatasRequest.ToArray();
 
                                 var broadcastMetadats = new List<BroadcastMetadata>();
 
@@ -2328,7 +2328,7 @@ namespace Library.Net.Outopos
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             {
-                                var signatures = messageManager.PullUnicastSignaturesRequest.ToArray();
+                                var signatures = messageManager.PullUnicastMetadatasRequest.ToArray();
 
                                 var unicastMetadata = new List<UnicastMetadata>();
 
@@ -2367,7 +2367,7 @@ namespace Library.Net.Outopos
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             {
-                                var tags = messageManager.PullMulticastTagsRequest.ToArray();
+                                var tags = messageManager.PullMulticastMetadatasRequest.ToArray();
 
                                 var multicastMetadatas = new List<MulticastMetadata>();
 
@@ -2524,7 +2524,7 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullBroadcastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullBroadcastSignaturesRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullBroadcastMetadatasRequest.Count > _maxMetadataRequestCount * messageManager.PullBroadcastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
             Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatasRequest ({0})", e.Signatures.Count()));
 
@@ -2532,7 +2532,7 @@ namespace Library.Net.Outopos
             {
                 if (!Signature.Check(signature)) continue;
 
-                messageManager.PullBroadcastSignaturesRequest.Add(signature);
+                messageManager.PullBroadcastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
                 _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
@@ -2572,7 +2572,7 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullUnicastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullUnicastSignaturesRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullUnicastMetadatasRequest.Count > _maxMetadataRequestCount * messageManager.PullUnicastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
             Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatasRequest ({0})", e.Signatures.Count()));
 
@@ -2580,7 +2580,7 @@ namespace Library.Net.Outopos
             {
                 if (!Signature.Check(signature)) continue;
 
-                messageManager.PullUnicastSignaturesRequest.Add(signature);
+                messageManager.PullUnicastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
                 _unicastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
@@ -2618,7 +2618,7 @@ namespace Library.Net.Outopos
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullMulticastTagsRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastTagsRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullMulticastMetadatasRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
             Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatasRequest ({0})", e.Tags.Count()));
 
@@ -2626,7 +2626,7 @@ namespace Library.Net.Outopos
             {
                 if (!ConnectionsManager.Check(tag)) continue;
 
-                messageManager.PullMulticastTagsRequest.Add(tag);
+                messageManager.PullMulticastMetadatasRequest.Add(tag);
                 _pullMetadataRequestCount.Increment();
 
                 _multicastMetadatasLastAccessTimes[tag] = DateTime.UtcNow;

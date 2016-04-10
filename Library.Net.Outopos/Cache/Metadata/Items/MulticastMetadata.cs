@@ -92,7 +92,7 @@ namespace Library.Net.Outopos
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // Tag
             if (this.Tag != null)

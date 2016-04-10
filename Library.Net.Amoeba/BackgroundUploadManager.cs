@@ -378,7 +378,7 @@ namespace Library.Net.Amoeba
 
         private void WatchThread()
         {
-            Stopwatch watchStopwatch = new Stopwatch();
+            var watchStopwatch = new Stopwatch();
 
             try
             {
@@ -415,8 +415,8 @@ namespace Library.Net.Amoeba
 
         public void Upload(Link link, DigitalSignature digitalSignature)
         {
-            if (link == null) throw new ArgumentNullException("link");
-            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
+            if (link == null) throw new ArgumentNullException(nameof(link));
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
             lock (this.ThisLock)
             {
@@ -430,7 +430,7 @@ namespace Library.Net.Amoeba
                 }
 
                 {
-                    BackgroundUploadItem item = new BackgroundUploadItem();
+                    var item = new BackgroundUploadItem();
 
                     item.Value = link;
                     item.Type = BackgroundItemType.Link;
@@ -453,8 +453,8 @@ namespace Library.Net.Amoeba
 
         public void Upload(Store store, DigitalSignature digitalSignature)
         {
-            if (store == null) throw new ArgumentNullException("store");
-            if (digitalSignature == null) throw new ArgumentNullException("digitalSignature");
+            if (store == null) throw new ArgumentNullException(nameof(store));
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
             lock (this.ThisLock)
             {
@@ -468,7 +468,7 @@ namespace Library.Net.Amoeba
                 }
 
                 {
-                    BackgroundUploadItem item = new BackgroundUploadItem();
+                    var item = new BackgroundUploadItem();
 
                     item.Value = store;
                     item.Type = BackgroundItemType.Store;

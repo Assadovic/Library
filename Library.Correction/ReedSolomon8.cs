@@ -313,7 +313,7 @@ namespace Library.Correction
             public void GenerateGF()
             {
                 string primPoly = _prim_polys[_gfBits];
-                byte mask = (byte)1;	// x ** 0 = 1
+                var mask = (byte)1;	// x ** 0 = 1
                 _gf_exp[_gfBits] = (byte)0; // will be updated at the end of the 1st loop
 
                 /*
@@ -468,7 +468,7 @@ namespace Library.Correction
                     {
                         int posA = row * k;
                         int posB = col;
-                        byte acc = (byte)0;
+                        var acc = (byte)0;
 
                         for (int i = 0; i < k; i++, posA++, posB += m)
                         {
@@ -691,7 +691,7 @@ namespace Library.Correction
                      * synthetic division etc.
                      */
                     byte xx = p[row];
-                    byte t = (byte)1;
+                    var t = (byte)1;
                     b[k - 1] = (byte)1; /* this is in fact c[k] */
 
                     for (int i = k - 2; i >= 0; i--)

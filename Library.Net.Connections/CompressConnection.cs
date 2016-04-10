@@ -89,7 +89,7 @@ namespace Library.Net.Connections
             {
                 try
                 {
-                    Stopwatch stopwatch = new Stopwatch();
+                    var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
                     using (BufferStream stream = new BufferStream(_bufferManager))
@@ -161,7 +161,7 @@ namespace Library.Net.Connections
                 {
                     stream = _connection.Receive(timeout, options);
 
-                    byte version = (byte)stream.ReadByte();
+                    var version = (byte)stream.ReadByte();
 
                     Stream dataStream = null;
 
@@ -266,8 +266,8 @@ namespace Library.Net.Connections
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_connect) throw new ConnectionException();
-            if (stream == null) throw new ArgumentNullException("stream");
-            if (stream.Length == 0) throw new ArgumentOutOfRangeException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream.Length == 0) throw new ArgumentOutOfRangeException(nameof(stream));
 
             bool isCompress = true;
 
@@ -282,7 +282,7 @@ namespace Library.Net.Connections
                 {
                     try
                     {
-                        List<KeyValuePair<byte, Stream>> list = new List<KeyValuePair<byte, Stream>>();
+                        var list = new List<KeyValuePair<byte, Stream>>();
 
                         if (isCompress)
                         {
@@ -359,7 +359,7 @@ namespace Library.Net.Connections
                             list[i].Value.Dispose();
                         }
 
-                        BufferStream headerStream = new BufferStream(_bufferManager);
+                        var headerStream = new BufferStream(_bufferManager);
                         headerStream.WriteByte((byte)list[0].Key);
 
                         using (var dataStream = new UniteStream(headerStream, list[0].Value))

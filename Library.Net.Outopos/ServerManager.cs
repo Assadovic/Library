@@ -54,7 +54,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("BlockedConnectionCount", (long)_blockedCount));
 
@@ -110,7 +110,7 @@ namespace Library.Net.Outopos
         public Connection AcceptConnection(out string uri, BandwidthLimit bandwidthLimit)
         {
             uri = null;
-            List<IDisposable> garbages = new List<IDisposable>();
+            var garbages = new List<IDisposable>();
 
             try
             {

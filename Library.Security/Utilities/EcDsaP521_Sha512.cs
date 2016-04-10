@@ -15,7 +15,7 @@ namespace Library.Security
         public static void CreateKeys(out byte[] publicKey, out byte[] privateKey)
         {
 #if Windows
-            CngKeyCreationParameters ckcp = new CngKeyCreationParameters();
+            var ckcp = new CngKeyCreationParameters();
             ckcp.ExportPolicy = CngExportPolicies.AllowPlaintextExport;
             ckcp.KeyUsage = CngKeyUsages.Signing;
 

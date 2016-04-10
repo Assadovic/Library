@@ -7,7 +7,6 @@ using System.Text;
 using Library.Io;
 using Library.Security;
 
-
 namespace Library.Net.Covenant
 {
     [DataContract(Name = "Profile", Namespace = "http://Library/Net/Covenant")]
