@@ -8,7 +8,7 @@ namespace Library.Net.Outopos
         private Action _callback;
 
         private System.Threading.Timer _watchTimer;
-        private object _syncObject = new object();
+        private readonly object _syncObject = new object();
 
         private volatile bool _disposed;
 
