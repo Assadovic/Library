@@ -13,8 +13,12 @@ namespace Library.Net.Covenant
 {
     public delegate IEnumerable<string> GetSignaturesEventHandler(object sender);
 
+    delegate void UploadedEventHandler(object sender, IEnumerable<Key> keys);
+
     class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
+        private ClientManager _clientManager;
+        private ServerManager _serverManager;
         private BufferManager _bufferManager;
 
         private Settings _settings;
@@ -27,17 +31,14 @@ namespace Library.Net.Covenant
 
         private LockedList<ConnectionManager> _connectionManagers;
         private MessagesManager _messagesManager;
+        private LocationManager _locationManager;
 
-        private LockedHashDictionary<Node, List<Key>> _pushBlocksLinkDictionary = new LockedHashDictionary<Node, List<Key>>();
-        private LockedHashDictionary<Node, List<Key>> _pushBlocksRequestDictionary = new LockedHashDictionary<Node, List<Key>>();
-        private LockedHashDictionary<Node, List<string>> _pushBroadcastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
-        private LockedHashDictionary<Node, List<string>> _pushUnicastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
-        private LockedHashDictionary<Node, List<Tag>> _pushMulticastMetadatasRequestDictionary = new LockedHashDictionary<Node, List<Tag>>();
-
-        private LockedHashDictionary<Node, Queue<Key>> _diffusionBlocksDictionary = new LockedHashDictionary<Node, Queue<Key>>();
-        private LockedHashDictionary<Node, Queue<Key>> _uploadBlocksDictionary = new LockedHashDictionary<Node, Queue<Key>>();
+        private LockedHashDictionary<Node, List<Key>> _pushLocationsRequestDictionary = new LockedHashDictionary<Node, List<Key>>();
+        private LockedHashDictionary<Node, List<string>> _pushLinkMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
+        private LockedHashDictionary<Node, List<string>> _pushMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
 
         private WatchTimer _refreshTimer;
+        private WatchTimer _mediateTimer;
 
         private LockedList<Node> _creatingNodes;
 
@@ -47,22 +48,15 @@ namespace Library.Net.Covenant
 
         private VolatileHashSet<string> _succeededUris;
 
-        private VolatileHashSet<Key> _downloadBlocks;
-        private VolatileHashSet<string> _pushBroadcastMetadatasRequestList;
-        private VolatileHashSet<string> _pushUnicastMetadatasRequestList;
-        private VolatileHashSet<Tag> _pushMulticastMetadatasRequestList;
+        private VolatileHashSet<string> _pushLinkMetadatasRequestList;
+        private VolatileHashSet<string> _pushStoreMetadatasRequestList;
 
-        private LockedHashDictionary<string, DateTime> _broadcastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<string, DateTime> _unicastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<Tag, DateTime> _multicastMetadatasLastAccessTimes = new LockedHashDictionary<Tag, DateTime>();
+        private LockedHashDictionary<string, DateTime> _linkMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
+        private LockedHashDictionary<string, DateTime> _storeMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
 
         private Thread _connectionsManagerThread;
-        private Thread _createConnection1Thread;
-        private Thread _createConnection2Thread;
-        private Thread _createConnection3Thread;
-        private Thread _acceptConnection1Thread;
-        private Thread _acceptConnection2Thread;
-        private Thread _acceptConnection3Thread;
+        private List<Thread> _createConnectionThreads = new List<Thread>();
+        private List<Thread> _acceptConnectionThreads = new List<Thread>();
 
         private volatile ManagerState _state = ManagerState.Stop;
 
@@ -74,40 +68,37 @@ namespace Library.Net.Covenant
         private long _sentByteCount;
 
         private readonly SafeInteger _pushNodeCount = new SafeInteger();
-        private readonly SafeInteger _pushBlockLinkCount = new SafeInteger();
-        private readonly SafeInteger _pushBlockRequestCount = new SafeInteger();
-        private readonly SafeInteger _pushBlockCount = new SafeInteger();
+        private readonly SafeInteger _pushLocationRequestCount = new SafeInteger();
+        private readonly SafeInteger _pushLocationCount = new SafeInteger();
         private readonly SafeInteger _pushMetadataRequestCount = new SafeInteger();
         private readonly SafeInteger _pushMetadataCount = new SafeInteger();
 
         private readonly SafeInteger _pullNodeCount = new SafeInteger();
-        private readonly SafeInteger _pullBlockLinkCount = new SafeInteger();
-        private readonly SafeInteger _pullBlockRequestCount = new SafeInteger();
-        private readonly SafeInteger _pullBlockCount = new SafeInteger();
+        private readonly SafeInteger _pullLocationRequestCount = new SafeInteger();
+        private readonly SafeInteger _pullLocationCount = new SafeInteger();
         private readonly SafeInteger _pullMetadataRequestCount = new SafeInteger();
         private readonly SafeInteger _pullMetadataCount = new SafeInteger();
-
-        private VolatileHashSet<Key> _relayBlocks;
-        private readonly SafeInteger _relayBlockCount = new SafeInteger();
 
         private readonly SafeInteger _connectConnectionCount = new SafeInteger();
         private readonly SafeInteger _acceptConnectionCount = new SafeInteger();
 
         private GetSignaturesEventHandler _getLockSignaturesEvent;
-        private GetTagsEventHandler _getLockTagsEvent;
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
         private const int _maxNodeCount = 128;
-        private const int _maxBlockLinkCount = 8192;
-        private const int _maxBlockRequestCount = 2048;
+        private const int _maxLocationRequestCount = 1024;
+        private const int _maxLocationCount = 8192;
         private const int _maxMetadataRequestCount = 1024;
-        private const int _maxMetadataCount = 1024;
+        private const int _maxMetadataCount = 8192;
 
         private const int _routeTableMinCount = 100;
 
         private const HashAlgorithm _hashAlgorithm = HashAlgorithm.Sha256;
+
+        public static readonly string Keyword_Link = "_link_";
+        public static readonly string Keyword_Store = "_store_";
 
         //#if DEBUG
         //        private const int _downloadingConnectionCountLowerLimit = 0;
@@ -119,11 +110,10 @@ namespace Library.Net.Covenant
         private const int _diffusionConnectionCountLowerLimit = 12;
         //#endif
 
-        public ConnectionsManager(ClientManager clientManager, ServerManager serverManager, CacheManager cacheManager, BufferManager bufferManager)
+        public ConnectionsManager(ClientManager clientManager, ServerManager serverManager, BufferManager bufferManager)
         {
             _clientManager = clientManager;
             _serverManager = serverManager;
-            _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
             _settings = new Settings(this.ThisLock);
@@ -141,6 +131,8 @@ namespace Library.Net.Covenant
                 }
             };
 
+            _locationManager = new LocationManager();
+
             _creatingNodes = new LockedList<Node>();
 
             _waitingNodes = new VolatileHashSet<Node>(new TimeSpan(0, 0, 30));
@@ -149,14 +141,11 @@ namespace Library.Net.Covenant
 
             _succeededUris = new VolatileHashSet<string>(new TimeSpan(1, 0, 0));
 
-            _downloadBlocks = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-            _pushBroadcastMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
-            _pushUnicastMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
-            _pushMulticastMetadatasRequestList = new VolatileHashSet<Tag>(new TimeSpan(0, 3, 0));
-
-            _relayBlocks = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
+            _pushLinkMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
+            _pushStoreMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
 
             _refreshTimer = new WatchTimer(this.RefreshTimer, new TimeSpan(0, 0, 5));
+            _mediateTimer = new WatchTimer(this.MediateTimer, new TimeSpan(0, 5, 0));
         }
 
         private void RefreshTimer()
@@ -167,12 +156,37 @@ namespace Library.Net.Covenant
 
             _succeededUris.TrimExcess();
 
-            _downloadBlocks.TrimExcess();
-            _pushBroadcastMetadatasRequestList.TrimExcess();
-            _pushUnicastMetadatasRequestList.TrimExcess();
-            _pushMulticastMetadatasRequestList.TrimExcess();
+            _pushLinkMetadatasRequestList.TrimExcess();
+            _pushStoreMetadatasRequestList.TrimExcess();
+        }
 
-            _relayBlocks.TrimExcess();
+        private void MediateTimer()
+        {
+            var otherNodes = new List<Node>();
+
+            lock (this.ThisLock)
+            {
+                otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+            }
+
+            var messageManagers = new List<MessageManager>();
+
+            foreach (var node in otherNodes)
+            {
+                messageManagers.Add(_messagesManager[node]);
+            }
+
+            foreach (var messageManager in messageManagers)
+            {
+                if (messageManager.Priority > 32)
+                {
+                    messageManager.Priority.Decrement();
+                }
+                else if (messageManager.Priority < -32)
+                {
+                    messageManager.Priority.Increment();
+                }
+            }
         }
 
         public GetSignaturesEventHandler GetLockSignaturesEvent
@@ -186,17 +200,6 @@ namespace Library.Net.Covenant
             }
         }
 
-        public GetTagsEventHandler GetLockTagsEvent
-        {
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _getLockTagsEvent = value;
-                }
-            }
-        }
-
         public Node BaseNode
         {
             get
@@ -205,7 +208,7 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    return _settings.BaseNode;
+                    return _routeTable.BaseNode;
                 }
             }
         }
@@ -253,7 +256,7 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    return _settings.BandwidthLimit;
+                    return (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
                 }
             }
             set
@@ -262,7 +265,6 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    _settings.BandwidthLimit = value;
                     _bandwidthLimit.In = value;
                     _bandwidthLimit.Out = value;
                 }
@@ -277,11 +279,11 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    List<Information> list = new List<Information>();
+                    var list = new List<Information>();
 
                     foreach (var connectionManager in _connectionManagers.ToArray())
                     {
-                        List<InformationContext> contexts = new List<InformationContext>();
+                        var contexts = new List<InformationContext>();
 
                         var messageManager = _messagesManager[connectionManager.Node];
 
@@ -309,19 +311,17 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    List<InformationContext> contexts = new List<InformationContext>();
+                    var contexts = new List<InformationContext>();
 
                     contexts.Add(new InformationContext("PushNodeCount", (long)_pushNodeCount));
-                    contexts.Add(new InformationContext("PushBlockLinkCount", (long)_pushBlockLinkCount));
-                    contexts.Add(new InformationContext("PushBlockRequestCount", (long)_pushBlockRequestCount));
-                    contexts.Add(new InformationContext("PushBlockCount", (long)_pushBlockCount));
+                    contexts.Add(new InformationContext("PushLocationRequestCount", (long)_pushLocationRequestCount));
+                    contexts.Add(new InformationContext("PushLocationCount", (long)_pushLocationCount));
                     contexts.Add(new InformationContext("PushMetadataRequestCount", (long)_pushMetadataRequestCount));
                     contexts.Add(new InformationContext("PushMetadataCount", (long)_pushMetadataCount));
 
                     contexts.Add(new InformationContext("PullNodeCount", (long)_pullNodeCount));
-                    contexts.Add(new InformationContext("PullBlockLinkCount", (long)_pullBlockLinkCount));
-                    contexts.Add(new InformationContext("PullBlockRequestCount", (long)_pullBlockRequestCount));
-                    contexts.Add(new InformationContext("PullBlockCount", (long)_pullBlockCount));
+                    contexts.Add(new InformationContext("PullLocationRequestCount", (long)_pullLocationRequestCount));
+                    contexts.Add(new InformationContext("PullLocationCount", (long)_pullLocationCount));
                     contexts.Add(new InformationContext("PullMetadataRequestCount", (long)_pullMetadataRequestCount));
                     contexts.Add(new InformationContext("PullMetadataCount", (long)_pullMetadataCount));
 
@@ -340,11 +340,6 @@ namespace Library.Net.Covenant
 
                         contexts.Add(new InformationContext("SurroundingNodeCount", nodes.Count));
                     }
-
-                    contexts.Add(new InformationContext("BlockCount", _cacheManager.Count));
-                    contexts.Add(new InformationContext("RelayBlockCount", (long)_relayBlockCount));
-
-                    contexts.Add(new InformationContext("MetadataCount", _settings.MetadataManager.Count));
 
                     return new Information(contexts);
                 }
@@ -382,11 +377,6 @@ namespace Library.Net.Covenant
             return _getLockSignaturesEvent?.Invoke(this);
         }
 
-        protected virtual IEnumerable<Tag> OnLockTagsEvent()
-        {
-            return _getLockTagsEvent?.Invoke(this);
-        }
-
         private static bool Check(Node node)
         {
             return !(node == null
@@ -400,11 +390,9 @@ namespace Library.Net.Covenant
                 || key.HashAlgorithm != HashAlgorithm.Sha256);
         }
 
-        private static bool Check(Tag tag)
+        private static bool Check(string signature)
         {
-            return !(tag == null
-                || tag.Name == null
-                || tag.Id == null || tag.Id.Length == 0);
+            return !(signature == null || !Signature.Check(signature));
         }
 
         private void UpdateSessionId()
@@ -466,15 +454,10 @@ namespace Library.Net.Covenant
                 Debug.WriteLine("ConnectionManager: Connect");
 
                 connectionManager.PullNodesEvent += this.connectionManager_NodesEvent;
-                connectionManager.PullBlocksLinkEvent += this.connectionManager_BlocksLinkEvent;
-                connectionManager.PullBlocksRequestEvent += this.connectionManager_BlocksRequestEvent;
-                connectionManager.PullBlockEvent += this.connectionManager_BlockEvent;
-                connectionManager.PullBroadcastMetadatasRequestEvent += this.connectionManager_PullBroadcastMetadatasRequestEvent;
-                connectionManager.PullBroadcastMetadatasEvent += this.connectionManager_PullBroadcastMetadatasEvent;
-                connectionManager.PullUnicastMetadatasRequestEvent += this.connectionManager_PullUnicastMetadatasRequestEvent;
-                connectionManager.PullUnicastMetadatasEvent += this.connectionManager_PullUnicastMetadatasEvent;
-                connectionManager.PullMulticastMetadatasRequestEvent += this.connectionManager_PullMulticastMetadatasRequestEvent;
-                connectionManager.PullMulticastMetadatasEvent += this.connectionManager_PullMulticastMetadatasEvent;
+                connectionManager.PullLocationsRequestEvent += this.connectionManager_LocationsRequestEvent;
+                connectionManager.PullLocationsEvent += this.connectionManager_LocationsEvent;
+                connectionManager.PullMetadatasRequestEvent += this.connectionManager_MetadatasRequestEvent;
+                connectionManager.PullMetadatasEvent += this.connectionManager_MetadatasEvent;
                 connectionManager.PullCancelEvent += this.connectionManager_PullCancelEvent;
                 connectionManager.CloseEvent += this.connectionManager_CloseEvent;
 
@@ -482,10 +465,10 @@ namespace Library.Net.Covenant
                 _connectionManagers.Add(connectionManager);
 
                 {
-                    var termpMessageManager = _messagesManager[connectionManager.Node];
+                    var tempMessageManager = _messagesManager[connectionManager.Node];
 
-                    if (termpMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(termpMessageManager.SessionId, connectionManager.SesstionId))
+                    if (tempMessageManager.SessionId != null
+                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
                     {
                         _messagesManager.Remove(connectionManager.Node);
                     }
@@ -604,11 +587,12 @@ namespace Library.Net.Covenant
                     {
                         if (this.State == ManagerState.Stop) return;
 
-                        var connection = _clientManager.CreateConnection(uri, _bandwidthLimit);
+                        ProtocolVersion version;
+                        var connection = _clientManager.CreateConnection(uri, out version, ProtocolType.Search);
 
                         if (connection != null)
                         {
-                            var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
+                            var connectionManager = new ConnectionManager(version, connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
 
                             try
                             {
@@ -680,11 +664,12 @@ namespace Library.Net.Covenant
                 }
 
                 string uri;
-                var connection = _serverManager.AcceptConnection(out uri, _bandwidthLimit);
+                ProtocolVersion version;
+                var connection = _serverManager.AcceptConnection(out uri, out version, ProtocolType.Search);
 
                 if (connection != null)
                 {
-                    var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
+                    var connectionManager = new ConnectionManager(version, connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
 
                     try
                     {
@@ -726,22 +711,57 @@ namespace Library.Net.Covenant
 
         private void ConnectionsManagerThread()
         {
-            Stopwatch connectionCheckStopwatch = new Stopwatch();
+            var connectionCheckStopwatch = new Stopwatch();
             connectionCheckStopwatch.Start();
 
-            Stopwatch refreshStopwatch = new Stopwatch();
+            var refreshStopwatch = new Stopwatch();
 
-            Stopwatch pushBlockDiffusionStopwatch = new Stopwatch();
+            var pushBlockDiffusionStopwatch = new Stopwatch();
             pushBlockDiffusionStopwatch.Start();
-            Stopwatch pushBlockUploadStopwatch = new Stopwatch();
+            var pushBlockUploadStopwatch = new Stopwatch();
             pushBlockUploadStopwatch.Start();
-            Stopwatch pushBlockDownloadStopwatch = new Stopwatch();
+            var pushBlockDownloadStopwatch = new Stopwatch();
             pushBlockDownloadStopwatch.Start();
 
-            Stopwatch pushMetadataUploadStopwatch = new Stopwatch();
+            var pushMetadataUploadStopwatch = new Stopwatch();
             pushMetadataUploadStopwatch.Start();
-            Stopwatch pushMetadataDownloadStopwatch = new Stopwatch();
+            var pushMetadataDownloadStopwatch = new Stopwatch();
             pushMetadataDownloadStopwatch.Start();
+
+            // 電子署名を検証して破損しているMetadataを検索し、削除。
+            {
+                {
+                    // Link
+                    {
+                        var removeSignatures = new List<string>();
+
+                        foreach (var signature in _settings.GetLinkSignatures().ToArray())
+                        {
+                            Metadata tempMetadata = _settings.GetLinkMetadata(signature);
+                            if (tempMetadata == null) continue;
+
+                            if (!tempMetadata.VerifyCertificate()) removeSignatures.Add(signature);
+                        }
+
+                        _settings.RemoveLinkSignatures(removeSignatures);
+                    }
+
+                    // Store
+                    {
+                        var removeSignatures = new List<string>();
+
+                        foreach (var signature in _settings.GetStoreSignatures().ToArray())
+                        {
+                            Metadata tempMetadata = _settings.GetStoreMetadata(signature);
+                            if (tempMetadata == null) continue;
+
+                            if (!tempMetadata.VerifyCertificate()) removeSignatures.Add(signature);
+                        }
+
+                        _settings.RemoveStoreSignatures(removeSignatures);
+                    }
+                }
+            }
 
             for (;;)
             {
@@ -820,6 +840,7 @@ namespace Library.Net.Covenant
                     refreshStopwatch.Restart();
 
                     // トラストにより必要なMetadataを選択し、不要なMetadataを削除する。
+                    //　非トラストなMetadataでアクセスが頻繁なMetadataを優先して保護する。
                     Task.Run(() =>
                     {
                         if (_refreshThreadRunning) return;
@@ -828,221 +849,59 @@ namespace Library.Net.Covenant
                         try
                         {
                             var lockSignatures = this.OnLockSignaturesEvent();
-                            if (lockSignatures == null) return;
 
-                            var lockTags = this.OnLockTagsEvent();
-                            if (lockTags == null) return;
-
-                            // Broadcast
+                            if (lockSignatures != null)
                             {
-                                // Signature
+                                // Link
                                 {
                                     var removeSignatures = new HashSet<string>();
-                                    removeSignatures.UnionWith(_settings.MetadataManager.GetBroadcastSignatures());
+                                    removeSignatures.UnionWith(_settings.GetLinkSignatures());
                                     removeSignatures.ExceptWith(lockSignatures);
 
                                     var sortList = removeSignatures
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _broadcastMetadatasLastAccessTimes.TryGetValue(n, out t);
+                                            _linkMetadataLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveBroadcastSignatures(sortList.Take(sortList.Count - 1024));
+                                    _settings.RemoveLinkSignatures(sortList.Take(sortList.Count - 1024));
 
-                                    var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetBroadcastSignatures());
+                                    var liveSignatures = new HashSet<string>(_settings.GetLinkSignatures());
 
-                                    foreach (var signature in _broadcastMetadatasLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _linkMetadataLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _broadcastMetadatasLastAccessTimes.Remove(signature);
+                                        _linkMetadataLastAccessTimes.Remove(signature);
                                     }
                                 }
-                            }
-
-                            // Unicast
-                            {
-                                // Signature
+                                // Store
                                 {
                                     var removeSignatures = new HashSet<string>();
-                                    removeSignatures.UnionWith(_settings.MetadataManager.GetUnicastSignatures());
+                                    removeSignatures.UnionWith(_settings.GetStoreSignatures());
                                     removeSignatures.ExceptWith(lockSignatures);
 
                                     var sortList = removeSignatures
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _unicastMetadatasLastAccessTimes.TryGetValue(n, out t);
+                                            _storeMetadataLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
 
-                                    _settings.MetadataManager.RemoveUnicastSignatures(sortList.Take(sortList.Count - 1024));
+                                    _settings.RemoveStoreSignatures(sortList.Take(sortList.Count - 1024));
 
-                                    var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetUnicastSignatures());
+                                    var liveSignatures = new HashSet<string>(_settings.GetStoreSignatures());
 
-                                    foreach (var signature in _unicastMetadatasLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _storeMetadataLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _unicastMetadatasLastAccessTimes.Remove(signature);
-                                    }
-                                }
-                            }
-
-                            // Multicast
-                            {
-                                // Tag
-                                {
-                                    var removeTags = new HashSet<Tag>();
-                                    removeTags.UnionWith(_settings.MetadataManager.GetMulticastTags());
-                                    removeTags.ExceptWith(lockTags);
-
-                                    var sortList = removeTags
-                                        .OrderBy(n =>
-                                        {
-                                            DateTime t;
-                                            _multicastMetadatasLastAccessTimes.TryGetValue(n, out t);
-
-                                            return t;
-                                        }).ToList();
-
-                                    _settings.MetadataManager.RemoveMulticastTags(sortList.Take(sortList.Count - 1024));
-
-                                    var liveTags = new HashSet<Tag>(_settings.MetadataManager.GetMulticastTags());
-
-                                    foreach (var tag in _multicastMetadatasLastAccessTimes.Keys.ToArray())
-                                    {
-                                        if (liveTags.Contains(tag)) continue;
-
-                                        _multicastMetadatasLastAccessTimes.Remove(tag);
-                                    }
-                                }
-                            }
-
-                            // Unicast
-                            {
-                                var trustSignature = new HashSet<string>(lockSignatures);
-
-                                {
-                                    var now = DateTime.UtcNow;
-
-                                    var removeUnicastMetadatas = new HashSet<UnicastMetadata>();
-
-                                    foreach (var targetSignature in _settings.MetadataManager.GetUnicastSignatures())
-                                    {
-                                        var trustMetadatas = new Dictionary<string, List<UnicastMetadata>>();
-                                        var untrustMetadatas = new Dictionary<string, List<UnicastMetadata>>();
-
-                                        foreach (var metadata in _settings.MetadataManager.GetUnicastMetadatas(targetSignature))
-                                        {
-                                            var signature = metadata.Certificate.ToString();
-
-                                            if (trustSignature.Contains(signature))
-                                            {
-                                                List<UnicastMetadata> list;
-
-                                                if (!trustMetadatas.TryGetValue(signature, out list))
-                                                {
-                                                    list = new List<UnicastMetadata>();
-                                                    trustMetadatas[signature] = list;
-                                                }
-
-                                                list.Add(metadata);
-                                            }
-                                            else
-                                            {
-                                                List<UnicastMetadata> list;
-
-                                                if (!untrustMetadatas.TryGetValue(signature, out list))
-                                                {
-                                                    list = new List<UnicastMetadata>();
-                                                    untrustMetadatas[signature] = list;
-                                                }
-
-                                                list.Add(metadata);
-                                            }
-                                        }
-
-                                        removeUnicastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
-
-                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
-                                        {
-                                            if (list.Count <= 32) continue;
-
-                                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
-                                            removeUnicastMetadatas.UnionWith(list.Take(list.Count - 32));
-                                        }
-                                    }
-
-                                    foreach (var metadata in removeUnicastMetadatas)
-                                    {
-                                        _settings.MetadataManager.RemoveMetadata(metadata);
-                                    }
-                                }
-                            }
-
-                            // Multicast
-                            {
-                                var trustSignature = new HashSet<string>(lockSignatures);
-
-                                {
-                                    var now = DateTime.UtcNow;
-
-                                    var removeMulticastMetadatas = new HashSet<MulticastMetadata>();
-
-                                    foreach (var tag in _settings.MetadataManager.GetMulticastTags())
-                                    {
-                                        var trustMetadatas = new Dictionary<string, List<MulticastMetadata>>();
-                                        var untrustMetadatas = new Dictionary<string, List<MulticastMetadata>>();
-
-                                        foreach (var metadata in _settings.MetadataManager.GetMulticastMetadatas(tag))
-                                        {
-                                            var signature = metadata.Certificate.ToString();
-
-                                            if (trustSignature.Contains(signature))
-                                            {
-                                                List<MulticastMetadata> list;
-
-                                                if (!trustMetadatas.TryGetValue(signature, out list))
-                                                {
-                                                    list = new List<MulticastMetadata>();
-                                                    trustMetadatas[signature] = list;
-                                                }
-
-                                                list.Add(metadata);
-                                            }
-                                            else
-                                            {
-                                                List<MulticastMetadata> list;
-
-                                                if (!untrustMetadatas.TryGetValue(signature, out list))
-                                                {
-                                                    list = new List<MulticastMetadata>();
-                                                    untrustMetadatas[signature] = list;
-                                                }
-
-                                                list.Add(metadata);
-                                            }
-                                        }
-
-                                        removeMulticastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
-
-                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
-                                        {
-                                            if (list.Count <= 32) continue;
-
-                                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
-                                            removeMulticastMetadatas.UnionWith(list.Take(list.Count - 32));
-                                        }
-                                    }
-
-                                    foreach (var metadata in removeMulticastMetadatas)
-                                    {
-                                        _settings.MetadataManager.RemoveMetadata(metadata);
+                                        _storeMetadataLastAccessTimes.Remove(signature);
                                     }
                                 }
                             }
@@ -1058,423 +917,9 @@ namespace Library.Net.Covenant
                     });
                 }
 
-                // 拡散アップロード
-                if (connectionCount > _diffusionConnectionCountLowerLimit
-                    && pushBlockDiffusionStopwatch.Elapsed.TotalSeconds >= 60)
-                {
-                    pushBlockDiffusionStopwatch.Restart();
-
-                    // 拡散アップロードするブロック数を10000以下に抑える。
-                    lock (this.ThisLock)
-                    {
-                        lock (_settings.DiffusionBlocksRequest.ThisLock)
-                        {
-                            if (_settings.DiffusionBlocksRequest.Count > 10000)
-                            {
-                                foreach (var key in _settings.DiffusionBlocksRequest.ToArray().Randomize()
-                                    .Take(_settings.DiffusionBlocksRequest.Count - 10000).ToList())
-                                {
-                                    _settings.DiffusionBlocksRequest.Remove(key);
-                                }
-                            }
-                        }
-                    }
-
-                    // 存在しないブロックのKeyをRemoveする。
-                    lock (this.ThisLock)
-                    {
-                        lock (_settings.DiffusionBlocksRequest.ThisLock)
-                        {
-                            foreach (var key in _cacheManager.ExceptFrom(_settings.DiffusionBlocksRequest.ToArray()).ToArray())
-                            {
-                                _settings.DiffusionBlocksRequest.Remove(key);
-                            }
-                        }
-
-                        lock (_settings.UploadBlocksRequest.ThisLock)
-                        {
-                            foreach (var key in _cacheManager.ExceptFrom(_settings.UploadBlocksRequest.ToArray()).ToArray())
-                            {
-                                _settings.UploadBlocksRequest.Remove(key);
-                            }
-                        }
-                    }
-
-                    var baseNode = this.BaseNode;
-
-                    var otherNodes = new List<Node>();
-
-                    lock (this.ThisLock)
-                    {
-                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
-                    }
-
-                    var messageManagers = new Dictionary<Node, MessageManager>();
-
-                    foreach (var node in otherNodes)
-                    {
-                        messageManagers[node] = _messagesManager[node];
-                    }
-
-                    var diffusionBlocksList = new List<Key>();
-
-                    {
-                        {
-                            var array = _settings.UploadBlocksRequest.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = 256;
-
-                            for (int i = 0; i < count && i < array.Length; i++)
-                            {
-                                diffusionBlocksList.Add(array[i]);
-                            }
-                        }
-
-                        {
-                            var array = _settings.DiffusionBlocksRequest.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = 256;
-
-                            for (int i = 0; i < count && i < array.Length; i++)
-                            {
-                                diffusionBlocksList.Add(array[i]);
-                            }
-                        }
-                    }
-
-                    _random.Shuffle(diffusionBlocksList);
-
-                    {
-                        var diffusionBlocksDictionary = new Dictionary<Node, HashSet<Key>>();
-
-                        foreach (var key in diffusionBlocksList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, baseNode.Id, otherNodes, 1))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                if (requestNodes.Count == 0)
-                                {
-                                    _settings.UploadBlocksRequest.Remove(key);
-                                    _settings.DiffusionBlocksRequest.Remove(key);
-
-                                    continue;
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Key> collection;
-
-                                    if (!diffusionBlocksDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<Key>();
-                                        diffusionBlocksDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    collection.Add(key);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_diffusionBlocksDictionary.ThisLock)
-                        {
-                            _diffusionBlocksDictionary.Clear();
-
-                            foreach (var pair in diffusionBlocksDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _diffusionBlocksDictionary.Add(node, new Queue<Key>(targets.Randomize()));
-                            }
-                        }
-                    }
-                }
-
-                // アップロード
+                // Metadataの拡散アップロード
                 if (connectionCount >= _uploadingConnectionCountLowerLimit
-                    && pushBlockUploadStopwatch.Elapsed.TotalSeconds >= 10)
-                {
-                    pushBlockUploadStopwatch.Restart();
-
-                    var baseNode = this.BaseNode;
-
-                    var otherNodes = new List<Node>();
-
-                    lock (this.ThisLock)
-                    {
-                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
-                    }
-
-                    var messageManagers = new Dictionary<Node, MessageManager>();
-
-                    foreach (var node in otherNodes)
-                    {
-                        messageManagers[node] = _messagesManager[node];
-                    }
-
-                    {
-                        var uploadBlocksDictionary = new Dictionary<Node, List<Key>>();
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            uploadBlocksDictionary.Add(node, _cacheManager.IntersectFrom(messageManager.PullBlocksRequest.ToArray().Randomize()).Take(128).ToList());
-                        }
-
-                        lock (_uploadBlocksDictionary.ThisLock)
-                        {
-                            _uploadBlocksDictionary.Clear();
-
-                            foreach (var pair in uploadBlocksDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _uploadBlocksDictionary.Add(node, new Queue<Key>(targets.Randomize()));
-                            }
-                        }
-                    }
-                }
-
-                // ダウンロード
-                if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushBlockDownloadStopwatch.Elapsed.TotalSeconds >= 60)
-                {
-                    pushBlockDownloadStopwatch.Restart();
-
-                    var baseNode = this.BaseNode;
-
-                    var otherNodes = new List<Node>();
-
-                    lock (this.ThisLock)
-                    {
-                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
-                    }
-
-                    var messageManagers = new Dictionary<Node, MessageManager>();
-
-                    foreach (var node in otherNodes)
-                    {
-                        messageManagers[node] = _messagesManager[node];
-                    }
-
-                    var pushBlocksLinkList = new List<Key>();
-                    var pushBlocksRequestList = new List<Key>();
-
-                    {
-                        {
-                            var array = _cacheManager.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxBlockLinkCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
-                            {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
-                                {
-                                    pushBlocksLinkList.Add(array[i]);
-
-                                    count--;
-                                }
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = messageManager.PullBlocksLink.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = (int)(_maxBlockLinkCount * ((double)8 / otherNodes.Count));
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
-                                    {
-                                        pushBlocksLinkList.Add(array[i]);
-
-                                        count--;
-                                    }
-                                }
-                            }
-                        }
-
-                        {
-                            var array = _cacheManager.ExceptFrom(_downloadBlocks.ToArray()).ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxBlockRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
-                            {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
-                                {
-                                    pushBlocksRequestList.Add(array[i]);
-
-                                    count--;
-                                }
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = _cacheManager.ExceptFrom(messageManager.PullBlocksRequest.ToArray()).ToArray();
-                                _random.Shuffle(array);
-
-                                int count = (int)(_maxBlockRequestCount * ((double)8 / otherNodes.Count));
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
-                                    {
-                                        pushBlocksRequestList.Add(array[i]);
-
-                                        count--;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    _random.Shuffle(pushBlocksLinkList);
-                    _random.Shuffle(pushBlocksRequestList);
-
-                    {
-                        var pushBlocksLinkDictionary = new Dictionary<Node, HashSet<Key>>();
-
-                        foreach (var key in pushBlocksLinkList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 1))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Key> collection;
-
-                                    if (!pushBlocksLinkDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<Key>();
-                                        pushBlocksLinkDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxBlockLinkCount)
-                                    {
-                                        collection.Add(key);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushBlocksLinkDictionary.ThisLock)
-                        {
-                            _pushBlocksLinkDictionary.Clear();
-
-                            foreach (var pair in pushBlocksLinkDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushBlocksLinkDictionary.Add(node, new List<Key>(targets.Randomize()));
-                            }
-                        }
-                    }
-
-                    {
-                        var pushBlocksRequestDictionary = new Dictionary<Node, HashSet<Key>>();
-
-                        foreach (var key in pushBlocksRequestList)
-                        {
-                            try
-                            {
-                                List<Node> requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                foreach (var pair in messageManagers)
-                                {
-                                    var node = pair.Key;
-                                    var messageManager = pair.Value;
-
-                                    if (messageManager.PullBlocksLink.Contains(key))
-                                    {
-                                        requestNodes.Add(node);
-                                    }
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Key> collection;
-
-                                    if (!pushBlocksRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<Key>();
-                                        pushBlocksRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxBlockRequestCount)
-                                    {
-                                        collection.Add(key);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushBlocksRequestDictionary.ThisLock)
-                        {
-                            _pushBlocksRequestDictionary.Clear();
-
-                            foreach (var pair in pushBlocksRequestDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushBlocksRequestDictionary.Add(node, new List<Key>(targets.Randomize()));
-                            }
-                        }
-                    }
-                }
-
-                // Metadataのアップロード
-                if (connectionCount >= _uploadingConnectionCountLowerLimit
-                    && pushMetadataUploadStopwatch.Elapsed.TotalMinutes >= 3)
+                    && pushMetadataUploadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushMetadataUploadStopwatch.Restart();
 
@@ -1494,8 +939,7 @@ namespace Library.Net.Covenant
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    // Broadcast
-                    foreach (var signature in _settings.MetadataManager.GetBroadcastSignatures())
+                    foreach (var signature in _settings.GetSignatures())
                     {
                         try
                         {
@@ -1508,67 +952,19 @@ namespace Library.Net.Covenant
 
                             for (int i = 0; i < requestNodes.Count; i++)
                             {
-                                messageManagers[requestNodes[i]].PullBroadcastSignaturesRequest.Add(signature);
+                                messageManagers[requestNodes[i]].PullMetadatasRequest.Add(signature);
                             }
                         }
                         catch (Exception e)
                         {
                             Log.Error(e);
-                        }
-                    }
-
-                    // Unicast
-                    foreach (var signature in _settings.MetadataManager.GetUnicastSignatures())
-                    {
-                        try
-                        {
-                            var requestNodes = new List<Node>();
-
-                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
-                            {
-                                requestNodes.Add(node);
-                            }
-
-                            for (int i = 0; i < requestNodes.Count; i++)
-                            {
-                                messageManagers[requestNodes[i]].PullUnicastSignaturesRequest.Add(signature);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e);
-                        }
-                    }
-
-                    // Multicast
-                    {
-                        foreach (var tag in _settings.MetadataManager.GetMulticastTags())
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    messageManagers[requestNodes[i]].PullMulticastTagsRequest.Add(tag);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
                         }
                     }
                 }
 
                 // Metadataのダウンロード
                 if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushMetadataDownloadStopwatch.Elapsed.TotalSeconds >= 60)
+                    && pushMetadataDownloadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushMetadataDownloadStopwatch.Restart();
 
@@ -1588,23 +984,20 @@ namespace Library.Net.Covenant
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushBroadcastSignaturesRequestList = new List<string>();
-                    var pushUnicastSignaturesRequestList = new List<string>();
-                    var pushMulticastTagsRequestList = new List<Tag>();
+                    var pushMetadatasRequestList = new List<string>();
 
-                    // Broadcast
                     {
                         {
-                            var array = _pushBroadcastMetadatasRequestList.ToArray();
+                            var array = _pushMetadatasRequestList.ToArray();
                             _random.Shuffle(array);
 
                             int count = _maxMetadataRequestCount;
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBroadcastSignaturesRequest.Contains(array[i])))
+                                if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
                                 {
-                                    pushBroadcastSignaturesRequestList.Add(array[i]);
+                                    pushMetadatasRequestList.Add(array[i]);
 
                                     count--;
                                 }
@@ -1617,16 +1010,16 @@ namespace Library.Net.Covenant
                             var messageManager = pair.Value;
 
                             {
-                                var array = messageManager.PullBroadcastSignaturesRequest.ToArray();
+                                var array = messageManager.PullMetadatasRequest.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushBroadcastSignaturesRequest.Contains(array[i])))
+                                    if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
                                     {
-                                        pushBroadcastSignaturesRequestList.Add(array[i]);
+                                        pushMetadatasRequestList.Add(array[i]);
 
                                         count--;
                                     }
@@ -1635,101 +1028,12 @@ namespace Library.Net.Covenant
                         }
                     }
 
-                    // Unicast
+                    _random.Shuffle(pushMetadatasRequestList);
+
                     {
-                        {
-                            var array = _pushUnicastMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
+                        var pushMetadatasRequestDictionary = new Dictionary<Node, HashSet<string>>();
 
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
-                            {
-                                if (!messageManagers.Values.Any(n => n.PushUnicastSignaturesRequest.Contains(array[i])))
-                                {
-                                    pushUnicastSignaturesRequestList.Add(array[i]);
-
-                                    count--;
-                                }
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = messageManager.PullUnicastSignaturesRequest.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = _maxMetadataRequestCount;
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushUnicastSignaturesRequest.Contains(array[i])))
-                                    {
-                                        pushUnicastSignaturesRequestList.Add(array[i]);
-
-                                        count--;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Multicast
-                    {
-                        {
-                            var array = _pushMulticastMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
-                            {
-                                if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
-                                {
-                                    pushMulticastTagsRequestList.Add(array[i]);
-
-                                    count--;
-                                }
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = messageManager.PullMulticastTagsRequest.ToArray();
-                                _random.Shuffle(array);
-
-                                int count = _maxMetadataRequestCount;
-
-                                for (int i = 0; count > 0 && i < array.Length; i++)
-                                {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastTagsRequest.Contains(array[i])))
-                                    {
-                                        pushMulticastTagsRequestList.Add(array[i]);
-
-                                        count--;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    _random.Shuffle(pushBroadcastSignaturesRequestList);
-                    _random.Shuffle(pushUnicastSignaturesRequestList);
-                    _random.Shuffle(pushMulticastTagsRequestList);
-
-                    // Broadcast
-                    {
-                        var pushBroadcastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
-
-                        foreach (var signature in pushBroadcastSignaturesRequestList)
+                        foreach (var signature in pushMetadatasRequestList)
                         {
                             try
                             {
@@ -1744,10 +1048,10 @@ namespace Library.Net.Covenant
                                 {
                                     HashSet<string> collection;
 
-                                    if (!pushBroadcastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                    if (!pushMetadatasRequestDictionary.TryGetValue(requestNodes[i], out collection))
                                     {
                                         collection = new HashSet<string>();
-                                        pushBroadcastSignaturesRequestDictionary[requestNodes[i]] = collection;
+                                        pushMetadatasRequestDictionary[requestNodes[i]] = collection;
                                     }
 
                                     if (collection.Count < _maxMetadataRequestCount)
@@ -1762,118 +1066,16 @@ namespace Library.Net.Covenant
                             }
                         }
 
-                        lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
+                        lock (_pushMetadatasRequestDictionary.ThisLock)
                         {
-                            _pushBroadcastMetadatasRequestDictionary.Clear();
+                            _pushMetadatasRequestDictionary.Clear();
 
-                            foreach (var pair in pushBroadcastSignaturesRequestDictionary)
+                            foreach (var pair in pushMetadatasRequestDictionary)
                             {
                                 var node = pair.Key;
                                 var targets = pair.Value;
 
-                                _pushBroadcastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
-                            }
-                        }
-                    }
-
-                    // Unicast
-                    {
-                        var pushUnicastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
-
-                        foreach (var signature in pushUnicastSignaturesRequestList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<string> collection;
-
-                                    if (!pushUnicastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<string>();
-                                        pushUnicastSignaturesRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(signature);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
-                        {
-                            _pushUnicastMetadatasRequestDictionary.Clear();
-
-                            foreach (var pair in pushUnicastSignaturesRequestDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushUnicastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
-                            }
-                        }
-                    }
-
-                    // Multicast
-                    {
-                        var pushMulticastTagsRequestDictionary = new Dictionary<Node, HashSet<Tag>>();
-
-                        foreach (var tag in pushMulticastTagsRequestList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Tag> collection;
-
-                                    if (!pushMulticastTagsRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<Tag>();
-                                        pushMulticastTagsRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(tag);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
-                        {
-                            _pushMulticastMetadatasRequestDictionary.Clear();
-
-                            foreach (var pair in pushMulticastTagsRequestDictionary)
-                            {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushMulticastMetadatasRequestDictionary.Add(node, new List<Tag>(targets.Randomize()));
+                                _pushMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
                             }
                         }
                     }
@@ -1893,12 +1095,14 @@ namespace Library.Net.Covenant
             {
                 var messageManager = _messagesManager[connectionManager.Node];
 
-                Stopwatch nodeUpdateTime = new Stopwatch();
-                Stopwatch updateTime = new Stopwatch();
+                var checkTime = new Stopwatch();
+                checkTime.Start();
+                var nodeUpdateTime = new Stopwatch();
+                var updateTime = new Stopwatch();
                 updateTime.Start();
-                Stopwatch blockDiffusionTime = new Stopwatch();
+                var blockDiffusionTime = new Stopwatch();
                 blockDiffusionTime.Start();
-                Stopwatch metadataUpdateTime = new Stopwatch();
+                var metadataUpdateTime = new Stopwatch();
                 metadataUpdateTime.Start();
 
                 for (;;)
@@ -1912,6 +1116,25 @@ namespace Library.Net.Covenant
                     lock (this.ThisLock)
                     {
                         connectionCount = _connectionManagers.Count;
+                    }
+
+                    // Check
+                    if (messageManager.Priority < 0 && checkTime.Elapsed.TotalSeconds >= 5)
+                    {
+                        checkTime.Restart();
+
+                        if ((DateTime.UtcNow - messageManager.LastPullTime).TotalMinutes >= 5)
+                        {
+                            lock (this.ThisLock)
+                            {
+                                this.RemoveNode(connectionManager.Node);
+                            }
+
+                            connectionManager.PushCancel();
+
+                            Debug.WriteLine("ConnectionManager: Push Cancel");
+                            return;
+                        }
                     }
 
                     // PushNodes
@@ -1950,7 +1173,7 @@ namespace Library.Net.Covenant
                         }
                     }
 
-                    if (updateTime.Elapsed.TotalSeconds >= 60)
+                    if (updateTime.Elapsed.TotalSeconds >= 30)
                     {
                         updateTime.Restart();
 
@@ -2024,17 +1247,17 @@ namespace Library.Net.Covenant
                             }
                         }
 
-                        // PushBroadcastMetadatasRequest
+                        // PushMetadatasRequest
                         if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
                             List<string> targetList = null;
 
-                            lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
+                            lock (_pushMetadatasRequestDictionary.ThisLock)
                             {
-                                if (_pushBroadcastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                if (_pushMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
-                                    _pushBroadcastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBroadcastSignaturesRequest.AddRange(targetList);
+                                    _pushMetadatasRequestDictionary.Remove(connectionManager.Node);
+                                    messageManager.PushMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
@@ -2042,101 +1265,21 @@ namespace Library.Net.Covenant
                             {
                                 try
                                 {
-                                    connectionManager.PushBroadcastMetadatasRequest(targetList);
+                                    connectionManager.PushMetadatasRequest(targetList);
 
                                     foreach (var item in targetList)
                                     {
-                                        _pushBroadcastMetadatasRequestList.Remove(item);
+                                        _pushMetadatasRequestList.Remove(item);
                                     }
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatasRequest ({0})", targetList.Count));
+                                    Debug.WriteLine(string.Format("ConnectionManager: Push MetadatasRequest ({0})", targetList.Count));
                                     _pushMetadataRequestCount.Add(targetList.Count);
                                 }
                                 catch (Exception e)
                                 {
                                     foreach (var item in targetList)
                                     {
-                                        messageManager.PushBroadcastSignaturesRequest.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
-                            }
-                        }
-
-                        // PushUnicastMetadatasRequest
-                        if (connectionCount >= _downloadingConnectionCountLowerLimit)
-                        {
-                            List<string> targetList = null;
-
-                            lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
-                            {
-                                if (_pushUnicastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
-                                {
-                                    _pushUnicastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushUnicastSignaturesRequest.AddRange(targetList);
-                                }
-                            }
-
-                            if (targetList != null)
-                            {
-                                try
-                                {
-                                    connectionManager.PushUnicastMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushUnicastMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushUnicastSignaturesRequest.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
-                            }
-                        }
-
-                        // PushMulticastMetadatasRequest
-                        if (connectionCount >= _downloadingConnectionCountLowerLimit)
-                        {
-                            List<Tag> targetList = null;
-
-                            lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
-                            {
-                                if (_pushMulticastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
-                                {
-                                    _pushMulticastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushMulticastTagsRequest.AddRange(targetList);
-                                }
-                            }
-
-                            if (targetList != null)
-                            {
-                                try
-                                {
-                                    connectionManager.PushMulticastMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushMulticastMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushMulticastTagsRequest.Remove(item);
+                                        messageManager.PushMetadatasRequest.Remove(item);
                                     }
 
                                     throw e;
@@ -2145,7 +1288,7 @@ namespace Library.Net.Covenant
                         }
                     }
 
-                    if (blockDiffusionTime.Elapsed.TotalSeconds >= 5)
+                    if (blockDiffusionTime.Elapsed.TotalSeconds >= connectionCount)
                     {
                         blockDiffusionTime.Restart();
 
@@ -2170,7 +1313,7 @@ namespace Library.Net.Covenant
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -2203,6 +1346,8 @@ namespace Library.Net.Covenant
 
                                 _settings.UploadBlocksRequest.Remove(key);
                                 _settings.DiffusionBlocksRequest.Remove(key);
+
+                                this.OnUploadedEvent(new Key[] { key });
                             }
                         }
                     }
@@ -2230,7 +1375,7 @@ namespace Library.Net.Covenant
 
                             if (key != null)
                             {
-                                ArraySegment<byte> buffer = new ArraySegment<byte>();
+                                var buffer = new ArraySegment<byte>();
 
                                 try
                                 {
@@ -2273,127 +1418,86 @@ namespace Library.Net.Covenant
 
                                 _settings.UploadBlocksRequest.Remove(key);
                                 _settings.DiffusionBlocksRequest.Remove(key);
+
+                                this.OnUploadedEvent(new Key[] { key });
                             }
                         }
                     }
 
-                    if (metadataUpdateTime.Elapsed.TotalSeconds >= 60)
+                    if (metadataUpdateTime.Elapsed.TotalSeconds >= 30)
                     {
                         metadataUpdateTime.Restart();
 
-                        // PushBroadcastMetadatas
+                        // PushMetadatas
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
+                            var signatures = messageManager.PullMetadatasRequest.ToArray();
+
+                            var linkMetadatas = new List<Metadata>();
+
+                            // Link
+                            _random.Shuffle(signatures);
+                            foreach (var signature in signatures)
                             {
-                                var signatures = messageManager.PullBroadcastSignaturesRequest.ToArray();
+                                Metadata tempMetadata = _settings.GetLinkMetadata(signature);
+                                if (tempMetadata == null) continue;
 
-                                var broadcastMetadats = new List<BroadcastMetadata>();
+                                DateTime creationTime;
 
-                                _random.Shuffle(signatures);
-                                foreach (var signature in signatures)
+                                if (!messageManager.StockLinkMetadatas.TryGetValue(signature, out creationTime)
+                                    || tempMetadata.CreationTime > creationTime)
                                 {
-                                    var metadata = _settings.MetadataManager.GetBroadcastMetadata(signature);
-                                    if (metadata == null) continue;
+                                    linkMetadatas.Add(tempMetadata);
 
-                                    if (!messageManager.StockBroadcastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
-                                    {
-                                        broadcastMetadats.Add(metadata);
-
-                                        if (broadcastMetadats.Count >= _maxMetadataCount) break;
-                                    }
-
-                                    if (broadcastMetadats.Count >= _maxMetadataCount) break;
-                                }
-
-                                if (broadcastMetadats.Count > 0)
-                                {
-                                    connectionManager.PushBroadcastMetadatas(broadcastMetadats);
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatas ({0})", broadcastMetadats.Count));
-                                    _pushMetadataCount.Add(broadcastMetadats.Count);
-
-                                    foreach (var metadata in broadcastMetadats)
-                                    {
-                                        messageManager.StockBroadcastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-                                    }
+                                    if (linkMetadatas.Count >= (_maxMetadataCount / 2)) break;
                                 }
                             }
-                        }
 
-                        // PushUnicastMetadatas
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
-                        {
+                            var storeMetadatas = new List<Metadata>();
+
+                            // Store
+                            _random.Shuffle(signatures);
+                            foreach (var signature in signatures)
                             {
-                                var signatures = messageManager.PullUnicastSignaturesRequest.ToArray();
+                                Metadata tempMetadata = _settings.GetStoreMetadata(signature);
+                                if (tempMetadata == null) continue;
 
-                                var unicastMetadata = new List<UnicastMetadata>();
+                                DateTime creationTime;
 
-                                _random.Shuffle(signatures);
-                                foreach (var signature in signatures)
+                                if (!messageManager.StockStoreMetadatas.TryGetValue(signature, out creationTime)
+                                    || tempMetadata.CreationTime > creationTime)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetUnicastMetadatas(signature))
-                                    {
-                                        if (!messageManager.StockUnicastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
-                                        {
-                                            unicastMetadata.Add(metadata);
+                                    storeMetadatas.Add(tempMetadata);
 
-                                            if (unicastMetadata.Count >= _maxMetadataCount) break;
-                                        }
-                                    }
-
-                                    if (unicastMetadata.Count >= _maxMetadataCount) break;
-                                }
-
-                                if (unicastMetadata.Count > 0)
-                                {
-                                    connectionManager.PushUnicastMetadatas(unicastMetadata);
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatas ({0})", unicastMetadata.Count));
-                                    _pushMetadataCount.Add(unicastMetadata.Count);
-
-                                    foreach (var metadata in unicastMetadata)
-                                    {
-                                        messageManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-                                    }
+                                    if (storeMetadatas.Count >= (_maxMetadataCount / 2)) break;
                                 }
                             }
-                        }
 
-                        // PushMulticastMetadatas
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
-                        {
+                            if (linkMetadatas.Count > 0 || storeMetadatas.Count > 0)
                             {
-                                var tags = messageManager.PullMulticastTagsRequest.ToArray();
+                                var metadatas = new List<Metadata>();
+                                metadatas.AddRange(linkMetadatas);
+                                metadatas.AddRange(storeMetadatas);
 
-                                var multicastMetadatas = new List<MulticastMetadata>();
+                                _random.Shuffle(metadatas);
 
-                                _random.Shuffle(tags);
-                                foreach (var tag in tags)
+                                connectionManager.PushMetadatas(metadatas);
+
+                                Debug.WriteLine(string.Format("ConnectionManager: Push Metadatas ({0})", metadatas.Count));
+                                _pushMetadataCount.Add(metadatas.Count);
+
+                                foreach (var metadata in linkMetadatas)
                                 {
-                                    foreach (var metadata in _settings.MetadataManager.GetMulticastMetadatas(tag))
-                                    {
-                                        if (!messageManager.StockMulticastMetadatas.Contains(metadata.CreateHash(_hashAlgorithm)))
-                                        {
-                                            multicastMetadatas.Add(metadata);
+                                    var signature = metadata.Certificate.ToString();
 
-                                            if (multicastMetadatas.Count >= _maxMetadataCount) break;
-                                        }
-                                    }
-
-                                    if (multicastMetadatas.Count >= _maxMetadataCount) break;
+                                    messageManager.StockLinkMetadatas[signature] = metadata.CreationTime;
                                 }
 
-                                if (multicastMetadatas.Count > 0)
+                                foreach (var metadata in storeMetadatas)
                                 {
-                                    connectionManager.PushMulticastMetadatas(multicastMetadatas);
+                                    var signature = metadata.Certificate.ToString();
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatas ({0})", multicastMetadatas.Count));
-                                    _pushMetadataCount.Add(multicastMetadatas.Count);
-
-                                    foreach (var metadata in multicastMetadatas)
-                                    {
-                                        messageManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-                                    }
+                                    messageManager.StockStoreMetadatas[signature] = metadata.CreationTime;
                                 }
                             }
                         }
@@ -2513,140 +1617,57 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void connectionManager_PullBroadcastMetadatasRequestEvent(object sender, PullBroadcastMetadatasRequestEventArgs e)
+        private void connectionManager_MetadatasRequestEvent(object sender, PullMetadatasRequestEventArgs e)
         {
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullBroadcastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullBroadcastSignaturesRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullMetadatasRequest.Count > _maxMetadataRequestCount * messageManager.PullMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatasRequest ({0})", e.Signatures.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull MetadatasRequest ({0})", e.Signatures.Count()));
 
             foreach (var signature in e.Signatures.Take(_maxMetadataRequestCount))
             {
-                if (!Signature.Check(signature)) continue;
+                if (!ConnectionsManager.Check(signature)) continue;
 
-                messageManager.PullBroadcastSignaturesRequest.Add(signature);
+                messageManager.PullMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
-                _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
+                _metadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
-        private void connectionManager_PullBroadcastMetadatasEvent(object sender, PullBroadcastMetadatasEventArgs e)
+        private void connectionManager_MetadatasEvent(object sender, PullMetadatasEventArgs e)
         {
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.StockBroadcastMetadatas.Count > _maxMetadataCount * messageManager.StockBroadcastMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.StockLinkMetadatas.Count > _maxMetadataCount * messageManager.StockLinkMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.StockStoreMetadatas.Count > _maxMetadataCount * messageManager.StockStoreMetadatas.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BroadcastMetadatas ({0})", e.BroadcastMetadatas.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull Metadatas ({0})", e.Metadatas.Count()));
 
-            foreach (var metadata in e.BroadcastMetadatas.Take(_maxMetadataCount))
+            foreach (var metadata in e.Metadatas.Take(_maxMetadataCount))
             {
-                if (_settings.MetadataManager.SetMetadata(metadata))
+                if (_settings.SetLinkMetadata(metadata))
                 {
-                    messageManager.StockBroadcastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
                     var signature = metadata.Certificate.ToString();
 
-                    _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
+                    messageManager.StockLinkMetadatas[signature] = metadata.CreationTime;
+
+                    _metadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
-
-                _pullMetadataCount.Increment();
-            }
-        }
-
-        private void connectionManager_PullUnicastMetadatasRequestEvent(object sender, PullUnicastMetadatasRequestEventArgs e)
-        {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
-
-            var messageManager = _messagesManager[connectionManager.Node];
-
-            if (messageManager.PullUnicastSignaturesRequest.Count > _maxMetadataRequestCount * messageManager.PullUnicastSignaturesRequest.SurvivalTime.TotalMinutes) return;
-
-            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatasRequest ({0})", e.Signatures.Count()));
-
-            foreach (var signature in e.Signatures.Take(_maxMetadataRequestCount))
-            {
-                if (!Signature.Check(signature)) continue;
-
-                messageManager.PullUnicastSignaturesRequest.Add(signature);
-                _pullMetadataRequestCount.Increment();
-
-                _unicastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
-            }
-        }
-
-        private void connectionManager_PullUnicastMetadatasEvent(object sender, PullUnicastMetadatasEventArgs e)
-        {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
-
-            var messageManager = _messagesManager[connectionManager.Node];
-
-            if (messageManager.StockUnicastMetadatas.Count > _maxMetadataCount * messageManager.StockUnicastMetadatas.SurvivalTime.TotalMinutes) return;
-
-            Debug.WriteLine(string.Format("ConnectionManager: Pull UnicastMetadatas ({0})", e.UnicastMetadatas.Count()));
-
-            foreach (var metadata in e.UnicastMetadatas.Take(_maxMetadataCount))
-            {
-                if (_settings.MetadataManager.SetMetadata(metadata))
+                else if (_settings.SetStoreMetadata(metadata))
                 {
-                    messageManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
+                    var signature = metadata.Certificate.ToString();
 
-                    _unicastMetadatasLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
-                }
+                    messageManager.StockStoreMetadatas[signature] = metadata.CreationTime;
 
-                _pullMetadataCount.Increment();
-            }
-        }
-
-        private void connectionManager_PullMulticastMetadatasRequestEvent(object sender, PullMulticastMetadatasRequestEventArgs e)
-        {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
-
-            var messageManager = _messagesManager[connectionManager.Node];
-
-            if (messageManager.PullMulticastTagsRequest.Count > _maxMetadataRequestCount * messageManager.PullMulticastTagsRequest.SurvivalTime.TotalMinutes) return;
-
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatasRequest ({0})", e.Tags.Count()));
-
-            foreach (var tag in e.Tags.Take(_maxMetadataRequestCount))
-            {
-                if (!ConnectionsManager.Check(tag)) continue;
-
-                messageManager.PullMulticastTagsRequest.Add(tag);
-                _pullMetadataRequestCount.Increment();
-
-                _multicastMetadatasLastAccessTimes[tag] = DateTime.UtcNow;
-            }
-        }
-
-        private void connectionManager_PullMulticastMetadatasEvent(object sender, PullMulticastMetadatasEventArgs e)
-        {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
-
-            var messageManager = _messagesManager[connectionManager.Node];
-
-            if (messageManager.StockMulticastMetadatas.Count > _maxMetadataCount * messageManager.StockMulticastMetadatas.SurvivalTime.TotalMinutes) return;
-
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MulticastMetadatas ({0})", e.MulticastMetadatas.Count()));
-
-            foreach (var metadata in e.MulticastMetadatas.Take(_maxMetadataCount))
-            {
-                if (_settings.MetadataManager.SetMetadata(metadata))
-                {
-                    messageManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
-                    _multicastMetadatasLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
+                    _metadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2700,6 +1721,11 @@ namespace Library.Net.Covenant
 
         #endregion
 
+        protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
+        {
+            _uploadedEvent?.Invoke(this, keys);
+        }
+
         public void SetBaseNode(Node baseNode)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -2707,7 +1733,6 @@ namespace Library.Net.Covenant
 
             lock (this.ThisLock)
             {
-                _settings.BaseNode = baseNode;
                 _routeTable.BaseNode = baseNode;
             }
         }
@@ -2773,69 +1798,42 @@ namespace Library.Net.Covenant
             }
         }
 
-        public BroadcastMetadata GetBroadcastMetadata(string signature)
+        public void SendMetadatasRequest(string signature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
             lock (this.ThisLock)
             {
-                _pushBroadcastMetadatasRequestList.Add(signature);
-
-                return _settings.MetadataManager.GetBroadcastMetadata(signature);
+                _pushMetadatasRequestList.Add(signature);
             }
         }
 
-        public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature)
+        public Metadata GetLinkMetadata(string signature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _pushUnicastMetadatasRequestList.Add(signature);
-
-                return _settings.MetadataManager.GetUnicastMetadatas(signature);
+                return _settings.GetLinkMetadata(signature);
             }
         }
 
-        public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag)
+        public Metadata GetStoreMetadata(string signature)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _pushMulticastMetadatasRequestList.Add(tag);
-
-                return _settings.MetadataManager.GetMulticastMetadatas(tag);
+                return _settings.GetStoreMetadata(signature);
             }
         }
 
-        public void Upload(BroadcastMetadata metadata)
+        public void Upload(Metadata metadata)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                _settings.MetadataManager.SetMetadata(metadata);
-            }
-        }
-
-        public void Upload(UnicastMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _settings.MetadataManager.SetMetadata(metadata);
-            }
-        }
-
-        public void Upload(MulticastMetadata metadata)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _settings.MetadataManager.SetMetadata(metadata);
+                _settings.SetLinkMetadata(metadata);
+                _settings.SetStoreMetadata(metadata);
             }
         }
 
@@ -2870,30 +1868,26 @@ namespace Library.Net.Covenant
                     _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
                     _connectionsManagerThread.Priority = ThreadPriority.Lowest;
                     _connectionsManagerThread.Start();
-                    _createConnection1Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection1Thread.Name = "ConnectionsManager_CreateConnection1Thread";
-                    _createConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection1Thread.Start();
-                    _createConnection2Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection2Thread.Name = "ConnectionsManager_CreateConnection2Thread";
-                    _createConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection2Thread.Start();
-                    _createConnection3Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection3Thread.Name = "ConnectionsManager_CreateConnection3Thread";
-                    _createConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection3Thread.Start();
-                    _acceptConnection1Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection1Thread.Name = "ConnectionsManager_AcceptConnection1Thread";
-                    _acceptConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection1Thread.Start();
-                    _acceptConnection2Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection2Thread.Name = "ConnectionsManager_AcceptConnection2Thread";
-                    _acceptConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection2Thread.Start();
-                    _acceptConnection3Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection3Thread.Name = "ConnectionsManager_AcceptConnection3Thread";
-                    _acceptConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection3Thread.Start();
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.CreateConnectionThread);
+                        thread.Name = "ConnectionsManager_CreateConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _createConnectionThreads.Add(thread);
+                    }
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.AcceptConnectionThread);
+                        thread.Name = "ConnectionsManager_AcceptConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _acceptConnectionThreads.Add(thread);
+                    }
                 }
             }
         }
@@ -2912,18 +1906,18 @@ namespace Library.Net.Covenant
                     _serverManager.Stop();
                 }
 
-                _createConnection1Thread.Join();
-                _createConnection1Thread = null;
-                _createConnection2Thread.Join();
-                _createConnection2Thread = null;
-                _createConnection3Thread.Join();
-                _createConnection3Thread = null;
-                _acceptConnection1Thread.Join();
-                _acceptConnection1Thread = null;
-                _acceptConnection2Thread.Join();
-                _acceptConnection2Thread = null;
-                _acceptConnection3Thread.Join();
-                _acceptConnection3Thread = null;
+                foreach (var thread in _createConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _createConnectionThreads.Clear();
+
+                foreach (var thread in _acceptConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _acceptConnectionThreads.Clear();
+
                 _connectionsManagerThread.Join();
                 _connectionsManagerThread = null;
 
@@ -2972,6 +1966,8 @@ namespace Library.Net.Covenant
 
             lock (this.ThisLock)
             {
+                _settings.BaseNode = _routeTable.BaseNode;
+
                 {
                     var otherNodes = _routeTable.ToArray();
 
@@ -2981,6 +1977,8 @@ namespace Library.Net.Covenant
                         _settings.OtherNodes.AddRange(otherNodes);
                     }
                 }
+
+                _settings.BandwidthLimit = (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
 
                 _settings.Save(directoryPath);
             }
@@ -2992,19 +1990,14 @@ namespace Library.Net.Covenant
         {
             private volatile object _thisLock;
 
-            private MetadataManager _metadataManager = new MetadataManager();
-
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = new Node(new byte[0], null)},
                     new Library.Configuration.SettingContent<NodeCollection>() { Name = "OtherNodes", Value = new NodeCollection() },
                     new Library.Configuration.SettingContent<int>() { Name = "ConnectionCountLimit", Value = 32 },
                     new Library.Configuration.SettingContent<int>() { Name = "BandwidthLimit", Value = 0 },
-                    new Library.Configuration.SettingContent<LockedHashSet<Key>>() { Name = "DiffusionBlocksRequest", Value = new LockedHashSet<Key>() },
-                    new Library.Configuration.SettingContent<LockedHashSet<Key>>() { Name = "UploadBlocksRequest", Value = new LockedHashSet<Key>() },
-                    new Library.Configuration.SettingContent<List<BroadcastMetadata>>() { Name = "BroadcastMetadatas", Value = new List<BroadcastMetadata>() },
-                    new Library.Configuration.SettingContent<List<UnicastMetadata>>() { Name = "UnicastMetadatas", Value = new List<UnicastMetadata>() },
-                    new Library.Configuration.SettingContent<List<MulticastMetadata>>() { Name = "MulticastMetadatas", Value = new List<MulticastMetadata>() },
+                    new Library.Configuration.SettingContent<Dictionary<string, Metadata>>() { Name = "LinkMetadatas", Value = new Dictionary<string, Metadata>() },
+                    new Library.Configuration.SettingContent<Dictionary<string, Metadata>>() { Name = "StoreMetadatas", Value = new Dictionary<string, Metadata>() },
                 })
             {
                 _thisLock = lockObject;
@@ -3015,46 +2008,6 @@ namespace Library.Net.Covenant
                 lock (_thisLock)
                 {
                     base.Load(directoryPath);
-
-                    foreach (var metadata in this.BroadcastMetadatas)
-                    {
-                        try
-                        {
-                            _metadataManager.SetMetadata(metadata);
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                    }
-
-                    foreach (var metadata in this.UnicastMetadatas)
-                    {
-                        try
-                        {
-                            _metadataManager.SetMetadata(metadata);
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                    }
-
-                    foreach (var metadata in this.MulticastMetadatas)
-                    {
-                        try
-                        {
-                            _metadataManager.SetMetadata(metadata);
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                    }
-
-                    this.BroadcastMetadatas.Clear();
-                    this.UnicastMetadatas.Clear();
-                    this.MulticastMetadatas.Clear();
                 }
             }
 
@@ -3062,15 +2015,133 @@ namespace Library.Net.Covenant
             {
                 lock (_thisLock)
                 {
-                    this.BroadcastMetadatas.AddRange(_metadataManager.GetBroadcastMetadatas());
-                    this.UnicastMetadatas.AddRange(_metadataManager.GetUnicastMetadatas());
-                    this.MulticastMetadatas.AddRange(_metadataManager.GetMulticastMetadatas());
-
                     base.Save(directoryPath);
+                }
+            }
 
-                    this.BroadcastMetadatas.Clear();
-                    this.UnicastMetadatas.Clear();
-                    this.MulticastMetadatas.Clear();
+            public IEnumerable<string> GetLinkSignatures()
+            {
+                lock (_thisLock)
+                {
+                    return this.LinkMetadatas.Keys.ToArray();
+                }
+            }
+
+            public IEnumerable<string> GetStoreSignatures()
+            {
+                lock (_thisLock)
+                {
+                    return this.StoreMetadatas.Keys.ToArray();
+                }
+            }
+
+            public void RemoveLinkSignatures(IEnumerable<string> signatures)
+            {
+                lock (_thisLock)
+                {
+                    foreach (var signature in signatures)
+                    {
+                        this.LinkMetadatas.Remove(signature);
+                    }
+                }
+            }
+
+            public void RemoveStoreSignatures(IEnumerable<string> signatures)
+            {
+                lock (_thisLock)
+                {
+                    foreach (var signature in signatures)
+                    {
+                        this.StoreMetadatas.Remove(signature);
+                    }
+                }
+            }
+
+            public Metadata GetLinkMetadata(string signature)
+            {
+                lock (_thisLock)
+                {
+                    Metadata metadata;
+
+                    if (this.LinkMetadatas.TryGetValue(signature, out metadata))
+                    {
+                        return metadata;
+                    }
+
+                    return null;
+                }
+            }
+
+            public Metadata GetStoreMetadata(string signature)
+            {
+                lock (_thisLock)
+                {
+                    Metadata metadata;
+
+                    if (this.StoreMetadatas.TryGetValue(signature, out metadata))
+                    {
+                        return metadata;
+                    }
+
+                    return null;
+                }
+            }
+
+            public bool SetLinkMetadata(Metadata metadata)
+            {
+                var now = DateTime.UtcNow;
+
+                if (metadata == null
+                    || metadata.Type == MetadataType.Link
+                    || (metadata.CreationTime - now).Minutes > 30) return false;
+
+                if (metadata.Certificate == null) throw new CertificateException();
+
+                var signature = metadata.Certificate.ToString();
+
+                // なるべく電子署名の検証をさけ、CPU使用率を下げるよう工夫する。
+                lock (_thisLock)
+                {
+                    Metadata tempMetadata;
+
+                    if (!this.LinkMetadatas.TryGetValue(signature, out tempMetadata)
+                        || metadata.CreationTime > tempMetadata.CreationTime)
+                    {
+                        if (!metadata.VerifyCertificate()) throw new CertificateException();
+
+                        this.LinkMetadatas[signature] = metadata;
+                    }
+
+                    return (tempMetadata == null || metadata.CreationTime >= tempMetadata.CreationTime);
+                }
+            }
+
+            public bool SetStoreMetadata(Metadata metadata)
+            {
+                var now = DateTime.UtcNow;
+
+                if (metadata == null
+                    || metadata.Type == MetadataType.Store
+                    || (metadata.CreationTime - now).Minutes > 30) return false;
+
+                if (metadata.Certificate == null) throw new CertificateException();
+
+                var signature = metadata.Certificate.ToString();
+
+                // なるべく電子署名の検証をさけ、CPU使用率を下げるよう工夫する。
+                lock (_thisLock)
+                {
+                    Metadata tempMetadata;
+
+                    if (!this.StoreMetadatas.TryGetValue(signature, out tempMetadata)
+                        || metadata.CreationTime > tempMetadata.CreationTime)
+                    {
+                        if (!metadata.VerifyCertificate()) throw new CertificateException();
+
+                        this.StoreMetadatas[signature] = metadata;
+                    }
+
+                    return (tempMetadata == null || metadata.CreationTime >= tempMetadata.CreationTime);
                 }
             }
 
@@ -3161,380 +2232,162 @@ namespace Library.Net.Covenant
                 }
             }
 
-            public MetadataManager MetadataManager
+            private Dictionary<string, Metadata> LinkMetadatas
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return _metadataManager;
-                    }
+                    return (Dictionary<string, Metadata>)this["LinkMetadatas"];
                 }
             }
 
-            private List<BroadcastMetadata> BroadcastMetadatas
+            private Dictionary<string, Metadata> StoreMetadatas
             {
                 get
                 {
-                    return (List<BroadcastMetadata>)this["BroadcastMetadatas"];
-                }
-            }
-
-            private List<UnicastMetadata> UnicastMetadatas
-            {
-                get
-                {
-                    return (List<UnicastMetadata>)this["UnicastMetadatas"];
-                }
-            }
-
-            private List<MulticastMetadata> MulticastMetadatas
-            {
-                get
-                {
-                    return (List<MulticastMetadata>)this["MulticastMetadatas"];
+                    return (Dictionary<string, Metadata>)this["StoreMetadatas"];
                 }
             }
         }
 
-        public class MetadataManager
+        private class LocationManager
         {
-            private Dictionary<string, BroadcastMetadata> _broadcastMetadats = new Dictionary<string, BroadcastMetadata>();
-            private Dictionary<string, HashSet<UnicastMetadata>> _unicastMetadata = new Dictionary<string, HashSet<UnicastMetadata>>();
-            private Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>> _multicastMetadatas = new Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>();
+            private LockedHashDictionary<Key, Info> _locations = new LockedHashDictionary<Key, Info>();
 
-            private readonly object _thisLock = new object();
-
-            public MetadataManager()
+            public LocationManager()
             {
 
             }
 
-            public int Count
+            public IEnumerable<Location> GetLocations(Key key)
             {
-                get
+                var list = new List<Location>();
+
+                Info topInfo;
+
+                if (_locations.TryGetValue(key, out topInfo))
                 {
-                    lock (_thisLock)
+                    bool flag = false;
+
                     {
-                        int count = 0;
+                        var now = DateTime.UtcNow;
 
-                        count += _broadcastMetadats.Count;
-                        count += _unicastMetadata.Values.Sum(n => n.Count);
-                        count += _multicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
+                        Info previousInfo = null;
+                        Info currentInfo = topInfo;
 
-                        return count;
-                    }
-                }
-            }
-
-            public IEnumerable<string> GetBroadcastSignatures()
-            {
-                lock (_thisLock)
-                {
-                    var hashset = new HashSet<string>();
-
-                    hashset.UnionWith(_broadcastMetadats.Keys);
-
-                    return hashset;
-                }
-            }
-
-            public IEnumerable<string> GetUnicastSignatures()
-            {
-                lock (_thisLock)
-                {
-                    var hashset = new HashSet<string>();
-
-                    hashset.UnionWith(_unicastMetadata.Keys);
-
-                    return hashset;
-                }
-            }
-
-            public IEnumerable<Tag> GetMulticastTags()
-            {
-                lock (_thisLock)
-                {
-                    var hashset = new HashSet<Tag>();
-
-                    hashset.UnionWith(_multicastMetadatas.Keys);
-
-                    return hashset;
-                }
-            }
-
-            public void RemoveBroadcastSignatures(IEnumerable<string> signatures)
-            {
-                lock (_thisLock)
-                {
-                    foreach (var signature in signatures)
-                    {
-                        _broadcastMetadats.Remove(signature);
-                    }
-                }
-            }
-
-            public void RemoveUnicastSignatures(IEnumerable<string> signatures)
-            {
-                lock (_thisLock)
-                {
-                    foreach (var signature in signatures)
-                    {
-                        _unicastMetadata.Remove(signature);
-                    }
-                }
-            }
-
-            public void RemoveMulticastTags(IEnumerable<Tag> tags)
-            {
-                lock (_thisLock)
-                {
-                    foreach (var tag in tags)
-                    {
-                        _multicastMetadatas.Remove(tag);
-                    }
-                }
-            }
-
-            public IEnumerable<BroadcastMetadata> GetBroadcastMetadatas()
-            {
-                lock (_thisLock)
-                {
-                    return _broadcastMetadats.Values.ToArray();
-                }
-            }
-
-            public BroadcastMetadata GetBroadcastMetadata(string signature)
-            {
-                lock (_thisLock)
-                {
-                    BroadcastMetadata metadata;
-
-                    if (_broadcastMetadats.TryGetValue(signature, out metadata))
-                    {
-                        return metadata;
-                    }
-
-                    return null;
-                }
-            }
-
-            public IEnumerable<UnicastMetadata> GetUnicastMetadatas()
-            {
-                lock (_thisLock)
-                {
-                    return _unicastMetadata.Values.Extract().ToArray();
-                }
-            }
-
-            public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature)
-            {
-                lock (_thisLock)
-                {
-                    HashSet<UnicastMetadata> hashset;
-
-                    if (_unicastMetadata.TryGetValue(signature, out hashset))
-                    {
-                        return hashset.ToArray();
-                    }
-
-                    return new UnicastMetadata[0];
-                }
-            }
-
-            public IEnumerable<MulticastMetadata> GetMulticastMetadatas()
-            {
-                lock (_thisLock)
-                {
-                    return _multicastMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
-                }
-            }
-
-            public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag)
-            {
-                lock (_thisLock)
-                {
-                    Dictionary<string, HashSet<MulticastMetadata>> dic = null;
-
-                    if (_multicastMetadatas.TryGetValue(tag, out dic))
-                    {
-                        return dic.Values.Extract().ToArray();
-                    }
-
-                    return new MulticastMetadata[0];
-                }
-            }
-
-            public bool SetMetadata(BroadcastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return false;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    BroadcastMetadata tempMetadata;
-
-                    if (!_broadcastMetadats.TryGetValue(signature, out tempMetadata)
-                        || metadata.CreationTime > tempMetadata.CreationTime)
-                    {
-                        if (!metadata.VerifyCertificate()) throw new CertificateException();
-
-                        _broadcastMetadats[signature] = metadata;
-                    }
-
-                    return (tempMetadata == null || metadata.CreationTime >= tempMetadata.CreationTime);
-                }
-            }
-
-            public bool SetMetadata(UnicastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || !Signature.Check(metadata.Signature)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return false;
-
-                    HashSet<UnicastMetadata> hashset;
-
-                    if (!_unicastMetadata.TryGetValue(metadata.Signature, out hashset))
-                    {
-                        hashset = new HashSet<UnicastMetadata>();
-                        _unicastMetadata[metadata.Signature] = hashset;
-                    }
-
-                    if (!hashset.Contains(metadata))
-                    {
-                        if (!metadata.VerifyCertificate()) throw new CertificateException();
-
-                        hashset.Add(metadata);
-                    }
-
-                    return true;
-                }
-            }
-
-            public bool SetMetadata(MulticastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return false;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, HashSet<MulticastMetadata>> dic;
-
-                    if (!_multicastMetadatas.TryGetValue(metadata.Tag, out dic))
-                    {
-                        dic = new Dictionary<string, HashSet<MulticastMetadata>>();
-                        _multicastMetadatas[metadata.Tag] = dic;
-                    }
-
-                    HashSet<MulticastMetadata> hashset;
-
-                    if (!dic.TryGetValue(signature, out hashset))
-                    {
-                        hashset = new HashSet<MulticastMetadata>();
-                        dic[signature] = hashset;
-                    }
-
-                    if (!hashset.Contains(metadata))
-                    {
-                        if (!metadata.VerifyCertificate()) throw new CertificateException();
-
-                        hashset.Add(metadata);
-                    }
-
-                    return true;
-                }
-            }
-
-            public void RemoveMetadata(BroadcastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    _broadcastMetadats.Remove(signature);
-                }
-            }
-
-            public void RemoveMetadata(UnicastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || !Signature.Check(metadata.Signature)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return;
-
-                    HashSet<UnicastMetadata> hashset;
-                    if (!_unicastMetadata.TryGetValue(metadata.Signature, out hashset)) return;
-
-                    hashset.Remove(metadata);
-
-                    if (hashset.Count == 0)
-                    {
-                        _unicastMetadata.Remove(metadata.Signature);
-                    }
-                }
-            }
-
-            public void RemoveMetadata(MulticastMetadata metadata)
-            {
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    if (metadata == null
-                        || metadata.Tag == null
-                            || metadata.Tag.Id == null || metadata.Tag.Id.Length == 0
-                            || string.IsNullOrWhiteSpace(metadata.Tag.Name)
-                        || (metadata.CreationTime - now).Minutes > 30
-                        || metadata.Certificate == null) return;
-
-                    var signature = metadata.Certificate.ToString();
-
-                    Dictionary<string, HashSet<MulticastMetadata>> dic;
-                    if (!_multicastMetadatas.TryGetValue(metadata.Tag, out dic)) return;
-
-                    HashSet<MulticastMetadata> hashset;
-                    if (!dic.TryGetValue(signature, out hashset)) return;
-
-                    hashset.Remove(metadata);
-
-                    if (hashset.Count == 0)
-                    {
-                        dic.Remove(signature);
-
-                        if (dic.Count == 0)
+                        for (;;)
                         {
-                            _multicastMetadatas.Remove(metadata.Tag);
+                            if ((now - currentInfo.CreationTime).TotalMinutes > 30)
+                            {
+                                if (previousInfo == null)
+                                {
+                                    topInfo = currentInfo.Next;
+
+                                    flag = true;
+                                }
+                                else
+                                {
+                                    previousInfo.Next = currentInfo.Next;
+                                }
+
+                                currentInfo = currentInfo.Next;
+                            }
+                            else
+                            {
+                                list.Add(currentInfo.Location);
+
+                                previousInfo = currentInfo;
+                                currentInfo = currentInfo.Next;
+                            }
+
+                            if (currentInfo == null) break;
                         }
                     }
+
+                    if (flag) _locations[key] = topInfo;
                 }
+
+                return list;
+            }
+
+            public void SetLocation(Location location)
+            {
+                Info topInfo;
+
+                if (!_locations.TryGetValue(location.Key, out topInfo))
+                {
+                    topInfo = new Info();
+                    topInfo.CreationTime = DateTime.UtcNow;
+                    topInfo.Location = location;
+
+                    _locations.Add(location.Key, topInfo);
+                }
+                else
+                {
+                    bool flag = false;
+                    int count = 1;
+
+                    {
+                        var now = DateTime.UtcNow;
+
+                        Info previousInfo = null;
+                        Info currentInfo = topInfo;
+
+                        for (;;)
+                        {
+                            if ((now - currentInfo.CreationTime).TotalMinutes > 30
+                                || currentInfo.Location == location)
+                            {
+                                if (previousInfo == null)
+                                {
+                                    topInfo = currentInfo.Next;
+
+                                    flag = true;
+                                }
+                                else
+                                {
+                                    previousInfo.Next = currentInfo.Next;
+                                }
+
+                                currentInfo = currentInfo.Next;
+                            }
+                            else
+                            {
+                                previousInfo = currentInfo;
+                                currentInfo = currentInfo.Next;
+
+                                count++;
+                            }
+
+                            if (currentInfo == null) break;
+                        }
+
+                        {
+                            currentInfo = new Info();
+                            currentInfo.CreationTime = now;
+                            currentInfo.Location = location;
+
+                            previousInfo.Next = currentInfo;
+                        }
+                    }
+
+                    if (count > 128)
+                    {
+                        topInfo = topInfo.Next;
+
+                        flag = true;
+                    }
+
+                    if (flag) _locations[location.Key] = topInfo;
+                }
+            }
+
+            // 自前のLinkedListのためのアイテムを用意。
+            private sealed class Info
+            {
+                public DateTime CreationTime { get; set; }
+                public Location Location { get; set; }
+
+                public Info Next { get; set; }
             }
         }
 

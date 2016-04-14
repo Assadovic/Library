@@ -10,20 +10,23 @@ using Library.Io;
 
 namespace Library.Net.Covenant
 {
-    [DataContract(Name = "QueryProfile", Namespace = "http://Library/Net/Covenant")]
-    public sealed class QueryProfile : ItemBase<QueryProfile>, IQueryProfile
+    [DataContract(Name = "QueryMetadata", Namespace = "http://Library/Net/Covenant")]
+    sealed class QueryMetadata : ItemBase<QueryMetadata>, IQueryMetadata
     {
         private enum SerializeId : byte
         {
-            CreationTime = 0,
-            Signature = 1,
+            Type = 0,
+            CreationTime = 1,
+            Signature = 2,
         }
 
+        private MetadataType _type;
         private DateTime _creationTime;
         private volatile string _signature;
 
-        internal QueryProfile(DateTime creationTime, string signature)
+        internal QueryMetadata(MetadataType type, DateTime creationTime, string signature)
         {
+            this.Type = type;
             this.CreationTime = creationTime;
             this.Signature = signature;
         }
@@ -53,7 +56,11 @@ namespace Library.Net.Covenant
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.CreationTime)
+                    if (id == (byte)SerializeId.Type)
+                    {
+                        this.Type = (MetadataType)Enum.Parse(typeof(MetadataType), ItemUtilities.GetString(rangeStream));
+                    }
+                    else if (id == (byte)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
@@ -67,8 +74,13 @@ namespace Library.Net.Covenant
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
+            // Type
+            if (this.Type != 0)
+            {
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Type, this.Type.ToString());
+            }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
@@ -91,17 +103,18 @@ namespace Library.Net.Covenant
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is QueryProfile)) return false;
+            if ((object)obj == null || !(obj is QueryMetadata)) return false;
 
-            return this.Equals((QueryProfile)obj);
+            return this.Equals((QueryMetadata)obj);
         }
 
-        public override bool Equals(QueryProfile other)
+        public override bool Equals(QueryMetadata other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.CreationTime != other.CreationTime
+            if (this.Type != other.Type
+                || this.CreationTime != other.CreationTime
                 || this.Signature != other.Signature)
             {
                 return false;
@@ -110,7 +123,27 @@ namespace Library.Net.Covenant
             return true;
         }
 
-        #region IQueryProfile
+        #region IQueryMetadata
+
+        [DataMember(Name = "Type")]
+        public MetadataType Type
+        {
+            get
+            {
+                return _type;
+            }
+            private set
+            {
+                if (!Enum.IsDefined(typeof(MetadataType), value))
+                {
+                    throw new ArgumentException();
+                }
+                else
+                {
+                    _type = value;
+                }
+            }
+        }
 
         [DataMember(Name = "CreationTime")]
         public DateTime CreationTime

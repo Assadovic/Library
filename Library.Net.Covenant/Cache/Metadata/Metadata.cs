@@ -11,23 +11,23 @@ namespace Library.Net.Covenant
     {
         private enum SerializeId : byte
         {
-            CreationTime = 0,
-            Type = 1,
+            Type = 0,
+            CreationTime = 1,
             Key = 2,
 
             Certificate = 3,
         }
 
-        private DateTime _creationTime;
         private MetadataType _type;
+        private DateTime _creationTime;
         private volatile Key _key;
 
         private volatile Certificate _certificate;
 
-        internal Metadata(DateTime creationTime, MetadataType type, Key key, DigitalSignature digitalSignature)
+        internal Metadata(MetadataType type, DateTime creationTime, Key key, DigitalSignature digitalSignature)
         {
-            this.CreationTime = creationTime;
             this.Type = type;
+            this.CreationTime = creationTime;
             this.Key = key;
 
             this.CreateCertificate(digitalSignature);
@@ -58,13 +58,13 @@ namespace Library.Net.Covenant
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.CreationTime)
-                    {
-                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
-                    }
                     if (id == (byte)SerializeId.Type)
                     {
                         this.Type = (MetadataType)Enum.Parse(typeof(MetadataType), ItemUtilities.GetString(rangeStream));
+                    }
+                    else if (id == (byte)SerializeId.CreationTime)
+                    {
+                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
                     else if (id == (byte)SerializeId.Key)
                     {
@@ -81,17 +81,17 @@ namespace Library.Net.Covenant
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
-            // CreationTime
-            if (this.CreationTime != DateTime.MinValue)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-            }
             // Type
             if (this.Type != 0)
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.Type, this.Type.ToString());
+            }
+            // CreationTime
+            if (this.CreationTime != DateTime.MinValue)
+            {
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
             // Key
             if (this.Key != null)
@@ -133,8 +133,8 @@ namespace Library.Net.Covenant
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.CreationTime != other.CreationTime
-                || this.Type != other.Type
+            if (this.Type != other.Type
+                || this.CreationTime != other.CreationTime
                 || this.Key != other.Key
 
                 || this.Certificate != other.Certificate)
@@ -184,20 +184,6 @@ namespace Library.Net.Covenant
 
         #region IMetadata
 
-        [DataMember(Name = "CreationTime")]
-        public DateTime CreationTime
-        {
-            get
-            {
-                return _creationTime;
-            }
-            private set
-            {
-                var utc = value.ToUniversalTime();
-                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-            }
-        }
-
         [DataMember(Name = "Type")]
         public MetadataType Type
         {
@@ -215,6 +201,20 @@ namespace Library.Net.Covenant
                 {
                     _type = value;
                 }
+            }
+        }
+
+        [DataMember(Name = "CreationTime")]
+        public DateTime CreationTime
+        {
+            get
+            {
+                return _creationTime;
+            }
+            private set
+            {
+                var utc = value.ToUniversalTime();
+                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
             }
         }
 

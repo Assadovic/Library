@@ -56,17 +56,13 @@ namespace Library.Net.Outopos
         private VolatileHashSet<string> _pushUnicastMetadatasRequestList;
         private VolatileHashSet<Tag> _pushMulticastMetadatasRequestList;
 
-        private LockedHashDictionary<string, DateTime> _broadcastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<string, DateTime> _unicastMetadatasLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<Tag, DateTime> _multicastMetadatasLastAccessTimes = new LockedHashDictionary<Tag, DateTime>();
+        private LockedHashDictionary<string, DateTime> _broadcastMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
+        private LockedHashDictionary<string, DateTime> _unicastMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
+        private LockedHashDictionary<Tag, DateTime> _multicastMetadataLastAccessTimes = new LockedHashDictionary<Tag, DateTime>();
 
         private Thread _connectionsManagerThread;
-        private Thread _createConnection1Thread;
-        private Thread _createConnection2Thread;
-        private Thread _createConnection3Thread;
-        private Thread _acceptConnection1Thread;
-        private Thread _acceptConnection2Thread;
-        private Thread _acceptConnection3Thread;
+        private List<Thread> _createConnectionThreads = new List<Thread>();
+        private List<Thread> _acceptConnectionThreads = new List<Thread>();
 
         private volatile ManagerState _state = ManagerState.Stop;
 
@@ -209,7 +205,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    return _settings.BaseNode;
+                    return _routeTable.BaseNode;
                 }
             }
         }
@@ -257,7 +253,7 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    return _settings.BandwidthLimit;
+                    return (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
                 }
             }
             set
@@ -266,7 +262,6 @@ namespace Library.Net.Outopos
 
                 lock (this.ThisLock)
                 {
-                    _settings.BandwidthLimit = value;
                     _bandwidthLimit.In = value;
                     _bandwidthLimit.Out = value;
                 }
@@ -486,10 +481,10 @@ namespace Library.Net.Outopos
                 _connectionManagers.Add(connectionManager);
 
                 {
-                    var termpMessageManager = _messagesManager[connectionManager.Node];
+                    var tempMessageManager = _messagesManager[connectionManager.Node];
 
-                    if (termpMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(termpMessageManager.SessionId, connectionManager.SesstionId))
+                    if (tempMessageManager.SessionId != null
+                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
                     {
                         _messagesManager.Remove(connectionManager.Node);
                     }
@@ -849,7 +844,7 @@ namespace Library.Net.Outopos
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _broadcastMetadatasLastAccessTimes.TryGetValue(n, out t);
+                                            _broadcastMetadataLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
@@ -858,11 +853,11 @@ namespace Library.Net.Outopos
 
                                     var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetBroadcastSignatures());
 
-                                    foreach (var signature in _broadcastMetadatasLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _broadcastMetadataLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _broadcastMetadatasLastAccessTimes.Remove(signature);
+                                        _broadcastMetadataLastAccessTimes.Remove(signature);
                                     }
                                 }
                             }
@@ -879,7 +874,7 @@ namespace Library.Net.Outopos
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _unicastMetadatasLastAccessTimes.TryGetValue(n, out t);
+                                            _unicastMetadataLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
@@ -888,11 +883,11 @@ namespace Library.Net.Outopos
 
                                     var liveSignatures = new HashSet<string>(_settings.MetadataManager.GetUnicastSignatures());
 
-                                    foreach (var signature in _unicastMetadatasLastAccessTimes.Keys.ToArray())
+                                    foreach (var signature in _unicastMetadataLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveSignatures.Contains(signature)) continue;
 
-                                        _unicastMetadatasLastAccessTimes.Remove(signature);
+                                        _unicastMetadataLastAccessTimes.Remove(signature);
                                     }
                                 }
                             }
@@ -909,7 +904,7 @@ namespace Library.Net.Outopos
                                         .OrderBy(n =>
                                         {
                                             DateTime t;
-                                            _multicastMetadatasLastAccessTimes.TryGetValue(n, out t);
+                                            _multicastMetadataLastAccessTimes.TryGetValue(n, out t);
 
                                             return t;
                                         }).ToList();
@@ -918,11 +913,11 @@ namespace Library.Net.Outopos
 
                                     var liveTags = new HashSet<Tag>(_settings.MetadataManager.GetMulticastTags());
 
-                                    foreach (var tag in _multicastMetadatasLastAccessTimes.Keys.ToArray())
+                                    foreach (var tag in _multicastMetadataLastAccessTimes.Keys.ToArray())
                                     {
                                         if (liveTags.Contains(tag)) continue;
 
-                                        _multicastMetadatasLastAccessTimes.Remove(tag);
+                                        _multicastMetadataLastAccessTimes.Remove(tag);
                                     }
                                 }
                             }
@@ -2535,7 +2530,7 @@ namespace Library.Net.Outopos
                 messageManager.PullBroadcastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
-                _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
+                _broadcastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2558,7 +2553,7 @@ namespace Library.Net.Outopos
 
                     var signature = metadata.Certificate.ToString();
 
-                    _broadcastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
+                    _broadcastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2583,7 +2578,7 @@ namespace Library.Net.Outopos
                 messageManager.PullUnicastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
 
-                _unicastMetadatasLastAccessTimes[signature] = DateTime.UtcNow;
+                _unicastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2604,7 +2599,7 @@ namespace Library.Net.Outopos
                 {
                     messageManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
-                    _unicastMetadatasLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
+                    _unicastMetadataLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2629,7 +2624,7 @@ namespace Library.Net.Outopos
                 messageManager.PullMulticastMetadatasRequest.Add(tag);
                 _pullMetadataRequestCount.Increment();
 
-                _multicastMetadatasLastAccessTimes[tag] = DateTime.UtcNow;
+                _multicastMetadataLastAccessTimes[tag] = DateTime.UtcNow;
             }
         }
 
@@ -2650,7 +2645,7 @@ namespace Library.Net.Outopos
                 {
                     messageManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
-                    _multicastMetadatasLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
+                    _multicastMetadataLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2711,7 +2706,6 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
-                _settings.BaseNode = baseNode;
                 _routeTable.BaseNode = baseNode;
             }
         }
@@ -2874,30 +2868,26 @@ namespace Library.Net.Outopos
                     _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
                     _connectionsManagerThread.Priority = ThreadPriority.Lowest;
                     _connectionsManagerThread.Start();
-                    _createConnection1Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection1Thread.Name = "ConnectionsManager_CreateConnection1Thread";
-                    _createConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection1Thread.Start();
-                    _createConnection2Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection2Thread.Name = "ConnectionsManager_CreateConnection2Thread";
-                    _createConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection2Thread.Start();
-                    _createConnection3Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection3Thread.Name = "ConnectionsManager_CreateConnection3Thread";
-                    _createConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection3Thread.Start();
-                    _acceptConnection1Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection1Thread.Name = "ConnectionsManager_AcceptConnection1Thread";
-                    _acceptConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection1Thread.Start();
-                    _acceptConnection2Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection2Thread.Name = "ConnectionsManager_AcceptConnection2Thread";
-                    _acceptConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection2Thread.Start();
-                    _acceptConnection3Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection3Thread.Name = "ConnectionsManager_AcceptConnection3Thread";
-                    _acceptConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection3Thread.Start();
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.CreateConnectionThread);
+                        thread.Name = "ConnectionsManager_CreateConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _createConnectionThreads.Add(thread);
+                    }
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.AcceptConnectionThread);
+                        thread.Name = "ConnectionsManager_AcceptConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _acceptConnectionThreads.Add(thread);
+                    }
                 }
             }
         }
@@ -2916,18 +2906,18 @@ namespace Library.Net.Outopos
                     _serverManager.Stop();
                 }
 
-                _createConnection1Thread.Join();
-                _createConnection1Thread = null;
-                _createConnection2Thread.Join();
-                _createConnection2Thread = null;
-                _createConnection3Thread.Join();
-                _createConnection3Thread = null;
-                _acceptConnection1Thread.Join();
-                _acceptConnection1Thread = null;
-                _acceptConnection2Thread.Join();
-                _acceptConnection2Thread = null;
-                _acceptConnection3Thread.Join();
-                _acceptConnection3Thread = null;
+                foreach (var thread in _createConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _createConnectionThreads.Clear();
+
+                foreach (var thread in _acceptConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _acceptConnectionThreads.Clear();
+
                 _connectionsManagerThread.Join();
                 _connectionsManagerThread = null;
 
@@ -2976,6 +2966,8 @@ namespace Library.Net.Outopos
 
             lock (this.ThisLock)
             {
+                _settings.BaseNode = _routeTable.BaseNode;
+
                 {
                     var otherNodes = _routeTable.ToArray();
 
@@ -2985,6 +2977,8 @@ namespace Library.Net.Outopos
                         _settings.OtherNodes.AddRange(otherNodes);
                     }
                 }
+
+                _settings.BandwidthLimit = (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
 
                 _settings.Save(directoryPath);
             }

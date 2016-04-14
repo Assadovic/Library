@@ -154,10 +154,10 @@ namespace Library.Net.Connections
                         {
                             xml.WriteStartElement("SecureConnection");
                             xml.WriteAttributeString("Version", "3");
-                            xml.WriteEndElement(); //Protocol
+                            xml.WriteEndElement(); //SecureConnection
                         }
 
-                        xml.WriteEndElement(); //Configuration
+                        xml.WriteEndElement(); //Protocol
 
                         xml.WriteEndDocument();
                         xml.Flush();
@@ -176,7 +176,9 @@ namespace Library.Net.Connections
                             {
                                 if (xml.LocalName == "SecureConnection")
                                 {
-                                    if (xml.GetAttribute("Version") == "3")
+                                    var version = xml.GetAttribute("Version");
+
+                                    if (version == "3")
                                     {
                                         _otherVersion |= SecureConnectionVersion.Version3;
                                     }

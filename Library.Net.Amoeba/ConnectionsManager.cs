@@ -57,12 +57,8 @@ namespace Library.Net.Amoeba
         private LockedHashDictionary<string, DateTime> _seedLastAccessTimes = new LockedHashDictionary<string, DateTime>();
 
         private Thread _connectionsManagerThread;
-        private Thread _createConnection1Thread;
-        private Thread _createConnection2Thread;
-        private Thread _createConnection3Thread;
-        private Thread _acceptConnection1Thread;
-        private Thread _acceptConnection2Thread;
-        private Thread _acceptConnection3Thread;
+        private List<Thread> _createConnectionThreads = new List<Thread>();
+        private List<Thread> _acceptConnectionThreads = new List<Thread>();
 
         private volatile ManagerState _state = ManagerState.Stop;
 
@@ -505,10 +501,10 @@ namespace Library.Net.Amoeba
                 _connectionManagers.Add(connectionManager);
 
                 {
-                    var termpMessageManager = _messagesManager[connectionManager.Node];
+                    var tempMessageManager = _messagesManager[connectionManager.Node];
 
-                    if (termpMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(termpMessageManager.SessionId, connectionManager.SesstionId))
+                    if (tempMessageManager.SessionId != null
+                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
                     {
                         _messagesManager.Remove(connectionManager.Node);
                     }
@@ -2143,7 +2139,6 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                _settings.BaseNode = baseNode;
                 _routeTable.BaseNode = baseNode;
             }
         }
@@ -2279,30 +2274,26 @@ namespace Library.Net.Amoeba
                     _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
                     _connectionsManagerThread.Priority = ThreadPriority.Lowest;
                     _connectionsManagerThread.Start();
-                    _createConnection1Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection1Thread.Name = "ConnectionsManager_CreateConnection1Thread";
-                    _createConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection1Thread.Start();
-                    _createConnection2Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection2Thread.Name = "ConnectionsManager_CreateConnection2Thread";
-                    _createConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection2Thread.Start();
-                    _createConnection3Thread = new Thread(this.CreateConnectionThread);
-                    _createConnection3Thread.Name = "ConnectionsManager_CreateConnection3Thread";
-                    _createConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _createConnection3Thread.Start();
-                    _acceptConnection1Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection1Thread.Name = "ConnectionsManager_AcceptConnection1Thread";
-                    _acceptConnection1Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection1Thread.Start();
-                    _acceptConnection2Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection2Thread.Name = "ConnectionsManager_AcceptConnection2Thread";
-                    _acceptConnection2Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection2Thread.Start();
-                    _acceptConnection3Thread = new Thread(this.AcceptConnectionThread);
-                    _acceptConnection3Thread.Name = "ConnectionsManager_AcceptConnection3Thread";
-                    _acceptConnection3Thread.Priority = ThreadPriority.Lowest;
-                    _acceptConnection3Thread.Start();
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.CreateConnectionThread);
+                        thread.Name = "ConnectionsManager_CreateConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _createConnectionThreads.Add(thread);
+                    }
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thread = new Thread(this.AcceptConnectionThread);
+                        thread.Name = "ConnectionsManager_AcceptConnectionThread";
+                        thread.Priority = ThreadPriority.Lowest;
+                        thread.Start();
+
+                        _acceptConnectionThreads.Add(thread);
+                    }
                 }
             }
         }
@@ -2321,18 +2312,18 @@ namespace Library.Net.Amoeba
                     _serverManager.Stop();
                 }
 
-                _createConnection1Thread.Join();
-                _createConnection1Thread = null;
-                _createConnection2Thread.Join();
-                _createConnection2Thread = null;
-                _createConnection3Thread.Join();
-                _createConnection3Thread = null;
-                _acceptConnection1Thread.Join();
-                _acceptConnection1Thread = null;
-                _acceptConnection2Thread.Join();
-                _acceptConnection2Thread = null;
-                _acceptConnection3Thread.Join();
-                _acceptConnection3Thread = null;
+                foreach (var thread in _createConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _createConnectionThreads.Clear();
+
+                foreach (var thread in _acceptConnectionThreads)
+                {
+                    thread.Join();
+                }
+                _acceptConnectionThreads.Clear();
+
                 _connectionsManagerThread.Join();
                 _connectionsManagerThread = null;
 

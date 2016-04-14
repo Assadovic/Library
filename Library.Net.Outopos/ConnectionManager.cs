@@ -302,10 +302,10 @@ namespace Library.Net.Outopos
                         {
                             xml.WriteStartElement("Outopos");
                             xml.WriteAttributeString("Version", "2");
-                            xml.WriteEndElement(); //Protocol
+                            xml.WriteEndElement(); //Outopos
                         }
 
-                        xml.WriteEndElement(); //Configuration
+                        xml.WriteEndElement(); //Protocol
 
                         xml.WriteEndDocument();
                         xml.Flush();

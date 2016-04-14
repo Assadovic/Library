@@ -34,17 +34,14 @@ namespace Library.Net.Covenant
             {
                 foreach (var messageManager in _messageManagerDictionary.Values.ToArray())
                 {
-                    messageManager.StockMetadatas.TrimExcess();
-                    messageManager.StockLocations.TrimExcess();
-
-                    messageManager.PushProfilesRequest.TrimExcess();
-                    messageManager.PullProfilesRequest.TrimExcess();
-
-                    messageManager.PushMetadatasRequest.TrimExcess();
-                    messageManager.PullMetadatasRequest.TrimExcess();
-
                     messageManager.PushLocationsRequest.TrimExcess();
                     messageManager.PullLocationsRequest.TrimExcess();
+
+                    messageManager.PushLinkMetadatasRequest.TrimExcess();
+                    messageManager.PullLinkMetadatasRequest.TrimExcess();
+
+                    messageManager.PushStoreMetadatasRequest.TrimExcess();
+                    messageManager.PullStoreMetadatasRequest.TrimExcess();
                 }
 
                 if (_messageManagerDictionary.Count > 128)
@@ -174,17 +171,14 @@ namespace Library.Net.Covenant
 
         private DateTime _lastPullTime = DateTime.UtcNow;
 
-        private VolatileHashSet<byte[]> _stockMetadatas;
-        private VolatileHashSet<byte[]> _stockLocations;
-
-        private VolatileHashDictionary<string, DateTime> _pushProfilesRequest;
-        private VolatileHashDictionary<string, DateTime> _pullProfilesRequest;
-
-        private VolatileHashSet<string> _pushMetadataRequest;
-        private VolatileHashSet<string> _pullMetadatasRequest;
-
         private VolatileHashSet<Key> _pushLocationsRequest;
         private VolatileHashSet<Key> _pullLocationsRequest;
+
+        private VolatileHashDictionary<string, DateTime> _pushLinkMetadatasRequest;
+        private VolatileHashDictionary<string, DateTime> _pullLinkMetadatasRequest;
+
+        private VolatileHashDictionary<string, DateTime> _pushStoreMetadatasRequest;
+        private VolatileHashDictionary<string, DateTime> _pullStoreMetadatasRequest;
 
         private readonly object _thisLock = new object();
 
@@ -197,17 +191,14 @@ namespace Library.Net.Covenant
             _receivedByteCount = new SafeInteger();
             _sentByteCount = new SafeInteger();
 
-            _stockMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
-            _stockLocations = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
-
-            _pushProfilesRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
-            _pullProfilesRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
-
-            _pushMetadataRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-            _pullMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-
             _pushLocationsRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullLocationsRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
+
+            _pushLinkMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
+            _pullLinkMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
+
+            _pushStoreMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
+            _pullStoreMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
         }
 
         public int Id
@@ -281,72 +272,6 @@ namespace Library.Net.Covenant
             }
         }
 
-        public VolatileHashSet<byte[]> StockMetadatas
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _stockMetadatas;
-                }
-            }
-        }
-
-        public VolatileHashSet<byte[]> StockLocations
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _stockLocations;
-                }
-            }
-        }
-
-        public VolatileHashDictionary<string, DateTime> PushProfilesRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushProfilesRequest;
-                }
-            }
-        }
-
-        public VolatileHashDictionary<string, DateTime> PullProfilesRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pullProfilesRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<string> PushMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushMetadataRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<string> PullMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pullMetadatasRequest;
-                }
-            }
-        }
-
         public VolatileHashSet<Key> PushLocationsRequest
         {
             get
@@ -365,6 +290,50 @@ namespace Library.Net.Covenant
                 lock (this.ThisLock)
                 {
                     return _pullLocationsRequest;
+                }
+            }
+        }
+
+        public VolatileHashDictionary<string, DateTime> PushLinkMetadatasRequest
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _pushLinkMetadatasRequest;
+                }
+            }
+        }
+
+        public VolatileHashDictionary<string, DateTime> PullLinkMetadatasRequest
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _pullLinkMetadatasRequest;
+                }
+            }
+        }
+
+        public VolatileHashDictionary<string, DateTime> PushStoreMetadatasRequest
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _pushStoreMetadatasRequest;
+                }
+            }
+        }
+
+        public VolatileHashDictionary<string, DateTime> PullStoreMetadatasRequest
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _pullStoreMetadatasRequest;
                 }
             }
         }

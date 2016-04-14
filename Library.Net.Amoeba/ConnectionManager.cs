@@ -263,10 +263,10 @@ namespace Library.Net.Amoeba
                         {
                             xml.WriteStartElement("Amoeba");
                             xml.WriteAttributeString("Version", "2");
-                            xml.WriteEndElement(); //Protocol
+                            xml.WriteEndElement(); //Amoeba
                         }
 
-                        xml.WriteEndElement(); //Configuration
+                        xml.WriteEndElement(); //Protocol
 
                         xml.WriteEndDocument();
                         xml.Flush();

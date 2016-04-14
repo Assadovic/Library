@@ -66,7 +66,7 @@ namespace Library.Net.Covenant
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
             // HashAlgorithm
             if (this.HashAlgorithm != 0)

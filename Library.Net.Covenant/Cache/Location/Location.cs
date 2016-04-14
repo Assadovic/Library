@@ -16,20 +16,17 @@ namespace Library.Net.Covenant
     {
         private enum SerializeId : byte
         {
-            CreationTime = 0,
-            Key = 1,
-            Uri = 2,
+            Key = 0,
+            Uri = 1,
         }
 
-        private DateTime _creationTime;
         private volatile Key _key;
         private volatile UriCollection _uris;
 
         public static readonly int MaxUriCount = 32;
 
-        internal Location(DateTime creationTime, Key key, IEnumerable<string> uris)
+        internal Location(Key key, IEnumerable<string> uris)
         {
-            this.CreationTime = creationTime;
             this.Key = key;
             if (uris != null) this.ProtectedUris.AddRange(uris);
         }
@@ -59,11 +56,7 @@ namespace Library.Net.Covenant
 
                 using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
                 {
-                    if (id == (byte)SerializeId.CreationTime)
-                    {
-                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
-                    }
-                    else if (id == (byte)SerializeId.Key)
+                    if (id == (byte)SerializeId.Key)
                     {
                         this.Key = Key.Import(rangeStream, bufferManager);
                     }
@@ -77,13 +70,8 @@ namespace Library.Net.Covenant
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            BufferStream bufferStream = new BufferStream(bufferManager);
+            var bufferStream = new BufferStream(bufferManager);
 
-            // CreationTime
-            if (this.CreationTime != DateTime.MinValue)
-            {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-            }
             // Key
             if (this.Key != null)
             {
@@ -104,7 +92,7 @@ namespace Library.Net.Covenant
 
         public override int GetHashCode()
         {
-            return this.CreationTime.GetHashCode();
+            return this.Key.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -119,8 +107,7 @@ namespace Library.Net.Covenant
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.CreationTime != other.CreationTime
-                || this.Key != other.Key
+            if (this.Key != other.Key
                 || (this.Uris == null) != (other.Uris == null))
             {
                 return false;
@@ -135,20 +122,6 @@ namespace Library.Net.Covenant
         }
 
         #region ILocation
-
-        [DataMember(Name = "CreationTime")]
-        public DateTime CreationTime
-        {
-            get
-            {
-                return _creationTime;
-            }
-            private set
-            {
-                var utc = value.ToUniversalTime();
-                _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-            }
-        }
 
         [DataMember(Name = "Key")]
         public Key Key

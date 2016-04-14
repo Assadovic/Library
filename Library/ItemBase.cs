@@ -17,22 +17,11 @@ namespace Library
 
         protected abstract void Initialize();
 
-#if DEBUG
-        private int _callCount = 0;
-
-        [OnDeserializing]
-        private void OnDeserializingMethod(StreamingContext context)
-        {
-            if (Interlocked.Increment(ref _callCount) > 1) Log.Error("ItemBase<T>.OnDeserializingMethod");
-            this.Initialize();
-        }
-#else
         [OnDeserializing]
         private void OnDeserializingMethod(StreamingContext context)
         {
             this.Initialize();
         }
-#endif
 
         public static T Import(Stream stream, BufferManager bufferManager)
         {

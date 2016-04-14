@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using Library.Collections;
 using Library.Io;
@@ -20,27 +21,6 @@ namespace Library.Net.Covenant
         public IEnumerable<Node> Nodes { get; set; }
     }
 
-    class PullProfilesRequestEventArgs : EventArgs
-    {
-        public IEnumerable<QueryProfile> QueryProfiles { get; set; }
-    }
-
-    class PullProfilesEventArgs : EventArgs
-    {
-        public IEnumerable<Profile> Profiles { get; set; }
-    }
-
-    class PullMetadatasRequestEventArgs : EventArgs
-    {
-        public IEnumerable<string> Keywords { get; set; }
-    }
-
-    class PullMetadatasEventArgs : EventArgs
-    {
-        public string Keyword { get; set; }
-        public IEnumerable<Metadata> Metadatas { get; set; }
-    }
-
     class PullLocationsRequestEventArgs : EventArgs
     {
         public IEnumerable<Key> Keys { get; set; }
@@ -51,16 +31,23 @@ namespace Library.Net.Covenant
         public IEnumerable<Location> Locations { get; set; }
     }
 
+    class PullMetadatasRequestEventArgs : EventArgs
+    {
+        public IEnumerable<QueryMetadata> QueryMetadatas { get; set; }
+    }
+
+    class PullMetadatasEventArgs : EventArgs
+    {
+        public IEnumerable<Metadata> Metadatas { get; set; }
+    }
+
     delegate void PullNodesEventHandler(object sender, PullNodesEventArgs e);
-
-    delegate void PullProfilesRequestEventHandler(object sender, PullProfilesRequestEventArgs e);
-    delegate void PullProfilesEventHandler(object sender, PullProfilesEventArgs e);
-
-    delegate void PullMetadatasRequestEventHandler(object sender, PullMetadatasRequestEventArgs e);
-    delegate void PullMetadatasEventHandler(object sender, PullMetadatasEventArgs e);
 
     delegate void PullLocationsRequestEventHandler(object sender, PullLocationsRequestEventArgs e);
     delegate void PullLocationsEventHandler(object sender, PullLocationsEventArgs e);
+
+    delegate void PullMetadatasRequestEventHandler(object sender, PullMetadatasRequestEventArgs e);
+    delegate void PullMetadatasEventHandler(object sender, PullMetadatasEventArgs e);
 
     delegate void PullCancelEventHandler(object sender, EventArgs e);
 
@@ -88,25 +75,21 @@ namespace Library.Net.Covenant
 
             Nodes = 4,
 
-            ProfilesRequest = 5,
-            Profiles = 6,
+            LocationsRequest = 5,
+            Locations = 6,
 
             MetadatasRequest = 7,
             Metadatas = 8,
-
-            LocationsRequest = 9,
-            Locations = 10,
         }
 
-        private byte[] _mySessionId;
-        private byte[] _otherSessionId;
         private ProtocolVersion _protocolVersion;
         private Connection _connection;
+        private byte[] _mySessionId;
+        private byte[] _otherSessionId;
         private Node _baseNode;
         private Node _otherNode;
-        private BufferManager _bufferManager;
-
         private ConnectDirection _direction;
+        private BufferManager _bufferManager;
 
         private bool _onClose;
 
@@ -124,23 +107,18 @@ namespace Library.Net.Covenant
         private volatile bool _disposed;
 
         private const int _maxNodeCount = 1024;
-        private const int _maxProfileRequestCount = 1024;
-        private const int _maxProfileCount = 1024;
-        private const int _maxMetadataRequestCount = 1024;
-        private const int _maxMetadataCount = 1024;
         private const int _maxLocationRequestCount = 1024;
         private const int _maxLocationCount = 1024;
+        private const int _maxMetadataRequestCount = 1024;
+        private const int _maxMetadataCount = 1024;
 
         public event PullNodesEventHandler PullNodesEvent;
 
-        public event PullProfilesRequestEventHandler PullProfilesRequestEvent;
-        public event PullProfilesEventHandler PullProfilesEvent;
+        public event PullLocationsRequestEventHandler PullLocationsRequestEvent;
+        public event PullLocationsEventHandler PullLocationsEvent;
 
         public event PullMetadatasRequestEventHandler PullMetadatasRequestEvent;
         public event PullMetadatasEventHandler PullMetadatasEvent;
-
-        public event PullLocationsRequestEventHandler PullLocationsRequestEvent;
-        public event PullLocationsEventHandler PullLocationsEvent;
 
         public event PullCancelEventHandler PullCancelEvent;
 
@@ -259,9 +237,9 @@ namespace Library.Net.Covenant
             {
                 try
                 {
-                    TimeSpan timeout = new TimeSpan(0, 0, 30);
+                    var timeout = new TimeSpan(0, 0, 30);
 
-                    Stopwatch stopwatch = new Stopwatch();
+                    var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
                     if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
@@ -301,7 +279,7 @@ namespace Library.Net.Covenant
                         _responseStopwatch.Start();
                         this.Ping(_pingHash);
 
-                        ThreadPool.QueueUserWorkItem(this.Pull);
+                        Task.Factory.StartNew(this.PullThread, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
                         _aliveTimer = new WatchTimer(this.AliveTimer, new TimeSpan(0, 0, 30));
                     }
                     else
@@ -452,14 +430,14 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void Pull(object state)
+        private void PullThread()
         {
-            Thread.CurrentThread.Name = "ConnectionManager_Pull";
+            Thread.CurrentThread.Name = "ConnectionManager_PullThread";
             Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
             try
             {
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
 
                 for (;;)
                 {
@@ -473,7 +451,7 @@ namespace Library.Net.Covenant
                         {
                             if (stream.Length == 0) continue;
 
-                            byte type = (byte)stream.ReadByte();
+                            var type = (byte)stream.ReadByte();
 
                             using (Stream stream2 = new RangeStream(stream, 1, stream.Length - 1, true))
                             {
@@ -512,43 +490,6 @@ namespace Library.Net.Covenant
                                         var message = NodesMessage.Import(stream2, _bufferManager);
                                         this.OnPullNodes(new PullNodesEventArgs() { Nodes = message.Nodes });
                                     }
-                                    else if (type == (byte)SerializeId.ProfilesRequest)
-                                    {
-                                        var message = ProfilesRequestMessage.Import(stream2, _bufferManager);
-
-                                        this.OnPullProfilesRequest(new PullProfilesRequestEventArgs()
-                                        {
-                                            QueryProfiles = message.QueryProfiles,
-                                        });
-                                    }
-                                    else if (type == (byte)SerializeId.Profiles)
-                                    {
-                                        var message = ProfilesMessage.Import(stream2, _bufferManager);
-
-                                        this.OnPullProfiles(new PullProfilesEventArgs()
-                                        {
-                                            Profiles = message.Profiles,
-                                        });
-                                    }
-                                    else if (type == (byte)SerializeId.MetadatasRequest)
-                                    {
-                                        var message = MetadatasRequestMessage.Import(stream2, _bufferManager);
-
-                                        this.OnPullMetadatasRequest(new PullMetadatasRequestEventArgs()
-                                        {
-                                            Keywords = message.Keywords,
-                                        });
-                                    }
-                                    else if (type == (byte)SerializeId.Metadatas)
-                                    {
-                                        var message = MetadatasMessage.Import(stream2, _bufferManager);
-
-                                        this.OnPullMetadatas(new PullMetadatasEventArgs()
-                                        {
-                                            Keyword = message.Keyword,
-                                            Metadatas = message.Metadatas,
-                                        });
-                                    }
                                     else if (type == (byte)SerializeId.LocationsRequest)
                                     {
                                         var message = LocationsRequestMessage.Import(stream2, _bufferManager);
@@ -565,6 +506,24 @@ namespace Library.Net.Covenant
                                         this.OnPullLocations(new PullLocationsEventArgs()
                                         {
                                             Locations = message.Locations,
+                                        });
+                                    }
+                                    else if (type == (byte)SerializeId.MetadatasRequest)
+                                    {
+                                        var message = MetadatasRequestMessage.Import(stream2, _bufferManager);
+
+                                        this.OnPullMetadatasRequest(new PullMetadatasRequestEventArgs()
+                                        {
+                                            QueryMetadatas = message.QueryMetadatas,
+                                        });
+                                    }
+                                    else if (type == (byte)SerializeId.Metadatas)
+                                    {
+                                        var message = MetadatasMessage.Import(stream2, _bufferManager);
+
+                                        this.OnPullMetadatas(new PullMetadatasEventArgs()
+                                        {
+                                            Metadatas = message.Metadatas,
                                         });
                                     }
                                 }
@@ -604,19 +563,19 @@ namespace Library.Net.Covenant
             }
         }
 
-        protected virtual void OnPullProfilesRequest(PullProfilesRequestEventArgs e)
+        protected virtual void OnPullLocationsRequest(PullLocationsRequestEventArgs e)
         {
-            if (this.PullProfilesRequestEvent != null)
+            if (this.PullLocationsRequestEvent != null)
             {
-                this.PullProfilesRequestEvent(this, e);
+                this.PullLocationsRequestEvent(this, e);
             }
         }
 
-        protected virtual void OnPullProfiles(PullProfilesEventArgs e)
+        protected virtual void OnPullLocations(PullLocationsEventArgs e)
         {
-            if (this.PullProfilesEvent != null)
+            if (this.PullLocationsEvent != null)
             {
-                this.PullProfilesEvent(this, e);
+                this.PullLocationsEvent(this, e);
             }
         }
 
@@ -633,22 +592,6 @@ namespace Library.Net.Covenant
             if (this.PullMetadatasEvent != null)
             {
                 this.PullMetadatasEvent(this, e);
-            }
-        }
-
-        protected virtual void OnPullLocationsRequest(PullLocationsRequestEventArgs e)
-        {
-            if (this.PullLocationsRequestEvent != null)
-            {
-                this.PullLocationsRequestEvent(this, e);
-            }
-        }
-
-        protected virtual void OnPullLocations(PullLocationsEventArgs e)
-        {
-            if (this.PullLocationsEvent != null)
-            {
-                this.PullLocationsEvent(this, e);
             }
         }
 
@@ -685,156 +628,6 @@ namespace Library.Net.Covenant
                     stream.Flush();
 
                     var message = new NodesMessage(nodes);
-
-                    stream = new UniteStream(stream, message.Export(_bufferManager));
-
-                    _connection.Send(stream, _sendTimeSpan);
-                    _aliveStopwatch.Restart();
-                }
-                catch (ConnectionException)
-                {
-                    this.OnClose(new EventArgs());
-
-                    throw;
-                }
-                finally
-                {
-                    stream.Close();
-                }
-            }
-            else
-            {
-                throw new ConnectionManagerException();
-            }
-        }
-
-        public void PushProfilesRequest(IEnumerable<QueryProfile> queryProfiles)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
-            {
-                Stream stream = new BufferStream(_bufferManager);
-
-                try
-                {
-                    stream.WriteByte((byte)SerializeId.ProfilesRequest);
-                    stream.Flush();
-
-                    var message = new ProfilesRequestMessage(queryProfiles);
-
-                    stream = new UniteStream(stream, message.Export(_bufferManager));
-
-                    _connection.Send(stream, _sendTimeSpan);
-                    _aliveStopwatch.Restart();
-                }
-                catch (ConnectionException)
-                {
-                    this.OnClose(new EventArgs());
-
-                    throw;
-                }
-                finally
-                {
-                    stream.Close();
-                }
-            }
-            else
-            {
-                throw new ConnectionManagerException();
-            }
-        }
-
-        public void PushProfiles(IEnumerable<Profile> broadcastMetadats)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
-            {
-                Stream stream = new BufferStream(_bufferManager);
-
-                try
-                {
-                    stream.WriteByte((byte)SerializeId.Profiles);
-                    stream.Flush();
-
-                    var message = new ProfilesMessage(broadcastMetadats);
-
-                    stream = new UniteStream(stream, message.Export(_bufferManager));
-
-                    _connection.Send(stream, _sendTimeSpan);
-                    _aliveStopwatch.Restart();
-                }
-                catch (ConnectionException)
-                {
-                    this.OnClose(new EventArgs());
-
-                    throw;
-                }
-                finally
-                {
-                    stream.Close();
-                }
-            }
-            else
-            {
-                throw new ConnectionManagerException();
-            }
-        }
-
-        public void PushMetadatasRequest(IEnumerable<string> signatures)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
-            {
-                Stream stream = new BufferStream(_bufferManager);
-
-                try
-                {
-                    stream.WriteByte((byte)SerializeId.MetadatasRequest);
-                    stream.Flush();
-
-                    var message = new MetadatasRequestMessage(signatures);
-
-                    stream = new UniteStream(stream, message.Export(_bufferManager));
-
-                    _connection.Send(stream, _sendTimeSpan);
-                    _aliveStopwatch.Restart();
-                }
-                catch (ConnectionException)
-                {
-                    this.OnClose(new EventArgs());
-
-                    throw;
-                }
-                finally
-                {
-                    stream.Close();
-                }
-            }
-            else
-            {
-                throw new ConnectionManagerException();
-            }
-        }
-
-        public void PushMetadatas(string keyword, IEnumerable<Metadata> Metadatas)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
-            {
-                Stream stream = new BufferStream(_bufferManager);
-
-                try
-                {
-                    stream.WriteByte((byte)SerializeId.Metadatas);
-                    stream.Flush();
-
-                    var message = new MetadatasMessage(
-                        keyword,
-                        Metadatas);
 
                     stream = new UniteStream(stream, message.Export(_bufferManager));
 
@@ -909,6 +702,80 @@ namespace Library.Net.Covenant
                     stream.Flush();
 
                     var message = new LocationsMessage(multicastMetadatas);
+
+                    stream = new UniteStream(stream, message.Export(_bufferManager));
+
+                    _connection.Send(stream, _sendTimeSpan);
+                    _aliveStopwatch.Restart();
+                }
+                catch (ConnectionException)
+                {
+                    this.OnClose(new EventArgs());
+
+                    throw;
+                }
+                finally
+                {
+                    stream.Close();
+                }
+            }
+            else
+            {
+                throw new ConnectionManagerException();
+            }
+        }
+
+        public void PushMetadatasRequest(IEnumerable<QueryMetadata> queryMetadatas)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            {
+                Stream stream = new BufferStream(_bufferManager);
+
+                try
+                {
+                    stream.WriteByte((byte)SerializeId.MetadatasRequest);
+                    stream.Flush();
+
+                    var message = new MetadatasRequestMessage(queryMetadatas);
+
+                    stream = new UniteStream(stream, message.Export(_bufferManager));
+
+                    _connection.Send(stream, _sendTimeSpan);
+                    _aliveStopwatch.Restart();
+                }
+                catch (ConnectionException)
+                {
+                    this.OnClose(new EventArgs());
+
+                    throw;
+                }
+                finally
+                {
+                    stream.Close();
+                }
+            }
+            else
+            {
+                throw new ConnectionManagerException();
+            }
+        }
+
+        public void PushMetadatas(IEnumerable<Metadata> metadats)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            {
+                Stream stream = new BufferStream(_bufferManager);
+
+                try
+                {
+                    stream.WriteByte((byte)SerializeId.Metadatas);
+                    stream.Flush();
+
+                    var message = new MetadatasMessage(metadats);
 
                     stream = new UniteStream(stream, message.Export(_bufferManager));
 
@@ -1014,7 +881,7 @@ namespace Library.Net.Covenant
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Nodes
                 foreach (var value in this.Nodes)
@@ -1050,383 +917,6 @@ namespace Library.Net.Covenant
                         _nodes = new NodeCollection(_maxNodeCount);
 
                     return _nodes;
-                }
-            }
-        }
-
-        private sealed class ProfilesRequestMessage : ItemBase<ProfilesRequestMessage>
-        {
-            private enum SerializeId : byte
-            {
-                QueryProfile = 0,
-            }
-
-            private QueryProfileCollection _queryProfile;
-
-            public ProfilesRequestMessage(IEnumerable<QueryProfile> queryProfiles)
-            {
-                if (queryProfiles != null) this.ProtectedQueryProfiles.AddRange(queryProfiles);
-            }
-
-            protected override void Initialize()
-            {
-
-            }
-
-            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
-            {
-                for (;;)
-                {
-                    byte id;
-                    {
-                        byte[] idBuffer = new byte[1];
-                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                        id = idBuffer[0];
-                    }
-
-                    int length;
-                    {
-                        byte[] lengthBuffer = new byte[4];
-                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                        length = NetworkConverter.ToInt32(lengthBuffer);
-                    }
-
-                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                    {
-                        if (id == (byte)SerializeId.QueryProfile)
-                        {
-                            this.ProtectedQueryProfiles.Add(QueryProfile.Import(rangeStream, bufferManager));
-                        }
-                    }
-                }
-            }
-
-            protected override Stream Export(BufferManager bufferManager, int count)
-            {
-                BufferStream bufferStream = new BufferStream(bufferManager);
-
-                // Signatures
-                foreach (var value in this.QueryProfiles)
-                {
-                    using (var stream = value.Export(bufferManager))
-                    {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.QueryProfile, stream);
-                    }
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
-            }
-
-            private volatile ReadOnlyCollection<QueryProfile> _readOnlyQueryProfiles;
-
-            public IEnumerable<QueryProfile> QueryProfiles
-            {
-                get
-                {
-                    if (_readOnlyQueryProfiles == null)
-                        _readOnlyQueryProfiles = new ReadOnlyCollection<QueryProfile>(this.ProtectedQueryProfiles.ToArray());
-
-                    return _readOnlyQueryProfiles;
-                }
-            }
-
-            private QueryProfileCollection ProtectedQueryProfiles
-            {
-                get
-                {
-                    if (_queryProfile == null)
-                        _queryProfile = new QueryProfileCollection(_maxProfileRequestCount);
-
-                    return _queryProfile;
-                }
-            }
-        }
-
-        private sealed class ProfilesMessage : ItemBase<ProfilesMessage>
-        {
-            private enum SerializeId : byte
-            {
-                Profile = 0,
-            }
-
-            private LockedList<Profile> _profiles;
-
-            public ProfilesMessage(IEnumerable<Profile> profiles)
-            {
-                if (profiles != null) this.ProtectedProfiles.AddRange(profiles);
-            }
-
-            protected override void Initialize()
-            {
-
-            }
-
-            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
-            {
-                for (;;)
-                {
-                    byte id;
-                    {
-                        byte[] idBuffer = new byte[1];
-                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                        id = idBuffer[0];
-                    }
-
-                    int length;
-                    {
-                        byte[] lengthBuffer = new byte[4];
-                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                        length = NetworkConverter.ToInt32(lengthBuffer);
-                    }
-
-                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                    {
-                        if (id == (byte)SerializeId.Profile)
-                        {
-                            this.ProtectedProfiles.Add(Profile.Import(rangeStream, bufferManager));
-                        }
-                    }
-                }
-            }
-
-            protected override Stream Export(BufferManager bufferManager, int count)
-            {
-                BufferStream bufferStream = new BufferStream(bufferManager);
-
-                // Profiles
-                foreach (var value in this.Profiles)
-                {
-                    using (var stream = value.Export(bufferManager))
-                    {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Profile, stream);
-                    }
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
-            }
-
-            private volatile ReadOnlyCollection<Profile> _readOnlyProfiles;
-
-            public IEnumerable<Profile> Profiles
-            {
-                get
-                {
-                    if (_readOnlyProfiles == null)
-                        _readOnlyProfiles = new ReadOnlyCollection<Profile>(this.ProtectedProfiles.ToArray());
-
-                    return _readOnlyProfiles;
-                }
-            }
-
-            private LockedList<Profile> ProtectedProfiles
-            {
-                get
-                {
-                    if (_profiles == null)
-                        _profiles = new LockedList<Profile>(_maxProfileCount);
-
-                    return _profiles;
-                }
-            }
-        }
-
-        private sealed class MetadatasRequestMessage : ItemBase<MetadatasRequestMessage>
-        {
-            private enum SerializeId : byte
-            {
-                Keyword = 0,
-            }
-
-            private KeywordCollection _keywords;
-
-            public MetadatasRequestMessage(IEnumerable<string> keywords)
-            {
-                if (keywords != null) this.ProtectedKeywords.AddRange(keywords);
-            }
-
-            protected override void Initialize()
-            {
-
-            }
-
-            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
-            {
-                for (;;)
-                {
-                    byte id;
-                    {
-                        byte[] idBuffer = new byte[1];
-                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                        id = idBuffer[0];
-                    }
-
-                    int length;
-                    {
-                        byte[] lengthBuffer = new byte[4];
-                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                        length = NetworkConverter.ToInt32(lengthBuffer);
-                    }
-
-                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                    {
-                        if (id == (byte)SerializeId.Keyword)
-                        {
-                            this.ProtectedKeywords.Add(ItemUtilities.GetString(rangeStream));
-                        }
-                    }
-                }
-            }
-
-            protected override Stream Export(BufferManager bufferManager, int count)
-            {
-                BufferStream bufferStream = new BufferStream(bufferManager);
-
-                // Keywords
-                foreach (var value in this.Keywords)
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Keyword, value);
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
-            }
-
-            private volatile ReadOnlyCollection<string> _readOnlyKeywords;
-
-            public IEnumerable<string> Keywords
-            {
-                get
-                {
-                    if (_readOnlyKeywords == null)
-                        _readOnlyKeywords = new ReadOnlyCollection<string>(this.ProtectedKeywords.ToArray());
-
-                    return _readOnlyKeywords;
-                }
-            }
-
-            private KeywordCollection ProtectedKeywords
-            {
-                get
-                {
-                    if (_keywords == null)
-                        _keywords = new KeywordCollection(_maxMetadataRequestCount);
-
-                    return _keywords;
-                }
-            }
-        }
-
-        private sealed class MetadatasMessage : ItemBase<MetadatasMessage>
-        {
-            private enum SerializeId : byte
-            {
-                Keyword = 0,
-                Metadata = 1,
-            }
-
-            private string _keyword;
-            private LockedList<Metadata> _warrants;
-
-            public MetadatasMessage(string keyword, IEnumerable<Metadata> warrants)
-            {
-                this.Keyword = keyword;
-                if (warrants != null) this.ProtectedMetadatas.AddRange(warrants);
-            }
-
-            protected override void Initialize()
-            {
-
-            }
-
-            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
-            {
-                for (;;)
-                {
-                    byte id;
-                    {
-                        byte[] idBuffer = new byte[1];
-                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                        id = idBuffer[0];
-                    }
-
-                    int length;
-                    {
-                        byte[] lengthBuffer = new byte[4];
-                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                        length = NetworkConverter.ToInt32(lengthBuffer);
-                    }
-
-                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                    {
-                        if (id == (byte)SerializeId.Keyword)
-                        {
-                            this.Keyword = ItemUtilities.GetString(rangeStream);
-                        }
-                        else if (id == (byte)SerializeId.Metadata)
-                        {
-                            this.ProtectedMetadatas.Add(Metadata.Import(rangeStream, bufferManager));
-                        }
-                    }
-                }
-            }
-
-            protected override Stream Export(BufferManager bufferManager, int count)
-            {
-                BufferStream bufferStream = new BufferStream(bufferManager);
-
-                // Keyword
-                if (this.Keyword != null)
-                {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Keyword, this.Keyword);
-                }
-                // Metadatas
-                foreach (var value in this.Metadatas)
-                {
-                    using (var stream = value.Export(bufferManager))
-                    {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Metadata, stream);
-                    }
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
-            }
-
-            public string Keyword
-            {
-                get
-                {
-                    return _keyword;
-                }
-                private set
-                {
-                    _keyword = value;
-                }
-            }
-
-            private volatile ReadOnlyCollection<Metadata> _readOnlyMetadatas;
-
-            public IEnumerable<Metadata> Metadatas
-            {
-                get
-                {
-                    if (_readOnlyMetadatas == null)
-                        _readOnlyMetadatas = new ReadOnlyCollection<Metadata>(this.ProtectedMetadatas.ToArray());
-
-                    return _readOnlyMetadatas;
-                }
-            }
-
-            private LockedList<Metadata> ProtectedMetadatas
-            {
-                get
-                {
-                    if (_warrants == null)
-                        _warrants = new LockedList<Metadata>(_maxMetadataCount);
-
-                    return _warrants;
                 }
             }
         }
@@ -1480,7 +970,7 @@ namespace Library.Net.Covenant
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Keys
                 foreach (var value in this.Keys)
@@ -1570,7 +1060,7 @@ namespace Library.Net.Covenant
 
             protected override Stream Export(BufferManager bufferManager, int count)
             {
-                BufferStream bufferStream = new BufferStream(bufferManager);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Locations
                 foreach (var value in this.Locations)
@@ -1607,6 +1097,184 @@ namespace Library.Net.Covenant
                         _locations = new LockedList<Location>(_maxLocationCount);
 
                     return _locations;
+                }
+            }
+        }
+
+        private sealed class MetadatasRequestMessage : ItemBase<MetadatasRequestMessage>
+        {
+            private enum SerializeId : byte
+            {
+                QueryMetadata = 0,
+            }
+
+            private QueryMetadataCollection _queryMetadata;
+
+            public MetadatasRequestMessage(IEnumerable<QueryMetadata> queryMetadatas)
+            {
+                if (queryMetadatas != null) this.ProtectedQueryMetadatas.AddRange(queryMetadatas);
+            }
+
+            protected override void Initialize()
+            {
+
+            }
+
+            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
+            {
+                for (;;)
+                {
+                    byte id;
+                    {
+                        byte[] idBuffer = new byte[1];
+                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
+                        id = idBuffer[0];
+                    }
+
+                    int length;
+                    {
+                        byte[] lengthBuffer = new byte[4];
+                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
+                        length = NetworkConverter.ToInt32(lengthBuffer);
+                    }
+
+                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
+                    {
+                        if (id == (byte)SerializeId.QueryMetadata)
+                        {
+                            this.ProtectedQueryMetadatas.Add(QueryMetadata.Import(rangeStream, bufferManager));
+                        }
+                    }
+                }
+            }
+
+            protected override Stream Export(BufferManager bufferManager, int count)
+            {
+                var bufferStream = new BufferStream(bufferManager);
+
+                // Signatures
+                foreach (var value in this.QueryMetadatas)
+                {
+                    using (var stream = value.Export(bufferManager))
+                    {
+                        ItemUtilities.Write(bufferStream, (byte)SerializeId.QueryMetadata, stream);
+                    }
+                }
+
+                bufferStream.Seek(0, SeekOrigin.Begin);
+                return bufferStream;
+            }
+
+            private volatile ReadOnlyCollection<QueryMetadata> _readOnlyQueryMetadatas;
+
+            public IEnumerable<QueryMetadata> QueryMetadatas
+            {
+                get
+                {
+                    if (_readOnlyQueryMetadatas == null)
+                        _readOnlyQueryMetadatas = new ReadOnlyCollection<QueryMetadata>(this.ProtectedQueryMetadatas.ToArray());
+
+                    return _readOnlyQueryMetadatas;
+                }
+            }
+
+            private QueryMetadataCollection ProtectedQueryMetadatas
+            {
+                get
+                {
+                    if (_queryMetadata == null)
+                        _queryMetadata = new QueryMetadataCollection(_maxMetadataRequestCount);
+
+                    return _queryMetadata;
+                }
+            }
+        }
+
+        private sealed class MetadatasMessage : ItemBase<MetadatasMessage>
+        {
+            private enum SerializeId : byte
+            {
+                Metadata = 0,
+            }
+
+            private LockedList<Metadata> _metadatas;
+
+            public MetadatasMessage(IEnumerable<Metadata> metadatas)
+            {
+                if (metadatas != null) this.ProtectedMetadatas.AddRange(metadatas);
+            }
+
+            protected override void Initialize()
+            {
+
+            }
+
+            protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
+            {
+                for (;;)
+                {
+                    byte id;
+                    {
+                        byte[] idBuffer = new byte[1];
+                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
+                        id = idBuffer[0];
+                    }
+
+                    int length;
+                    {
+                        byte[] lengthBuffer = new byte[4];
+                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
+                        length = NetworkConverter.ToInt32(lengthBuffer);
+                    }
+
+                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
+                    {
+                        if (id == (byte)SerializeId.Metadata)
+                        {
+                            this.ProtectedMetadatas.Add(Metadata.Import(rangeStream, bufferManager));
+                        }
+                    }
+                }
+            }
+
+            protected override Stream Export(BufferManager bufferManager, int count)
+            {
+                var bufferStream = new BufferStream(bufferManager);
+
+                // Metadatas
+                foreach (var value in this.Metadatas)
+                {
+                    using (var stream = value.Export(bufferManager))
+                    {
+                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Metadata, stream);
+                    }
+                }
+
+                bufferStream.Seek(0, SeekOrigin.Begin);
+                return bufferStream;
+            }
+
+            private volatile ReadOnlyCollection<Metadata> _readOnlyMetadatas;
+
+            public IEnumerable<Metadata> Metadatas
+            {
+                get
+                {
+                    if (_readOnlyMetadatas == null)
+                        _readOnlyMetadatas = new ReadOnlyCollection<Metadata>(this.ProtectedMetadatas.ToArray());
+
+                    return _readOnlyMetadatas;
+                }
+            }
+
+            private LockedList<Metadata> ProtectedMetadatas
+            {
+                get
+                {
+                    if (_metadatas == null)
+                        _metadatas = new LockedList<Metadata>(_maxMetadataCount);
+
+                    return _metadatas;
                 }
             }
         }

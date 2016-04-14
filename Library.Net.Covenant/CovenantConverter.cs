@@ -29,7 +29,7 @@ namespace Library.Net.Covenant
             {
                 stream = new RangeStream(item.Export(_bufferManager));
 
-                List<KeyValuePair<byte, Stream>> list = new List<KeyValuePair<byte, Stream>>();
+                var list = new List<KeyValuePair<byte, Stream>>();
 
                 try
                 {
@@ -107,12 +107,12 @@ namespace Library.Net.Covenant
                     list[i].Value.Dispose();
                 }
 
-                BufferStream metadataStream = new BufferStream(_bufferManager);
+                var metadataStream = new BufferStream(_bufferManager);
                 metadataStream.WriteByte((byte)list[0].Key);
 
                 var dataStream = new UniteStream(metadataStream, list[0].Value);
 
-                MemoryStream crcStream = new MemoryStream(Crc32_Castagnoli.ComputeHash(dataStream));
+                var crcStream = new MemoryStream(Crc32_Castagnoli.ComputeHash(dataStream));
                 return new UniteStream(dataStream, crcStream);
             }
             catch (Exception ex)
@@ -150,7 +150,7 @@ namespace Library.Net.Covenant
                     }
 
                     targetStream.Seek(0, SeekOrigin.Begin);
-                    byte type = (byte)targetStream.ReadByte();
+                    var type = (byte)targetStream.ReadByte();
 
                     using (Stream dataStream = new RangeStream(targetStream, targetStream.Position, targetStream.Length - targetStream.Position - 4, true))
                     {
@@ -272,41 +272,6 @@ namespace Library.Net.Covenant
                 using (Stream stream = CovenantConverter.FromBase64String(item.Remove(0, "Node:".Length)))
                 {
                     return CovenantConverter.FromStream<Node>(stream);
-                }
-            }
-            catch (Exception)
-            {
-                throw new FormatException();
-            }
-        }
-
-        public static string ToMetadataString(Metadata item)
-        {
-            if (item == null) throw new ArgumentNullException("item");
-
-            try
-            {
-                using (Stream stream = CovenantConverter.ToStream<Metadata>(item))
-                {
-                    return "Metadata:" + CovenantConverter.ToBase64String(stream);
-                }
-            }
-            catch (Exception)
-            {
-                throw new FormatException();
-            }
-        }
-
-        public static Metadata FromMetadataString(string item)
-        {
-            if (item == null) throw new ArgumentNullException("item");
-            if (!item.StartsWith("Metadata:")) throw new ArgumentException("item");
-
-            try
-            {
-                using (Stream stream = CovenantConverter.FromBase64String(item.Remove(0, "Metadata:".Length)))
-                {
-                    return CovenantConverter.FromStream<Metadata>(stream);
                 }
             }
             catch (Exception)
