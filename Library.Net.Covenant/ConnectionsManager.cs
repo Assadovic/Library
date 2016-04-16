@@ -31,14 +31,13 @@ namespace Library.Net.Covenant
 
         private LockedList<ConnectionManager> _connectionManagers;
         private MessagesManager _messagesManager;
-        private LocationManager _locationManager;
+        private LocationsManager _locationsManager;
 
         private LockedHashDictionary<Node, List<Key>> _pushLocationsRequestDictionary = new LockedHashDictionary<Node, List<Key>>();
         private LockedHashDictionary<Node, List<string>> _pushLinkMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
-        private LockedHashDictionary<Node, List<string>> _pushMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
+        private LockedHashDictionary<Node, List<string>> _pushStoreMetadatasRequestDictionary = new LockedHashDictionary<Node, List<string>>();
 
         private WatchTimer _refreshTimer;
-        private WatchTimer _mediateTimer;
 
         private LockedList<Node> _creatingNodes;
 
@@ -48,6 +47,7 @@ namespace Library.Net.Covenant
 
         private VolatileHashSet<string> _succeededUris;
 
+        private VolatileHashSet<Key> _pushLocationsRequestList;
         private VolatileHashSet<string> _pushLinkMetadatasRequestList;
         private VolatileHashSet<string> _pushStoreMetadatasRequestList;
 
@@ -95,11 +95,6 @@ namespace Library.Net.Covenant
 
         private const int _routeTableMinCount = 100;
 
-        private const HashAlgorithm _hashAlgorithm = HashAlgorithm.Sha256;
-
-        public static readonly string Keyword_Link = "_link_";
-        public static readonly string Keyword_Store = "_store_";
-
         //#if DEBUG
         //        private const int _downloadingConnectionCountLowerLimit = 0;
         //        private const int _uploadingConnectionCountLowerLimit = 0;
@@ -131,7 +126,7 @@ namespace Library.Net.Covenant
                 }
             };
 
-            _locationManager = new LocationManager();
+            _locationsManager = new LocationsManager();
 
             _creatingNodes = new LockedList<Node>();
 
@@ -141,52 +136,26 @@ namespace Library.Net.Covenant
 
             _succeededUris = new VolatileHashSet<string>(new TimeSpan(1, 0, 0));
 
+            _pushLocationsRequestList = new VolatileHashSet<Key>(new TimeSpan(0, 3, 0));
             _pushLinkMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
             _pushStoreMetadatasRequestList = new VolatileHashSet<string>(new TimeSpan(0, 3, 0));
 
             _refreshTimer = new WatchTimer(this.RefreshTimer, new TimeSpan(0, 0, 5));
-            _mediateTimer = new WatchTimer(this.MediateTimer, new TimeSpan(0, 5, 0));
         }
 
         private void RefreshTimer()
         {
+            _locationsManager.Refresh();
+
             _waitingNodes.TrimExcess();
             _cuttingNodes.TrimExcess();
             _removeNodes.TrimExcess();
 
             _succeededUris.TrimExcess();
 
+            _pushLocationsRequestList.TrimExcess();
             _pushLinkMetadatasRequestList.TrimExcess();
             _pushStoreMetadatasRequestList.TrimExcess();
-        }
-
-        private void MediateTimer()
-        {
-            var otherNodes = new List<Node>();
-
-            lock (this.ThisLock)
-            {
-                otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
-            }
-
-            var messageManagers = new List<MessageManager>();
-
-            foreach (var node in otherNodes)
-            {
-                messageManagers.Add(_messagesManager[node]);
-            }
-
-            foreach (var messageManager in messageManagers)
-            {
-                if (messageManager.Priority > 32)
-                {
-                    messageManager.Priority.Decrement();
-                }
-                else if (messageManager.Priority < -32)
-                {
-                    messageManager.Priority.Increment();
-                }
-            }
         }
 
         public GetSignaturesEventHandler GetLockSignaturesEvent
@@ -290,7 +259,6 @@ namespace Library.Net.Covenant
                         contexts.Add(new InformationContext("Id", messageManager.Id));
                         contexts.Add(new InformationContext("Node", connectionManager.Node));
                         contexts.Add(new InformationContext("Uri", _nodeToUri[connectionManager.Node]));
-                        contexts.Add(new InformationContext("Priority", (long)messageManager.Priority));
                         contexts.Add(new InformationContext("ReceivedByteCount", (long)messageManager.ReceivedByteCount + connectionManager.ReceivedByteCount));
                         contexts.Add(new InformationContext("SentByteCount", (long)messageManager.SentByteCount + connectionManager.SentByteCount));
                         contexts.Add(new InformationContext("Direction", connectionManager.Direction));
@@ -419,18 +387,6 @@ namespace Library.Net.Covenant
                 {
                     _routeTable.Remove(node);
                 }
-            }
-        }
-
-        private double GetPriority(Node node)
-        {
-            const int average = 256;
-
-            lock (this.ThisLock)
-            {
-                var priority = (long)_messagesManager[node].Priority;
-
-                return ((double)(priority + average)) / (average * 2);
             }
         }
 
@@ -703,7 +659,6 @@ namespace Library.Net.Covenant
         private class NodeSortItem
         {
             public Node Node { get; set; }
-            public long Priority { get; set; }
             public DateTime LastPullTime { get; set; }
         }
 
@@ -716,17 +671,10 @@ namespace Library.Net.Covenant
 
             var refreshStopwatch = new Stopwatch();
 
-            var pushBlockDiffusionStopwatch = new Stopwatch();
-            pushBlockDiffusionStopwatch.Start();
-            var pushBlockUploadStopwatch = new Stopwatch();
-            pushBlockUploadStopwatch.Start();
-            var pushBlockDownloadStopwatch = new Stopwatch();
-            pushBlockDownloadStopwatch.Start();
-
-            var pushMetadataUploadStopwatch = new Stopwatch();
-            pushMetadataUploadStopwatch.Start();
-            var pushMetadataDownloadStopwatch = new Stopwatch();
-            pushMetadataDownloadStopwatch.Start();
+            var pushUploadStopwatch = new Stopwatch();
+            pushUploadStopwatch.Start();
+            var pushDownloadStopwatch = new Stopwatch();
+            pushDownloadStopwatch.Start();
 
             // 電子署名を検証して破損しているMetadataを検索し、削除。
             {
@@ -789,7 +737,6 @@ namespace Library.Net.Covenant
                             nodeSortItems.Add(new NodeSortItem()
                             {
                                 Node = connectionManager.Node,
-                                Priority = _messagesManager[connectionManager.Node].Priority,
                                 LastPullTime = _messagesManager[connectionManager.Node].LastPullTime,
                             });
                         }
@@ -797,9 +744,6 @@ namespace Library.Net.Covenant
 
                     nodeSortItems.Sort((x, y) =>
                     {
-                        int c = x.Priority.CompareTo(y.Priority);
-                        if (c != 0) return c;
-
                         return x.LastPullTime.CompareTo(y.LastPullTime);
                     });
 
@@ -878,6 +822,7 @@ namespace Library.Net.Covenant
                                         _linkMetadataLastAccessTimes.Remove(signature);
                                     }
                                 }
+
                                 // Store
                                 {
                                     var removeSignatures = new HashSet<string>();
@@ -917,11 +862,11 @@ namespace Library.Net.Covenant
                     });
                 }
 
-                // Metadataの拡散アップロード
+                // 拡散アップロード
                 if (connectionCount >= _uploadingConnectionCountLowerLimit
-                    && pushMetadataUploadStopwatch.Elapsed.TotalSeconds >= 30)
+                    && pushUploadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
-                    pushMetadataUploadStopwatch.Restart();
+                    pushUploadStopwatch.Restart();
 
                     var baseNode = this.BaseNode;
 
@@ -937,6 +882,28 @@ namespace Library.Net.Covenant
                     foreach (var node in otherNodes)
                     {
                         messageManagers[node] = _messagesManager[node];
+                    }
+
+                    foreach (var key in _locationsManager.GetKeys())
+                    {
+                        try
+                        {
+                            var requestNodes = new List<Node>();
+
+                            foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 1))
+                            {
+                                requestNodes.Add(node);
+                            }
+
+                            for (int i = 0; i < requestNodes.Count; i++)
+                            {
+                                messageManagers[requestNodes[i]].PullLocationsRequest.Add(key);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e);
+                        }
                     }
 
                     foreach (var signature in _settings.GetLinkSignatures())
@@ -984,11 +951,11 @@ namespace Library.Net.Covenant
                     }
                 }
 
-                // Metadataのダウンロード
+                // ダウンロード
                 if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushMetadataDownloadStopwatch.Elapsed.TotalSeconds >= 30)
+                    && pushDownloadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
-                    pushMetadataDownloadStopwatch.Restart();
+                    pushDownloadStopwatch.Restart();
 
                     var baseNode = this.BaseNode;
 
@@ -1006,42 +973,115 @@ namespace Library.Net.Covenant
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushLinkMetadatasRequestList = new List<string>();
+                    var pushLocationsRequestList = new HashSet<Key>();
+                    var pushLinkMetadatasRequestList = new HashSet<string>();
+                    var pushStoreMetadatasRequestList = new HashSet<string>();
 
                     {
+                        // Location
                         {
-                            var array = _pushMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
-                                {
-                                    pushLinkMetadatasRequestList.Add(array[i]);
-
-                                    count--;
-                                }
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = messageManager.PullMetadatasRequest.ToArray();
+                                var array = _pushLocationsRequestList.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
+                                    pushLocationsRequestList.Add(array[i]);
+
+                                    count--;
+                                }
+                            }
+
+                            foreach (var pair in messageManagers)
+                            {
+                                var node = pair.Key;
+                                var messageManager = pair.Value;
+
+                                {
+                                    var array = messageManager.PullLocationsRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
                                     {
-                                        pushLinkMetadatasRequestList.Add(array[i]);
+                                        pushLocationsRequestList.Add(array[i]);
+
+                                        count--;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Link
+                        {
+                            {
+                                var array = _pushLinkMetadatasRequestList.ToArray();
+                                _random.Shuffle(array);
+
+                                int count = _maxMetadataRequestCount;
+
+                                for (int i = 0; count > 0 && i < array.Length; i++)
+                                {
+                                    pushLinkMetadatasRequestList.Add(array[i]);
+
+                                    count--;
+                                }
+                            }
+
+                            foreach (var pair in messageManagers)
+                            {
+                                var node = pair.Key;
+                                var messageManager = pair.Value;
+
+                                {
+                                    var array = messageManager.PullLinkMetadatasRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
+                                    {
+                                        pushLinkMetadatasRequestList.Add(array[i].Key);
+
+                                        count--;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Store
+                        {
+                            {
+                                var array = _pushStoreMetadatasRequestList.ToArray();
+                                _random.Shuffle(array);
+
+                                int count = _maxMetadataRequestCount;
+
+                                for (int i = 0; count > 0 && i < array.Length; i++)
+                                {
+                                    pushStoreMetadatasRequestList.Add(array[i]);
+
+                                    count--;
+                                }
+                            }
+
+                            foreach (var pair in messageManagers)
+                            {
+                                var node = pair.Key;
+                                var messageManager = pair.Value;
+
+                                {
+                                    var array = messageManager.PullStoreMetadatasRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
+                                    {
+                                        pushStoreMetadatasRequestList.Add(array[i].Key);
 
                                         count--;
                                     }
@@ -1050,54 +1090,157 @@ namespace Library.Net.Covenant
                         }
                     }
 
-                    _random.Shuffle(pushLinkMetadatasRequestList);
-
                     {
-                        var pushMetadatasRequestDictionary = new Dictionary<Node, HashSet<string>>();
-
-                        foreach (var signature in pushLinkMetadatasRequestList)
+                        // Location
                         {
-                            try
+                            var pushLocationsRequestDictionary = new Dictionary<Node, HashSet<Key>>();
+
+                            foreach (var key in pushLocationsRequestList.Randomize())
                             {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                                try
                                 {
-                                    requestNodes.Add(node);
+                                    var requestNodes = new List<Node>();
+
+                                    foreach (var node in Kademlia<Node>.Search(key.Hash, otherNodes, 2))
+                                    {
+                                        requestNodes.Add(node);
+                                    }
+
+                                    for (int i = 0; i < requestNodes.Count; i++)
+                                    {
+                                        HashSet<Key> collection;
+
+                                        if (!pushLocationsRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<Key>();
+                                            pushLocationsRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(key);
+                                        }
+                                    }
                                 }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
+                                catch (Exception e)
                                 {
-                                    HashSet<string> collection;
-
-                                    if (!pushMetadatasRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<string>();
-                                        pushMetadatasRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(signature);
-                                    }
+                                    Log.Error(e);
                                 }
                             }
-                            catch (Exception e)
+
+                            lock (_pushLocationsRequestDictionary.ThisLock)
                             {
-                                Log.Error(e);
+                                _pushLocationsRequestDictionary.Clear();
+
+                                foreach (var pair in pushLocationsRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushLocationsRequestDictionary.Add(node, new List<Key>(targets.Randomize()));
+                                }
                             }
                         }
 
-                        lock (_pushMetadatasRequestDictionary.ThisLock)
+                        // Link
                         {
-                            _pushMetadatasRequestDictionary.Clear();
+                            var pushLinkMetadatasRequestDictionary = new Dictionary<Node, HashSet<string>>();
 
-                            foreach (var pair in pushMetadatasRequestDictionary)
+                            foreach (var signature in pushLinkMetadatasRequestList.Randomize())
                             {
-                                var node = pair.Key;
-                                var targets = pair.Value;
+                                try
+                                {
+                                    var requestNodes = new List<Node>();
 
-                                _pushMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                    foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                                    {
+                                        requestNodes.Add(node);
+                                    }
+
+                                    for (int i = 0; i < requestNodes.Count; i++)
+                                    {
+                                        HashSet<string> collection;
+
+                                        if (!pushLinkMetadatasRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<string>();
+                                            pushLinkMetadatasRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(signature);
+                                        }
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Error(e);
+                                }
+                            }
+
+                            lock (_pushLinkMetadatasRequestDictionary.ThisLock)
+                            {
+                                _pushLinkMetadatasRequestDictionary.Clear();
+
+                                foreach (var pair in pushLinkMetadatasRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushLinkMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                }
+                            }
+                        }
+
+                        // Store
+                        {
+                            var pushStoreMetadatasRequestDictionary = new Dictionary<Node, HashSet<string>>();
+
+                            foreach (var signature in pushStoreMetadatasRequestList.Randomize())
+                            {
+                                try
+                                {
+                                    var requestNodes = new List<Node>();
+
+                                    foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                                    {
+                                        requestNodes.Add(node);
+                                    }
+
+                                    for (int i = 0; i < requestNodes.Count; i++)
+                                    {
+                                        HashSet<string> collection;
+
+                                        if (!pushStoreMetadatasRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<string>();
+                                            pushStoreMetadatasRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(signature);
+                                        }
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Error(e);
+                                }
+                            }
+
+                            lock (_pushStoreMetadatasRequestDictionary.ThisLock)
+                            {
+                                _pushStoreMetadatasRequestDictionary.Clear();
+
+                                foreach (var pair in pushStoreMetadatasRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushStoreMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                }
                             }
                         }
                     }
@@ -1117,13 +1260,11 @@ namespace Library.Net.Covenant
             {
                 var messageManager = _messagesManager[connectionManager.Node];
 
-                var checkTime = new Stopwatch();
-                checkTime.Start();
                 var nodeUpdateTime = new Stopwatch();
                 var updateTime = new Stopwatch();
                 updateTime.Start();
-                var blockDiffusionTime = new Stopwatch();
-                blockDiffusionTime.Start();
+                var locationUpdateTime = new Stopwatch();
+                locationUpdateTime.Start();
                 var metadataUpdateTime = new Stopwatch();
                 metadataUpdateTime.Start();
 
@@ -1138,25 +1279,6 @@ namespace Library.Net.Covenant
                     lock (this.ThisLock)
                     {
                         connectionCount = _connectionManagers.Count;
-                    }
-
-                    // Check
-                    if (messageManager.Priority < 0 && checkTime.Elapsed.TotalSeconds >= 5)
-                    {
-                        checkTime.Restart();
-
-                        if ((DateTime.UtcNow - messageManager.LastPullTime).TotalMinutes >= 5)
-                        {
-                            lock (this.ThisLock)
-                            {
-                                this.RemoveNode(connectionManager.Node);
-                            }
-
-                            connectionManager.PushCancel();
-
-                            Debug.WriteLine("ConnectionManager: Push Cancel");
-                            return;
-                        }
                     }
 
                     // PushNodes
@@ -1199,249 +1321,126 @@ namespace Library.Net.Covenant
                     {
                         updateTime.Restart();
 
-                        // PushBlocksLink
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
-                        {
-                            List<Key> targetList = null;
-
-                            lock (_pushBlocksLinkDictionary.ThisLock)
-                            {
-                                if (_pushBlocksLinkDictionary.TryGetValue(connectionManager.Node, out targetList))
-                                {
-                                    _pushBlocksLinkDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksLink.AddRange(targetList);
-                                }
-                            }
-
-                            if (targetList != null)
-                            {
-                                try
-                                {
-                                    connectionManager.PushBlocksLink(targetList);
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksLink ({0})", targetList.Count));
-                                    _pushBlockLinkCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksLink.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
-                            }
-                        }
-
-                        // PushBlocksRequest
+                        // PushLocationsRequest
                         if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
                             List<Key> targetList = null;
 
-                            lock (_pushBlocksRequestDictionary.ThisLock)
+                            lock (_pushLocationsRequestDictionary.ThisLock)
                             {
-                                if (_pushBlocksRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                if (_pushLocationsRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
-                                    _pushBlocksRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksRequest.AddRange(targetList);
+                                    _pushLocationsRequestDictionary.Remove(connectionManager.Node);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
-                                {
-                                    connectionManager.PushBlocksRequest(targetList);
+                                connectionManager.PushLocationsRequest(targetList);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksRequest ({0})", targetList.Count));
-                                    _pushBlockRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
+                                foreach (var item in targetList)
                                 {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksRequest.Remove(item);
-                                    }
-
-                                    throw e;
+                                    _pushLocationsRequestList.Remove(item);
                                 }
+
+                                Debug.WriteLine(string.Format("ConnectionManager: Push LocationsRequest ({0})", targetList.Count));
+                                _pushLocationRequestCount.Add(targetList.Count);
                             }
                         }
 
                         // PushMetadatasRequest
                         if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
-                            List<string> targetList = null;
+                            var queryList = new List<QueryMetadata>();
 
-                            lock (_pushMetadatasRequestDictionary.ThisLock)
                             {
-                                if (_pushMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                // Link
                                 {
-                                    _pushMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushMetadatasRequest.AddRange(targetList);
-                                }
-                            }
+                                    var targetList = new List<string>();
 
-                            if (targetList != null)
-                            {
-                                try
-                                {
-                                    connectionManager.PushMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
+                                    lock (_pushLinkMetadatasRequestDictionary.ThisLock)
                                     {
-                                        _pushMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push MetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushMetadatasRequest.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
-                            }
-                        }
-                    }
-
-                    if (blockDiffusionTime.Elapsed.TotalSeconds >= connectionCount)
-                    {
-                        blockDiffusionTime.Restart();
-
-                        // PushBlock
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
-                        {
-                            Key key = null;
-
-                            lock (_diffusionBlocksDictionary.ThisLock)
-                            {
-                                Queue<Key> queue;
-
-                                if (_diffusionBlocksDictionary.TryGetValue(connectionManager.Node, out queue))
-                                {
-                                    if (queue.Count > 0)
-                                    {
-                                        key = queue.Dequeue();
-                                        messageManager.StockBlocks.Add(key);
-                                    }
-                                }
-                            }
-
-                            if (key != null)
-                            {
-                                var buffer = new ArraySegment<byte>();
-
-                                try
-                                {
-                                    buffer = _cacheManager[key];
-
-                                    connectionManager.PushBlock(key, buffer);
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push Block (Diffusion) ({0})", NetworkConverter.ToBase64UrlString(key.Hash)));
-                                    _pushBlockCount.Increment();
-
-                                    messageManager.PullBlocksRequest.Remove(key);
-                                }
-                                catch (ConnectionManagerException e)
-                                {
-                                    messageManager.StockBlocks.Remove(key);
-
-                                    throw e;
-                                }
-                                catch (BlockNotFoundException)
-                                {
-                                    messageManager.StockBlocks.Remove(key);
-                                }
-                                finally
-                                {
-                                    if (buffer.Array != null)
-                                    {
-                                        _bufferManager.ReturnBuffer(buffer.Array);
-                                    }
-                                }
-
-                                _settings.UploadBlocksRequest.Remove(key);
-                                _settings.DiffusionBlocksRequest.Remove(key);
-
-                                this.OnUploadedEvent(new Key[] { key });
-                            }
-                        }
-                    }
-
-                    if (_random.NextDouble() < this.GetPriority(connectionManager.Node))
-                    {
-                        // PushBlock
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
-                        {
-                            Key key = null;
-
-                            lock (_uploadBlocksDictionary.ThisLock)
-                            {
-                                Queue<Key> queue;
-
-                                if (_uploadBlocksDictionary.TryGetValue(connectionManager.Node, out queue))
-                                {
-                                    if (queue.Count > 0)
-                                    {
-                                        key = queue.Dequeue();
-                                        messageManager.StockBlocks.Add(key);
-                                    }
-                                }
-                            }
-
-                            if (key != null)
-                            {
-                                var buffer = new ArraySegment<byte>();
-
-                                try
-                                {
-                                    buffer = _cacheManager[key];
-
-                                    connectionManager.PushBlock(key, buffer);
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push Block (Upload) ({0})", NetworkConverter.ToBase64UrlString(key.Hash)));
-                                    _pushBlockCount.Increment();
-
-                                    messageManager.PullBlocksRequest.Remove(key);
-
-                                    messageManager.Priority.Decrement();
-
-                                    // Infomation
-                                    {
-                                        if (_relayBlocks.Contains(key))
+                                        if (_pushLinkMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                         {
-                                            _relayBlockCount.Increment();
+                                            _pushLinkMetadatasRequestDictionary.Remove(connectionManager.Node);
                                         }
                                     }
-                                }
-                                catch (ConnectionManagerException e)
-                                {
-                                    messageManager.StockBlocks.Remove(key);
 
-                                    throw e;
-                                }
-                                catch (BlockNotFoundException)
-                                {
-                                    messageManager.StockBlocks.Remove(key);
-                                }
-                                finally
-                                {
-                                    if (buffer.Array != null)
+                                    foreach (var signature in targetList)
                                     {
-                                        _bufferManager.ReturnBuffer(buffer.Array);
+                                        var metadata = _settings.GetLinkMetadata(signature);
+                                        queryList.Add(new QueryMetadata(MetadataType.Link, metadata?.CreationTime ?? DateTime.MinValue, signature));
                                     }
                                 }
 
-                                _settings.UploadBlocksRequest.Remove(key);
-                                _settings.DiffusionBlocksRequest.Remove(key);
+                                // Store
+                                {
+                                    var targetList = new List<string>();
 
-                                this.OnUploadedEvent(new Key[] { key });
+                                    lock (_pushStoreMetadatasRequestDictionary.ThisLock)
+                                    {
+                                        if (_pushStoreMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                        {
+                                            _pushStoreMetadatasRequestDictionary.Remove(connectionManager.Node);
+                                        }
+                                    }
+
+                                    foreach (var signature in targetList)
+                                    {
+                                        var metadata = _settings.GetStoreMetadata(signature);
+                                        queryList.Add(new QueryMetadata(MetadataType.Store, metadata?.CreationTime ?? DateTime.MinValue, signature));
+                                    }
+                                }
+                            }
+
+                            if (queryList.Count > 0)
+                            {
+                                connectionManager.PushMetadatasRequest(queryList);
+
+                                foreach (var item in queryList)
+                                {
+                                    if (item.Type == MetadataType.Link)
+                                    {
+                                        _pushLinkMetadatasRequestList.Remove(item.Signature);
+                                    }
+                                    else if (item.Type == MetadataType.Link)
+                                    {
+                                        _pushStoreMetadatasRequestList.Remove(item.Signature);
+                                    }
+                                }
+
+                                Debug.WriteLine(string.Format("ConnectionManager: Push SeedsRequest ({0})", queryList.Count));
+                                _pushMetadataRequestCount.Add(queryList.Count);
+                            }
+                        }
+                    }
+
+                    if (locationUpdateTime.Elapsed.TotalSeconds >= 30)
+                    {
+                        locationUpdateTime.Restart();
+
+                        // PushLocations
+                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
+                        {
+                            var locations = new List<Location>();
+
+                            // Link
+                            foreach (var key in messageManager.PullLocationsRequest.Randomize())
+                            {
+                                var count = _maxLocationCount - locations.Count;
+                                if (count <= 0) break;
+
+                                locations.AddRange(_locationsManager.GetLocations(key).Take(count));
+                            }
+
+                            if (locations.Count > 0)
+                            {
+                                _random.Shuffle(locations);
+
+                                connectionManager.PushLocations(locations);
+
+                                Debug.WriteLine(string.Format("ConnectionManager: Push Locations ({0})", locations.Count));
+                                _pushLocationCount.Add(locations.Count);
                             }
                         }
                     }
@@ -1453,21 +1452,15 @@ namespace Library.Net.Covenant
                         // PushMetadatas
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
-                            var signatures = messageManager.PullMetadatasRequest.ToArray();
-
                             var linkMetadatas = new List<Metadata>();
 
                             // Link
-                            _random.Shuffle(signatures);
-                            foreach (var signature in signatures)
+                            foreach (var pair in messageManager.PullLinkMetadatasRequest.Randomize())
                             {
-                                Metadata tempMetadata = _settings.GetLinkMetadata(signature);
+                                Metadata tempMetadata = _settings.GetLinkMetadata(pair.Key);
                                 if (tempMetadata == null) continue;
 
-                                DateTime creationTime;
-
-                                if (!messageManager.StockLinkMetadatas.TryGetValue(signature, out creationTime)
-                                    || tempMetadata.CreationTime > creationTime)
+                                if (tempMetadata.CreationTime > pair.Value)
                                 {
                                     linkMetadatas.Add(tempMetadata);
 
@@ -1478,16 +1471,12 @@ namespace Library.Net.Covenant
                             var storeMetadatas = new List<Metadata>();
 
                             // Store
-                            _random.Shuffle(signatures);
-                            foreach (var signature in signatures)
+                            foreach (var pair in messageManager.PullStoreMetadatasRequest.Randomize())
                             {
-                                Metadata tempMetadata = _settings.GetStoreMetadata(signature);
+                                Metadata tempMetadata = _settings.GetStoreMetadata(pair.Key);
                                 if (tempMetadata == null) continue;
 
-                                DateTime creationTime;
-
-                                if (!messageManager.StockStoreMetadatas.TryGetValue(signature, out creationTime)
-                                    || tempMetadata.CreationTime > creationTime)
+                                if (tempMetadata.CreationTime > pair.Value)
                                 {
                                     storeMetadatas.Add(tempMetadata);
 
@@ -1507,20 +1496,6 @@ namespace Library.Net.Covenant
 
                                 Debug.WriteLine(string.Format("ConnectionManager: Push Metadatas ({0})", metadatas.Count));
                                 _pushMetadataCount.Add(metadatas.Count);
-
-                                foreach (var metadata in linkMetadatas)
-                                {
-                                    var signature = metadata.Certificate.ToString();
-
-                                    messageManager.StockLinkMetadatas[signature] = metadata.CreationTime;
-                                }
-
-                                foreach (var metadata in storeMetadatas)
-                                {
-                                    var signature = metadata.Certificate.ToString();
-
-                                    messageManager.StockStoreMetadatas[signature] = metadata.CreationTime;
-                                }
                             }
                         }
                     }
@@ -1554,89 +1529,45 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void connectionManager_BlocksLinkEvent(object sender, PullBlocksLinkEventArgs e)
+        private void connectionManager_LocationsRequestEvent(object sender, PullLocationsRequestEventArgs e)
         {
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullBlocksLink.Count > _maxBlockLinkCount * messageManager.PullBlocksLink.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullLocationsRequest.Count > _maxLocationRequestCount * messageManager.PullLocationsRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BlocksLink ({0})", e.Keys.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull LocationsRequest ({0})", e.Keys.Count()));
 
-            foreach (var key in e.Keys.Take(_maxBlockLinkCount))
+            foreach (var key in e.Keys.Take(_maxLocationRequestCount))
             {
                 if (!ConnectionsManager.Check(key)) continue;
 
-                messageManager.PullBlocksLink.Add(key);
-                _pullBlockLinkCount.Increment();
+                messageManager.PullLocationsRequest.Add(key);
+
+                _pullLocationRequestCount.Increment();
             }
         }
 
-        private void connectionManager_BlocksRequestEvent(object sender, PullBlocksRequestEventArgs e)
+        private void connectionManager_LocationsEvent(object sender, PullLocationsEventArgs e)
         {
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullBlocksRequest.Count > _maxBlockRequestCount * messageManager.PullBlocksRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullLocationsCount.Get() > _maxLocationCount * messageManager.PullLocationsCount.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull BlocksRequest ({0})", e.Keys.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull Locations ({0})", e.Locations.Count()));
 
-            foreach (var key in e.Keys.Take(_maxBlockRequestCount))
+            foreach (var location in e.Locations.Take(_maxLocationCount))
             {
-                if (!ConnectionsManager.Check(key)) continue;
-
-                messageManager.PullBlocksRequest.Add(key);
-                _pullBlockRequestCount.Increment();
+                _locationsManager.SetLocation(location);
+                _pullLocationCount.Increment();
             }
-        }
 
-        private void connectionManager_BlockEvent(object sender, PullBlockEventArgs e)
-        {
-            // tryですべて囲まないとメモリーリークの恐れあり。
-            try
-            {
-                var connectionManager = sender as ConnectionManager;
-                if (connectionManager == null) return;
-
-                var messageManager = _messagesManager[connectionManager.Node];
-
-                if (!ConnectionsManager.Check(e.Key) || e.Value.Array == null) return;
-
-                _cacheManager[e.Key] = e.Value;
-
-                if (messageManager.PushBlocksRequest.Remove(e.Key))
-                {
-                    Debug.WriteLine(string.Format("ConnectionManager: Pull Block (Upload) ({0})", NetworkConverter.ToBase64UrlString(e.Key.Hash)));
-
-                    messageManager.LastPullTime = DateTime.UtcNow;
-                    messageManager.Priority.Increment();
-
-                    // Information
-                    {
-                        _relayBlocks.Add(e.Key);
-                    }
-                }
-                else
-                {
-                    Debug.WriteLine(string.Format("ConnectionManager: Pull Block (Diffusion) ({0})", NetworkConverter.ToBase64UrlString(e.Key.Hash)));
-
-                    _settings.DiffusionBlocksRequest.Add(e.Key);
-                }
-
-                messageManager.StockBlocks.Add(e.Key);
-                _pullBlockCount.Increment();
-            }
-            finally
-            {
-                if (e.Value.Array != null)
-                {
-                    _bufferManager.ReturnBuffer(e.Value.Array);
-                }
-            }
+            messageManager.PullLocationsCount.Add(e.Locations.Count());
         }
 
         private void connectionManager_MetadatasRequestEvent(object sender, PullMetadatasRequestEventArgs e)
@@ -1646,18 +1577,27 @@ namespace Library.Net.Covenant
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.PullMetadatasRequest.Count > _maxMetadataRequestCount * messageManager.PullMetadatasRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullLinkMetadatasRequest.Count > (_maxMetadataRequestCount / 2) * messageManager.PullLinkMetadatasRequest.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullStoreMetadatasRequest.Count > (_maxMetadataRequestCount / 2) * messageManager.PullStoreMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MetadatasRequest ({0})", e.Signatures.Count()));
+            Debug.WriteLine(string.Format("ConnectionManager: Pull MetadatasRequest ({0})", e.QueryMetadatas.Count()));
 
-            foreach (var signature in e.Signatures.Take(_maxMetadataRequestCount))
+            foreach (var queryMetadata in e.QueryMetadatas.Take(_maxMetadataRequestCount))
             {
-                if (!ConnectionsManager.Check(signature)) continue;
+                if (!ConnectionsManager.Check(queryMetadata.Signature)) continue;
 
-                messageManager.PullMetadatasRequest.Add(signature);
+                if (queryMetadata.Type == MetadataType.Link)
+                {
+                    messageManager.PullLinkMetadatasRequest[queryMetadata.Signature] = queryMetadata.CreationTime;
+                    _linkMetadataLastAccessTimes[queryMetadata.Signature] = DateTime.UtcNow;
+                }
+                else if (queryMetadata.Type == MetadataType.Store)
+                {
+                    messageManager.PullStoreMetadatasRequest[queryMetadata.Signature] = queryMetadata.CreationTime;
+                    _storeMetadataLastAccessTimes[queryMetadata.Signature] = DateTime.UtcNow;
+                }
+
                 _pullMetadataRequestCount.Increment();
-
-                _metadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -1668,8 +1608,7 @@ namespace Library.Net.Covenant
 
             var messageManager = _messagesManager[connectionManager.Node];
 
-            if (messageManager.StockLinkMetadatas.Count > _maxMetadataCount * messageManager.StockLinkMetadatas.SurvivalTime.TotalMinutes) return;
-            if (messageManager.StockStoreMetadatas.Count > _maxMetadataCount * messageManager.StockStoreMetadatas.SurvivalTime.TotalMinutes) return;
+            if (messageManager.PullMetadatasCount.Get() > _maxMetadataCount * messageManager.PullMetadatasCount.SurvivalTime.TotalMinutes) return;
 
             Debug.WriteLine(string.Format("ConnectionManager: Pull Metadatas ({0})", e.Metadatas.Count()));
 
@@ -1679,21 +1618,19 @@ namespace Library.Net.Covenant
                 {
                     var signature = metadata.Certificate.ToString();
 
-                    messageManager.StockLinkMetadatas[signature] = metadata.CreationTime;
-
-                    _metadataLastAccessTimes[signature] = DateTime.UtcNow;
+                    _linkMetadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
                 else if (_settings.SetStoreMetadata(metadata))
                 {
                     var signature = metadata.Certificate.ToString();
 
-                    messageManager.StockStoreMetadatas[signature] = metadata.CreationTime;
-
-                    _metadataLastAccessTimes[signature] = DateTime.UtcNow;
+                    _storeMetadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
             }
+
+            messageManager.PullMetadatasCount.Add(e.Metadatas.Count());
         }
 
         private void connectionManager_PullCancelEvent(object sender, EventArgs e)
@@ -1743,11 +1680,6 @@ namespace Library.Net.Covenant
 
         #endregion
 
-        protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
-        {
-            _uploadedEvent?.Invoke(this, keys);
-        }
-
         public void SetBaseNode(Node baseNode)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -1774,57 +1706,15 @@ namespace Library.Net.Covenant
             }
         }
 
-        public bool IsDownloadWaiting(Key key)
+        public IEnumerable<Location> GetLocation(Key key)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
             lock (this.ThisLock)
             {
-                if (_downloadBlocks.Contains(key))
-                    return true;
+                _pushLocationsRequestList.Add(key);
 
-                return false;
-            }
-        }
-
-        public bool IsUploadWaiting(Key key)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                if (_settings.UploadBlocksRequest.Contains(key))
-                    return true;
-
-                return false;
-            }
-        }
-
-        public void Download(Key key)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _downloadBlocks.Add(key);
-            }
-        }
-
-        public void Upload(Key key)
-        {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-
-            lock (this.ThisLock)
-            {
-                _settings.UploadBlocksRequest.Add(key);
-            }
-        }
-
-        public void SendMetadatasRequest(string signature)
-        {
-            lock (this.ThisLock)
-            {
-                _pushMetadatasRequestList.Add(signature);
+                return _locationsManager.GetLocations(key);
             }
         }
 
@@ -1834,6 +1724,8 @@ namespace Library.Net.Covenant
 
             lock (this.ThisLock)
             {
+                _pushLinkMetadatasRequestList.Add(signature);
+
                 return _settings.GetLinkMetadata(signature);
             }
         }
@@ -1844,6 +1736,8 @@ namespace Library.Net.Covenant
 
             lock (this.ThisLock)
             {
+                _pushStoreMetadatasRequestList.Add(signature);
+
                 return _settings.GetStoreMetadata(signature);
             }
         }
@@ -2271,135 +2165,170 @@ namespace Library.Net.Covenant
             }
         }
 
-        private class LocationManager
+        private class LocationsManager : IThisLock
         {
             private LockedHashDictionary<Key, Info> _locations = new LockedHashDictionary<Key, Info>();
 
-            public LocationManager()
+            private readonly object _thisLock = new object();
+
+            public LocationsManager()
             {
 
+            }
+
+            public void Refresh()
+            {
+                lock (this.ThisLock)
+                {
+                    foreach (var key in _locations.Keys.ToArray())
+                    {
+                        this.GetLocations(key);
+                    }
+                }
+            }
+
+            public IEnumerable<Key> GetKeys()
+            {
+                lock (this.ThisLock)
+                {
+                    return _locations.Keys.ToArray();
+                }
             }
 
             public IEnumerable<Location> GetLocations(Key key)
             {
-                var list = new List<Location>();
-
-                Info topInfo;
-
-                if (_locations.TryGetValue(key, out topInfo))
+                lock (this.ThisLock)
                 {
-                    bool flag = false;
+                    var list = new List<Location>();
 
+                    Info topInfo;
+
+                    if (_locations.TryGetValue(key, out topInfo))
                     {
-                        var now = DateTime.UtcNow;
+                        bool flag = false;
 
-                        Info previousInfo = null;
-                        Info currentInfo = topInfo;
-
-                        for (;;)
                         {
-                            if ((now - currentInfo.CreationTime).TotalMinutes > 30)
-                            {
-                                if (previousInfo == null)
-                                {
-                                    topInfo = currentInfo.Next;
+                            var now = DateTime.UtcNow;
 
-                                    flag = true;
+                            Info previousInfo = null;
+                            Info currentInfo = topInfo;
+
+                            for (;;)
+                            {
+                                if ((now - currentInfo.CreationTime).TotalMinutes > 30)
+                                {
+                                    if (previousInfo == null)
+                                    {
+                                        topInfo = currentInfo.Next;
+
+                                        flag = true;
+                                    }
+                                    else
+                                    {
+                                        previousInfo.Next = currentInfo.Next;
+                                    }
+
+                                    currentInfo = currentInfo.Next;
                                 }
                                 else
                                 {
-                                    previousInfo.Next = currentInfo.Next;
+                                    list.Add(currentInfo.Location);
+
+                                    previousInfo = currentInfo;
+                                    currentInfo = currentInfo.Next;
                                 }
 
-                                currentInfo = currentInfo.Next;
+                                if (currentInfo == null) break;
                             }
-                            else
-                            {
-                                list.Add(currentInfo.Location);
+                        }
 
-                                previousInfo = currentInfo;
-                                currentInfo = currentInfo.Next;
-                            }
-
-                            if (currentInfo == null) break;
+                        if (flag)
+                        {
+                            if (topInfo == null) _locations.Remove(key);
+                            else _locations[key] = topInfo;
                         }
                     }
 
-                    if (flag) _locations[key] = topInfo;
+                    return list;
                 }
-
-                return list;
             }
 
             public void SetLocation(Location location)
             {
-                Info topInfo;
-
-                if (!_locations.TryGetValue(location.Key, out topInfo))
+                lock (this.ThisLock)
                 {
-                    topInfo = new Info();
-                    topInfo.CreationTime = DateTime.UtcNow;
-                    topInfo.Location = location;
+                    Info topInfo;
 
-                    _locations.Add(location.Key, topInfo);
-                }
-                else
-                {
-                    bool flag = false;
-                    int count = 1;
-
+                    if (!_locations.TryGetValue(location.Key, out topInfo))
                     {
-                        var now = DateTime.UtcNow;
+                        topInfo = new Info();
+                        topInfo.CreationTime = DateTime.UtcNow;
+                        topInfo.Location = location;
 
-                        Info previousInfo = null;
-                        Info currentInfo = topInfo;
+                        _locations.Add(location.Key, topInfo);
+                    }
+                    else
+                    {
+                        bool flag = false;
+                        int count = 1;
 
-                        for (;;)
                         {
-                            if ((now - currentInfo.CreationTime).TotalMinutes > 30
-                                || currentInfo.Location == location)
-                            {
-                                if (previousInfo == null)
-                                {
-                                    topInfo = currentInfo.Next;
+                            var now = DateTime.UtcNow;
 
-                                    flag = true;
+                            Info previousInfo = null;
+                            Info currentInfo = topInfo;
+
+                            for (;;)
+                            {
+                                if ((now - currentInfo.CreationTime).TotalMinutes > 30
+                                    || currentInfo.Location == location)
+                                {
+                                    if (previousInfo == null)
+                                    {
+                                        topInfo = currentInfo.Next;
+
+                                        flag = true;
+                                    }
+                                    else
+                                    {
+                                        previousInfo.Next = currentInfo.Next;
+                                    }
+
+                                    currentInfo = currentInfo.Next;
                                 }
                                 else
                                 {
-                                    previousInfo.Next = currentInfo.Next;
+                                    previousInfo = currentInfo;
+                                    currentInfo = currentInfo.Next;
+
+                                    count++;
                                 }
 
-                                currentInfo = currentInfo.Next;
+                                if (currentInfo == null) break;
                             }
-                            else
+
                             {
-                                previousInfo = currentInfo;
-                                currentInfo = currentInfo.Next;
+                                currentInfo = new Info();
+                                currentInfo.CreationTime = now;
+                                currentInfo.Location = location;
 
-                                count++;
+                                previousInfo.Next = currentInfo;
                             }
-
-                            if (currentInfo == null) break;
                         }
 
+                        if (count > 128)
                         {
-                            currentInfo = new Info();
-                            currentInfo.CreationTime = now;
-                            currentInfo.Location = location;
+                            topInfo = topInfo.Next;
 
-                            previousInfo.Next = currentInfo;
+                            flag = true;
+                        }
+
+                        if (flag)
+                        {
+                            if (topInfo == null) _locations.Remove(location.Key);
+                            else _locations[location.Key] = topInfo;
                         }
                     }
-
-                    if (count > 128)
-                    {
-                        topInfo = topInfo.Next;
-
-                        flag = true;
-                    }
-
-                    if (flag) _locations[location.Key] = topInfo;
                 }
             }
 
@@ -2411,6 +2340,18 @@ namespace Library.Net.Covenant
 
                 public Info Next { get; set; }
             }
+
+            #region IThisLock
+
+            public object ThisLock
+            {
+                get
+                {
+                    return _thisLock;
+                }
+            }
+
+            #endregion
         }
 
         protected override void Dispose(bool disposing)

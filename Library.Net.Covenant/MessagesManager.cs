@@ -34,13 +34,11 @@ namespace Library.Net.Covenant
             {
                 foreach (var messageManager in _messageManagerDictionary.Values.ToArray())
                 {
-                    messageManager.PushLocationsRequest.TrimExcess();
+                    messageManager.PullLocationsCount.Refresh();
+                    messageManager.PullMetadatasCount.Refresh();
+
                     messageManager.PullLocationsRequest.TrimExcess();
-
-                    messageManager.PushLinkMetadatasRequest.TrimExcess();
                     messageManager.PullLinkMetadatasRequest.TrimExcess();
-
-                    messageManager.PushStoreMetadatasRequest.TrimExcess();
                     messageManager.PullStoreMetadatasRequest.TrimExcess();
                 }
 
@@ -164,20 +162,17 @@ namespace Library.Net.Covenant
     {
         private int _id;
         private byte[] _sessionId;
-        private readonly SafeInteger _priority;
 
         private readonly SafeInteger _receivedByteCount;
         private readonly SafeInteger _sentByteCount;
 
         private DateTime _lastPullTime = DateTime.UtcNow;
 
-        private VolatileHashSet<Key> _pushLocationsRequest;
+        private CountManager _pullLocationsCount;
+        private CountManager _pullMetadatasCount;
+
         private VolatileHashSet<Key> _pullLocationsRequest;
-
-        private VolatileHashDictionary<string, DateTime> _pushLinkMetadatasRequest;
         private VolatileHashDictionary<string, DateTime> _pullLinkMetadatasRequest;
-
-        private VolatileHashDictionary<string, DateTime> _pushStoreMetadatasRequest;
         private VolatileHashDictionary<string, DateTime> _pullStoreMetadatasRequest;
 
         private readonly object _thisLock = new object();
@@ -186,18 +181,14 @@ namespace Library.Net.Covenant
         {
             _id = id;
 
-            _priority = new SafeInteger();
-
             _receivedByteCount = new SafeInteger();
             _sentByteCount = new SafeInteger();
 
-            _pushLocationsRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
+            _pullLocationsCount = new CountManager(new TimeSpan(0, 30, 0));
+            _pullMetadatasCount = new CountManager(new TimeSpan(0, 30, 0));
+
             _pullLocationsRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-
-            _pushLinkMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
             _pullLinkMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
-
-            _pushStoreMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
             _pullStoreMetadatasRequest = new VolatileHashDictionary<string, DateTime>(new TimeSpan(0, 30, 0));
         }
 
@@ -227,14 +218,6 @@ namespace Library.Net.Covenant
                 {
                     _sessionId = value;
                 }
-            }
-        }
-
-        public SafeInteger Priority
-        {
-            get
-            {
-                return _priority;
             }
         }
 
@@ -272,13 +255,24 @@ namespace Library.Net.Covenant
             }
         }
 
-        public VolatileHashSet<Key> PushLocationsRequest
+        public CountManager PullLocationsCount
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _pushLocationsRequest;
+                    return _pullLocationsCount;
+                }
+            }
+        }
+
+        public CountManager PullMetadatasCount
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _pullMetadatasCount;
                 }
             }
         }
@@ -294,17 +288,6 @@ namespace Library.Net.Covenant
             }
         }
 
-        public VolatileHashDictionary<string, DateTime> PushLinkMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushLinkMetadatasRequest;
-                }
-            }
-        }
-
         public VolatileHashDictionary<string, DateTime> PullLinkMetadatasRequest
         {
             get
@@ -312,17 +295,6 @@ namespace Library.Net.Covenant
                 lock (this.ThisLock)
                 {
                     return _pullLinkMetadatasRequest;
-                }
-            }
-        }
-
-        public VolatileHashDictionary<string, DateTime> PushStoreMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushStoreMetadatasRequest;
                 }
             }
         }

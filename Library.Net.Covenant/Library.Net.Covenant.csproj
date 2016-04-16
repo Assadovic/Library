@@ -94,6 +94,7 @@
     <Compile Include="ConnectionManager.cs" />
     <Compile Include="ProtocolType.cs" />
     <Compile Include="ServerManager.cs" />
+    <Compile Include="Utilities\CountManager.cs" />
     <Compile Include="Utilities\EqualityComparer.cs" />
     <Compile Include="Utilities\ItemUtilities.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1271,8 +1271,8 @@ namespace Library.Net.Outopos
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushBlocksLinkList = new List<Key>();
-                    var pushBlocksRequestList = new List<Key>();
+                    var pushBlocksLinkList = new HashSet<Key>();
+                    var pushBlocksRequestList = new HashSet<Key>();
 
                     {
                         {
@@ -1344,13 +1344,10 @@ namespace Library.Net.Outopos
                         }
                     }
 
-                    _random.Shuffle(pushBlocksLinkList);
-                    _random.Shuffle(pushBlocksRequestList);
-
                     {
                         var pushBlocksLinkDictionary = new Dictionary<Node, HashSet<Key>>();
 
-                        foreach (var key in pushBlocksLinkList)
+                        foreach (var key in pushBlocksLinkList.Randomize())
                         {
                             try
                             {
@@ -1400,7 +1397,7 @@ namespace Library.Net.Outopos
                     {
                         var pushBlocksRequestDictionary = new Dictionary<Node, HashSet<Key>>();
 
-                        foreach (var key in pushBlocksRequestList)
+                        foreach (var key in pushBlocksRequestList.Randomize())
                         {
                             try
                             {
@@ -1575,33 +1572,15 @@ namespace Library.Net.Outopos
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushBroadcastSignaturesRequestList = new List<string>();
-                    var pushUnicastSignaturesRequestList = new List<string>();
-                    var pushMulticastTagsRequestList = new List<Tag>();
+                    var pushBroadcastSignaturesRequestList = new HashSet<string>();
+                    var pushUnicastSignaturesRequestList = new HashSet<string>();
+                    var pushMulticastTagsRequestList = new HashSet<Tag>();
 
-                    // Broadcast
                     {
+                        // Broadcast
                         {
-                            var array = _pushBroadcastMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                pushBroadcastSignaturesRequestList.Add(array[i]);
-
-                                count--;
-                            }
-                        }
-
-                        foreach (var pair in messageManagers)
-                        {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
-                            {
-                                var array = messageManager.PullBroadcastMetadatasRequest.ToArray();
+                                var array = _pushBroadcastMetadatasRequestList.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
@@ -1613,32 +1592,32 @@ namespace Library.Net.Outopos
                                     count--;
                                 }
                             }
-                        }
-                    }
 
-                    // Unicast
-                    {
-                        {
-                            var array = _pushUnicastMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
+                            foreach (var pair in messageManagers)
                             {
-                                pushUnicastSignaturesRequestList.Add(array[i]);
+                                var node = pair.Key;
+                                var messageManager = pair.Value;
 
-                                count--;
+                                {
+                                    var array = messageManager.PullBroadcastMetadatasRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
+                                    {
+                                        pushBroadcastSignaturesRequestList.Add(array[i]);
+
+                                        count--;
+                                    }
+                                }
                             }
                         }
 
-                        foreach (var pair in messageManagers)
+                        // Unicast
                         {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
                             {
-                                var array = messageManager.PullUnicastMetadatasRequest.ToArray();
+                                var array = _pushUnicastMetadatasRequestList.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
@@ -1650,32 +1629,32 @@ namespace Library.Net.Outopos
                                     count--;
                                 }
                             }
-                        }
-                    }
 
-                    // Multicast
-                    {
-                        {
-                            var array = _pushMulticastMetadatasRequestList.ToArray();
-                            _random.Shuffle(array);
-
-                            int count = _maxMetadataRequestCount;
-
-                            for (int i = 0; count > 0 && i < array.Length; i++)
+                            foreach (var pair in messageManagers)
                             {
-                                pushMulticastTagsRequestList.Add(array[i]);
+                                var node = pair.Key;
+                                var messageManager = pair.Value;
 
-                                count--;
+                                {
+                                    var array = messageManager.PullUnicastMetadatasRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
+                                    {
+                                        pushUnicastSignaturesRequestList.Add(array[i]);
+
+                                        count--;
+                                    }
+                                }
                             }
                         }
 
-                        foreach (var pair in messageManagers)
+                        // Multicast
                         {
-                            var node = pair.Key;
-                            var messageManager = pair.Value;
-
                             {
-                                var array = messageManager.PullMulticastMetadatasRequest.ToArray();
+                                var array = _pushMulticastMetadatasRequestList.ToArray();
                                 _random.Shuffle(array);
 
                                 int count = _maxMetadataRequestCount;
@@ -1687,162 +1666,180 @@ namespace Library.Net.Outopos
                                     count--;
                                 }
                             }
-                        }
-                    }
 
-                    _random.Shuffle(pushBroadcastSignaturesRequestList);
-                    _random.Shuffle(pushUnicastSignaturesRequestList);
-                    _random.Shuffle(pushMulticastTagsRequestList);
-
-                    // Broadcast
-                    {
-                        var pushBroadcastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
-
-                        foreach (var signature in pushBroadcastSignaturesRequestList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
-                                {
-                                    requestNodes.Add(node);
-                                }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<string> collection;
-
-                                    if (!pushBroadcastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<string>();
-                                        pushBroadcastSignaturesRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(signature);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e);
-                            }
-                        }
-
-                        lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
-                        {
-                            _pushBroadcastMetadatasRequestDictionary.Clear();
-
-                            foreach (var pair in pushBroadcastSignaturesRequestDictionary)
+                            foreach (var pair in messageManagers)
                             {
                                 var node = pair.Key;
-                                var targets = pair.Value;
+                                var messageManager = pair.Value;
 
-                                _pushBroadcastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                {
+                                    var array = messageManager.PullMulticastMetadatasRequest.ToArray();
+                                    _random.Shuffle(array);
+
+                                    int count = _maxMetadataRequestCount;
+
+                                    for (int i = 0; count > 0 && i < array.Length; i++)
+                                    {
+                                        pushMulticastTagsRequestList.Add(array[i]);
+
+                                        count--;
+                                    }
+                                }
                             }
                         }
                     }
 
-                    // Unicast
                     {
-                        var pushUnicastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
-
-                        foreach (var signature in pushUnicastSignaturesRequestList)
+                        // Broadcast
                         {
-                            try
+                            var pushBroadcastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
+
+                            foreach (var signature in pushBroadcastSignaturesRequestList.Randomize())
                             {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                                try
                                 {
-                                    requestNodes.Add(node);
+                                    var requestNodes = new List<Node>();
+
+                                    foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                                    {
+                                        requestNodes.Add(node);
+                                    }
+
+                                    for (int i = 0; i < requestNodes.Count; i++)
+                                    {
+                                        HashSet<string> collection;
+
+                                        if (!pushBroadcastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<string>();
+                                            pushBroadcastSignaturesRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(signature);
+                                        }
+                                    }
                                 }
-
-                                for (int i = 0; i < requestNodes.Count; i++)
+                                catch (Exception e)
                                 {
-                                    HashSet<string> collection;
-
-                                    if (!pushUnicastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
-                                    {
-                                        collection = new HashSet<string>();
-                                        pushUnicastSignaturesRequestDictionary[requestNodes[i]] = collection;
-                                    }
-
-                                    if (collection.Count < _maxMetadataRequestCount)
-                                    {
-                                        collection.Add(signature);
-                                    }
+                                    Log.Error(e);
                                 }
                             }
-                            catch (Exception e)
+
+                            lock (_pushBroadcastMetadatasRequestDictionary.ThisLock)
                             {
-                                Log.Error(e);
+                                _pushBroadcastMetadatasRequestDictionary.Clear();
+
+                                foreach (var pair in pushBroadcastSignaturesRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushBroadcastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                }
                             }
                         }
 
-                        lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
+                        // Unicast
                         {
-                            _pushUnicastMetadatasRequestDictionary.Clear();
+                            var pushUnicastSignaturesRequestDictionary = new Dictionary<Node, HashSet<string>>();
 
-                            foreach (var pair in pushUnicastSignaturesRequestDictionary)
+                            foreach (var signature in pushUnicastSignaturesRequestList.Randomize())
                             {
-                                var node = pair.Key;
-                                var targets = pair.Value;
-
-                                _pushUnicastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
-                            }
-                        }
-                    }
-
-                    // Multicast
-                    {
-                        var pushMulticastTagsRequestDictionary = new Dictionary<Node, HashSet<Tag>>();
-
-                        foreach (var tag in pushMulticastTagsRequestList)
-                        {
-                            try
-                            {
-                                var requestNodes = new List<Node>();
-
-                                foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
+                                try
                                 {
-                                    requestNodes.Add(node);
-                                }
+                                    var requestNodes = new List<Node>();
 
-                                for (int i = 0; i < requestNodes.Count; i++)
-                                {
-                                    HashSet<Tag> collection;
-
-                                    if (!pushMulticastTagsRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                    foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
                                     {
-                                        collection = new HashSet<Tag>();
-                                        pushMulticastTagsRequestDictionary[requestNodes[i]] = collection;
+                                        requestNodes.Add(node);
                                     }
 
-                                    if (collection.Count < _maxMetadataRequestCount)
+                                    for (int i = 0; i < requestNodes.Count; i++)
                                     {
-                                        collection.Add(tag);
+                                        HashSet<string> collection;
+
+                                        if (!pushUnicastSignaturesRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<string>();
+                                            pushUnicastSignaturesRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(signature);
+                                        }
                                     }
                                 }
+                                catch (Exception e)
+                                {
+                                    Log.Error(e);
+                                }
                             }
-                            catch (Exception e)
+
+                            lock (_pushUnicastMetadatasRequestDictionary.ThisLock)
                             {
-                                Log.Error(e);
+                                _pushUnicastMetadatasRequestDictionary.Clear();
+
+                                foreach (var pair in pushUnicastSignaturesRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushUnicastMetadatasRequestDictionary.Add(node, new List<string>(targets.Randomize()));
+                                }
                             }
                         }
 
-                        lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
+                        // Multicast
                         {
-                            _pushMulticastMetadatasRequestDictionary.Clear();
+                            var pushMulticastTagsRequestDictionary = new Dictionary<Node, HashSet<Tag>>();
 
-                            foreach (var pair in pushMulticastTagsRequestDictionary)
+                            foreach (var tag in pushMulticastTagsRequestList.Randomize())
                             {
-                                var node = pair.Key;
-                                var targets = pair.Value;
+                                try
+                                {
+                                    var requestNodes = new List<Node>();
 
-                                _pushMulticastMetadatasRequestDictionary.Add(node, new List<Tag>(targets.Randomize()));
+                                    foreach (var node in Kademlia<Node>.Search(tag.Id, otherNodes, 2))
+                                    {
+                                        requestNodes.Add(node);
+                                    }
+
+                                    for (int i = 0; i < requestNodes.Count; i++)
+                                    {
+                                        HashSet<Tag> collection;
+
+                                        if (!pushMulticastTagsRequestDictionary.TryGetValue(requestNodes[i], out collection))
+                                        {
+                                            collection = new HashSet<Tag>();
+                                            pushMulticastTagsRequestDictionary[requestNodes[i]] = collection;
+                                        }
+
+                                        if (collection.Count < _maxMetadataRequestCount)
+                                        {
+                                            collection.Add(tag);
+                                        }
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Error(e);
+                                }
+                            }
+
+                            lock (_pushMulticastMetadatasRequestDictionary.ThisLock)
+                            {
+                                _pushMulticastMetadatasRequestDictionary.Clear();
+
+                                foreach (var pair in pushMulticastTagsRequestDictionary)
+                                {
+                                    var node = pair.Key;
+                                    var targets = pair.Value;
+
+                                    _pushMulticastMetadatasRequestDictionary.Add(node, new List<Tag>(targets.Randomize()));
+                                }
                             }
                         }
                     }

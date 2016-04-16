@@ -1127,8 +1127,8 @@ namespace Library.Net.Amoeba
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushBlocksLinkList = new List<Key>();
-                    var pushBlocksRequestList = new List<Key>();
+                    var pushBlocksLinkList = new HashSet<Key>();
+                    var pushBlocksRequestList = new HashSet<Key>();
 
                     {
                         {
@@ -1196,13 +1196,10 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    _random.Shuffle(pushBlocksLinkList);
-                    _random.Shuffle(pushBlocksRequestList);
-
                     {
                         var pushBlocksLinkDictionary = new Dictionary<Node, HashSet<Key>>();
 
-                        foreach (var key in pushBlocksLinkList)
+                        foreach (var key in pushBlocksLinkList.Randomize())
                         {
                             try
                             {
@@ -1252,7 +1249,7 @@ namespace Library.Net.Amoeba
                     {
                         var pushBlocksRequestDictionary = new Dictionary<Node, HashSet<Key>>();
 
-                        foreach (var key in pushBlocksRequestList)
+                        foreach (var key in pushBlocksRequestList.Randomize())
                         {
                             try
                             {
@@ -1378,7 +1375,7 @@ namespace Library.Net.Amoeba
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushSeedsRequestList = new List<string>();
+                    var pushSeedsRequestList = new HashSet<string>();
 
                     {
                         {
@@ -1416,12 +1413,10 @@ namespace Library.Net.Amoeba
                         }
                     }
 
-                    _random.Shuffle(pushSeedsRequestList);
-
                     {
                         var pushSeedsRequestDictionary = new Dictionary<Node, HashSet<string>>();
 
-                        foreach (var signature in pushSeedsRequestList)
+                        foreach (var signature in pushSeedsRequestList.Randomize())
                         {
                             try
                             {
@@ -2620,6 +2615,20 @@ namespace Library.Net.Amoeba
                     }
 
                     _refreshTimer = null;
+                }
+
+                if (_mediateTimer != null)
+                {
+                    try
+                    {
+                        _mediateTimer.Dispose();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    _mediateTimer = null;
                 }
 
                 if (_messagesManager != null)
