@@ -38,13 +38,8 @@ namespace Library.Net.Amoeba
                     messageManager.StockLinkSeeds.TrimExcess();
                     messageManager.StockStoreSeeds.TrimExcess();
 
-                    messageManager.PushBlocksLink.TrimExcess();
                     messageManager.PullBlocksLink.TrimExcess();
-
-                    messageManager.PushBlocksRequest.TrimExcess();
                     messageManager.PullBlocksRequest.TrimExcess();
-
-                    messageManager.PushSeedsRequest.TrimExcess();
                     messageManager.PullSeedsRequest.TrimExcess();
                 }
 
@@ -179,13 +174,8 @@ namespace Library.Net.Amoeba
         private VolatileHashDictionary<string, DateTime> _stockLinkSeeds;
         private VolatileHashDictionary<string, DateTime> _stockStoreSeeds;
 
-        private VolatileHashSet<Key> _pushBlocksLink;
         private VolatileHashSet<Key> _pullBlocksLink;
-
-        private VolatileHashSet<Key> _pushBlocksRequest;
         private VolatileHashSet<Key> _pullBlocksRequest;
-
-        private VolatileHashSet<string> _pushSeedsRequest;
         private VolatileHashSet<string> _pullSeedsRequest;
 
         private readonly object _thisLock = new object();
@@ -203,13 +193,8 @@ namespace Library.Net.Amoeba
             _stockLinkSeeds = new VolatileHashDictionary<string, DateTime>(new TimeSpan(1, 0, 0));
             _stockStoreSeeds = new VolatileHashDictionary<string, DateTime>(new TimeSpan(1, 0, 0));
 
-            _pushBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-
-            _pushBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-
-            _pushSeedsRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
             _pullSeedsRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
         }
 
@@ -317,17 +302,6 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public VolatileHashSet<Key> PushBlocksLink
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushBlocksLink;
-                }
-            }
-        }
-
         public VolatileHashSet<Key> PullBlocksLink
         {
             get
@@ -339,17 +313,6 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public VolatileHashSet<Key> PushBlocksRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushBlocksRequest;
-                }
-            }
-        }
-
         public VolatileHashSet<Key> PullBlocksRequest
         {
             get
@@ -357,17 +320,6 @@ namespace Library.Net.Amoeba
                 lock (this.ThisLock)
                 {
                     return _pullBlocksRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<string> PushSeedsRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushSeedsRequest;
                 }
             }
         }

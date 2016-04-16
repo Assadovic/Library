@@ -939,7 +939,7 @@ namespace Library.Net.Covenant
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    foreach (var signature in _settings.GetSignatures())
+                    foreach (var signature in _settings.GetLinkSignatures())
                     {
                         try
                         {
@@ -952,7 +952,29 @@ namespace Library.Net.Covenant
 
                             for (int i = 0; i < requestNodes.Count; i++)
                             {
-                                messageManagers[requestNodes[i]].PullMetadatasRequest.Add(signature);
+                                messageManagers[requestNodes[i]].PullLinkMetadatasRequest.Add(signature, DateTime.MinValue);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e);
+                        }
+                    }
+
+                    foreach (var signature in _settings.GetStoreSignatures())
+                    {
+                        try
+                        {
+                            var requestNodes = new List<Node>();
+
+                            foreach (var node in Kademlia<Node>.Search(Signature.GetHash(signature), otherNodes, 2))
+                            {
+                                requestNodes.Add(node);
+                            }
+
+                            for (int i = 0; i < requestNodes.Count; i++)
+                            {
+                                messageManagers[requestNodes[i]].PullStoreMetadatasRequest.Add(signature, DateTime.MinValue);
                             }
                         }
                         catch (Exception e)
@@ -984,7 +1006,7 @@ namespace Library.Net.Covenant
                         messageManagers[node] = _messagesManager[node];
                     }
 
-                    var pushMetadatasRequestList = new List<string>();
+                    var pushLinkMetadatasRequestList = new List<string>();
 
                     {
                         {
@@ -997,7 +1019,7 @@ namespace Library.Net.Covenant
                             {
                                 if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
                                 {
-                                    pushMetadatasRequestList.Add(array[i]);
+                                    pushLinkMetadatasRequestList.Add(array[i]);
 
                                     count--;
                                 }
@@ -1019,7 +1041,7 @@ namespace Library.Net.Covenant
                                 {
                                     if (!messageManagers.Values.Any(n => n.PushMetadatasRequest.Contains(array[i])))
                                     {
-                                        pushMetadatasRequestList.Add(array[i]);
+                                        pushLinkMetadatasRequestList.Add(array[i]);
 
                                         count--;
                                     }
@@ -1028,12 +1050,12 @@ namespace Library.Net.Covenant
                         }
                     }
 
-                    _random.Shuffle(pushMetadatasRequestList);
+                    _random.Shuffle(pushLinkMetadatasRequestList);
 
                     {
                         var pushMetadatasRequestDictionary = new Dictionary<Node, HashSet<string>>();
 
-                        foreach (var signature in pushMetadatasRequestList)
+                        foreach (var signature in pushLinkMetadatasRequestList)
                         {
                             try
                             {

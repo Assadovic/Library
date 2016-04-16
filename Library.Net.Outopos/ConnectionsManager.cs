@@ -1283,12 +1283,9 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
-                                {
-                                    pushBlocksLinkList.Add(array[i]);
+                                pushBlocksLinkList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1305,12 +1302,9 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushBlocksLink.Contains(array[i])))
-                                    {
-                                        pushBlocksLinkList.Add(array[i]);
+                                    pushBlocksLinkList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1323,12 +1317,9 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
-                                {
-                                    pushBlocksRequestList.Add(array[i]);
+                                pushBlocksRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1345,12 +1336,9 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushBlocksRequest.Contains(array[i])))
-                                    {
-                                        pushBlocksRequestList.Add(array[i]);
+                                    pushBlocksRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1601,12 +1589,9 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushBroadcastMetadatasRequest.Contains(array[i])))
-                                {
-                                    pushBroadcastSignaturesRequestList.Add(array[i]);
+                                pushBroadcastSignaturesRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1623,12 +1608,9 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushBroadcastMetadatasRequest.Contains(array[i])))
-                                    {
-                                        pushBroadcastSignaturesRequestList.Add(array[i]);
+                                    pushBroadcastSignaturesRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1644,12 +1626,9 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushUnicastMetadatasRequest.Contains(array[i])))
-                                {
-                                    pushUnicastSignaturesRequestList.Add(array[i]);
+                                pushUnicastSignaturesRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1666,12 +1645,9 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushUnicastMetadatasRequest.Contains(array[i])))
-                                    {
-                                        pushUnicastSignaturesRequestList.Add(array[i]);
+                                    pushUnicastSignaturesRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1687,12 +1663,9 @@ namespace Library.Net.Outopos
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushMulticastMetadatasRequest.Contains(array[i])))
-                                {
-                                    pushMulticastTagsRequestList.Add(array[i]);
+                                pushMulticastTagsRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1709,12 +1682,9 @@ namespace Library.Net.Outopos
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushMulticastMetadatasRequest.Contains(array[i])))
-                                    {
-                                        pushMulticastTagsRequestList.Add(array[i]);
+                                    pushMulticastTagsRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1963,28 +1933,15 @@ namespace Library.Net.Outopos
                                 if (_pushBlocksLinkDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBlocksLinkDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksLink.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
-                                {
-                                    connectionManager.PushBlocksLink(targetList);
+                                connectionManager.PushBlocksLink(targetList);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksLink ({0})", targetList.Count));
-                                    _pushBlockLinkCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksLink.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push BlocksLink ({0})", targetList.Count));
+                                _pushBlockLinkCount.Add(targetList.Count);
                             }
                         }
 
@@ -1998,28 +1955,15 @@ namespace Library.Net.Outopos
                                 if (_pushBlocksRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBlocksRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
-                                {
-                                    connectionManager.PushBlocksRequest(targetList);
+                                connectionManager.PushBlocksRequest(targetList);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksRequest ({0})", targetList.Count));
-                                    _pushBlockRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksRequest.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push BlocksRequest ({0})", targetList.Count));
+                                _pushBlockRequestCount.Add(targetList.Count);
                             }
                         }
 
@@ -2033,33 +1977,20 @@ namespace Library.Net.Outopos
                                 if (_pushBroadcastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBroadcastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBroadcastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
+                                connectionManager.PushBroadcastMetadatasRequest(targetList);
+
+                                foreach (var item in targetList)
                                 {
-                                    connectionManager.PushBroadcastMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushBroadcastMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
+                                    _pushBroadcastMetadatasRequestList.Remove(item);
                                 }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBroadcastMetadatasRequest.Remove(item);
-                                    }
 
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push BroadcastMetadatasRequest ({0})", targetList.Count));
+                                _pushMetadataRequestCount.Add(targetList.Count);
                             }
                         }
 
@@ -2073,33 +2004,20 @@ namespace Library.Net.Outopos
                                 if (_pushUnicastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushUnicastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushUnicastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
+                                connectionManager.PushUnicastMetadatasRequest(targetList);
+
+                                foreach (var item in targetList)
                                 {
-                                    connectionManager.PushUnicastMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushUnicastMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
+                                    _pushUnicastMetadatasRequestList.Remove(item);
                                 }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushUnicastMetadatasRequest.Remove(item);
-                                    }
 
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push UnicastMetadatasRequest ({0})", targetList.Count));
+                                _pushMetadataRequestCount.Add(targetList.Count);
                             }
                         }
 
@@ -2113,33 +2031,20 @@ namespace Library.Net.Outopos
                                 if (_pushMulticastMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushMulticastMetadatasRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushMulticastMetadatasRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
+                                connectionManager.PushMulticastMetadatasRequest(targetList);
+
+                                foreach (var item in targetList)
                                 {
-                                    connectionManager.PushMulticastMetadatasRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushMulticastMetadatasRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatasRequest ({0})", targetList.Count));
-                                    _pushMetadataRequestCount.Add(targetList.Count);
+                                    _pushMulticastMetadatasRequestList.Remove(item);
                                 }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushMulticastMetadatasRequest.Remove(item);
-                                    }
 
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push MulticastMetadatasRequest ({0})", targetList.Count));
+                                _pushMetadataRequestCount.Add(targetList.Count);
                             }
                         }
                     }
@@ -2475,13 +2380,28 @@ namespace Library.Net.Outopos
                 var connectionManager = sender as ConnectionManager;
                 if (connectionManager == null) return;
 
-                var messageManager = _messagesManager[connectionManager.Node];
+                var messageManagers = new Dictionary<Node, MessageManager>();
+                {
+                    var otherNodes = new List<Node>();
+
+                    lock (this.ThisLock)
+                    {
+                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+                    }
+
+                    foreach (var node in otherNodes)
+                    {
+                        messageManagers[node] = _messagesManager[node];
+                    }
+                }
+
+                var messageManager = messageManagers[connectionManager.Node];
 
                 if (!ConnectionsManager.Check(e.Key) || e.Value.Array == null) return;
 
                 _cacheManager[e.Key] = e.Value;
 
-                if (messageManager.PushBlocksRequest.Remove(e.Key))
+                if (_downloadBlocks.Contains(e.Key) || messageManagers.Values.Any(n => n.PullBlocksRequest.Contains(e.Key)))
                 {
                     Debug.WriteLine(string.Format("ConnectionManager: Pull Block (Upload) ({0})", NetworkConverter.ToBase64UrlString(e.Key.Hash)));
 

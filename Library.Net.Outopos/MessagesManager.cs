@@ -40,19 +40,10 @@ namespace Library.Net.Outopos
                     messageManager.StockWikiDocumentMetadatas.TrimExcess();
                     messageManager.StockMulticastMetadatas.TrimExcess();
 
-                    messageManager.PushBlocksLink.TrimExcess();
                     messageManager.PullBlocksLink.TrimExcess();
-
-                    messageManager.PushBlocksRequest.TrimExcess();
                     messageManager.PullBlocksRequest.TrimExcess();
-
-                    messageManager.PushBroadcastMetadatasRequest.TrimExcess();
                     messageManager.PullBroadcastMetadatasRequest.TrimExcess();
-
-                    messageManager.PushUnicastMetadatasRequest.TrimExcess();
                     messageManager.PullUnicastMetadatasRequest.TrimExcess();
-
-                    messageManager.PushMulticastMetadatasRequest.TrimExcess();
                     messageManager.PullMulticastMetadatasRequest.TrimExcess();
                 }
 
@@ -189,19 +180,10 @@ namespace Library.Net.Outopos
         private VolatileHashSet<byte[]> _stockWikiDocumentMetadatas;
         private VolatileHashSet<byte[]> _stockMulticastMetadatas;
 
-        private VolatileHashSet<Key> _pushBlocksLink;
         private VolatileHashSet<Key> _pullBlocksLink;
-
-        private VolatileHashSet<Key> _pushBlocksRequest;
         private VolatileHashSet<Key> _pullBlocksRequest;
-
-        private VolatileHashSet<string> _pushBroadcastMetadatasRequest;
         private VolatileHashSet<string> _pullBroadcastMetadatasRequest;
-
-        private VolatileHashSet<string> _pushUnicastMetadatasRequest;
         private VolatileHashSet<string> _pullUnicastMetadatasRequest;
-
-        private VolatileHashSet<Tag> _pushMulticastMetadatasRequest;
         private VolatileHashSet<Tag> _pullMulticastMetadatasRequest;
 
         private readonly object _thisLock = new object();
@@ -221,19 +203,10 @@ namespace Library.Net.Outopos
             _stockWikiDocumentMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
             _stockMulticastMetadatas = new VolatileHashSet<byte[]>(new TimeSpan(1, 0, 0), new ByteArrayEqualityComparer());
 
-            _pushBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksLink = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-
-            _pushBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
             _pullBlocksRequest = new VolatileHashSet<Key>(new TimeSpan(0, 30, 0));
-
-            _pushBroadcastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
             _pullBroadcastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-
-            _pushUnicastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
             _pullUnicastMetadatasRequest = new VolatileHashSet<string>(new TimeSpan(0, 30, 0));
-
-            _pushMulticastMetadatasRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
             _pullMulticastMetadatasRequest = new VolatileHashSet<Tag>(new TimeSpan(0, 30, 0));
         }
 
@@ -363,17 +336,6 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<Key> PushBlocksLink
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushBlocksLink;
-                }
-            }
-        }
-
         public VolatileHashSet<Key> PullBlocksLink
         {
             get
@@ -381,17 +343,6 @@ namespace Library.Net.Outopos
                 lock (this.ThisLock)
                 {
                     return _pullBlocksLink;
-                }
-            }
-        }
-
-        public VolatileHashSet<Key> PushBlocksRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushBlocksRequest;
                 }
             }
         }
@@ -407,17 +358,6 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<string> PushBroadcastMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushBroadcastMetadatasRequest;
-                }
-            }
-        }
-
         public VolatileHashSet<string> PullBroadcastMetadatasRequest
         {
             get
@@ -429,17 +369,6 @@ namespace Library.Net.Outopos
             }
         }
 
-        public VolatileHashSet<string> PushUnicastMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushUnicastMetadatasRequest;
-                }
-            }
-        }
-
         public VolatileHashSet<string> PullUnicastMetadatasRequest
         {
             get
@@ -447,17 +376,6 @@ namespace Library.Net.Outopos
                 lock (this.ThisLock)
                 {
                     return _pullUnicastMetadatasRequest;
-                }
-            }
-        }
-
-        public VolatileHashSet<Tag> PushMulticastMetadatasRequest
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _pushMulticastMetadatasRequest;
                 }
             }
         }

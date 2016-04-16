@@ -237,7 +237,7 @@ namespace Library.Net.Amoeba
 
                 lock (this.ThisLock)
                 {
-                    return _settings.BaseNode;
+                    return _routeTable.BaseNode;
                 }
             }
         }
@@ -1139,12 +1139,9 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (messageManagers.Values.Count(n => n.PushBlocksLink.Contains(array[i])) < 2)
-                                {
-                                    pushBlocksLinkList.Add(array[i]);
+                                pushBlocksLinkList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1160,12 +1157,9 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (messageManagers.Values.Count(n => n.PushBlocksLink.Contains(array[i])) < 2)
-                                {
-                                    pushBlocksLinkList.Add(array[i]);
+                                pushBlocksLinkList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1177,12 +1171,9 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (messageManagers.Values.Count(n => n.PushBlocksRequest.Contains(array[i])) < 3)
-                                {
-                                    pushBlocksRequestList.Add(array[i]);
+                                pushBlocksRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1198,12 +1189,9 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (messageManagers.Values.Count(n => n.PushBlocksRequest.Contains(array[i])) < 3)
-                                {
-                                    pushBlocksRequestList.Add(array[i]);
+                                pushBlocksRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
                     }
@@ -1401,12 +1389,9 @@ namespace Library.Net.Amoeba
 
                             for (int i = 0; count > 0 && i < array.Length; i++)
                             {
-                                if (!messageManagers.Values.Any(n => n.PushSeedsRequest.Contains(array[i])))
-                                {
-                                    pushSeedsRequestList.Add(array[i]);
+                                pushSeedsRequestList.Add(array[i]);
 
-                                    count--;
-                                }
+                                count--;
                             }
                         }
 
@@ -1423,12 +1408,9 @@ namespace Library.Net.Amoeba
 
                                 for (int i = 0; count > 0 && i < array.Length; i++)
                                 {
-                                    if (!messageManagers.Values.Any(n => n.PushSeedsRequest.Contains(array[i])))
-                                    {
-                                        pushSeedsRequestList.Add(array[i]);
+                                    pushSeedsRequestList.Add(array[i]);
 
-                                        count--;
-                                    }
+                                    count--;
                                 }
                             }
                         }
@@ -1593,28 +1575,15 @@ namespace Library.Net.Amoeba
                                 if (_pushBlocksLinkDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBlocksLinkDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksLink.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
-                                {
-                                    connectionManager.PushBlocksLink(targetList);
+                                connectionManager.PushBlocksLink(targetList);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksLink ({0})", targetList.Count));
-                                    _pushBlockLinkCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksLink.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push BlocksLink ({0})", targetList.Count));
+                                _pushBlockLinkCount.Add(targetList.Count);
                             }
                         }
 
@@ -1628,28 +1597,15 @@ namespace Library.Net.Amoeba
                                 if (_pushBlocksRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushBlocksRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushBlocksRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
-                                {
-                                    connectionManager.PushBlocksRequest(targetList);
+                                connectionManager.PushBlocksRequest(targetList);
 
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push BlocksRequest ({0})", targetList.Count));
-                                    _pushBlockRequestCount.Add(targetList.Count);
-                                }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushBlocksRequest.Remove(item);
-                                    }
-
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push BlocksRequest ({0})", targetList.Count));
+                                _pushBlockRequestCount.Add(targetList.Count);
                             }
                         }
 
@@ -1663,33 +1619,20 @@ namespace Library.Net.Amoeba
                                 if (_pushSeedsRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
                                 {
                                     _pushSeedsRequestDictionary.Remove(connectionManager.Node);
-                                    messageManager.PushSeedsRequest.AddRange(targetList);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                try
+                                connectionManager.PushSeedsRequest(targetList);
+
+                                foreach (var item in targetList)
                                 {
-                                    connectionManager.PushSeedsRequest(targetList);
-
-                                    foreach (var item in targetList)
-                                    {
-                                        _pushSeedsRequestList.Remove(item);
-                                    }
-
-                                    Debug.WriteLine(string.Format("ConnectionManager: Push SeedsRequest ({0})", targetList.Count));
-                                    _pushSeedRequestCount.Add(targetList.Count);
+                                    _pushSeedsRequestList.Remove(item);
                                 }
-                                catch (Exception e)
-                                {
-                                    foreach (var item in targetList)
-                                    {
-                                        messageManager.PushSeedsRequest.Remove(item);
-                                    }
 
-                                    throw e;
-                                }
+                                Debug.WriteLine(string.Format("ConnectionManager: Push SeedsRequest ({0})", targetList.Count));
+                                _pushSeedRequestCount.Add(targetList.Count);
                             }
                         }
                     }
@@ -1986,13 +1929,28 @@ namespace Library.Net.Amoeba
                 var connectionManager = sender as ConnectionManager;
                 if (connectionManager == null) return;
 
-                var messageManager = _messagesManager[connectionManager.Node];
+                var messageManagers = new Dictionary<Node, MessageManager>();
+                {
+                    var otherNodes = new List<Node>();
+
+                    lock (this.ThisLock)
+                    {
+                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+                    }
+
+                    foreach (var node in otherNodes)
+                    {
+                        messageManagers[node] = _messagesManager[node];
+                    }
+                }
+
+                var messageManager = messageManagers[connectionManager.Node];
 
                 if (!ConnectionsManager.Check(e.Key) || e.Value.Array == null) return;
 
                 _cacheManager[e.Key] = e.Value;
 
-                if (messageManager.PushBlocksRequest.Remove(e.Key))
+                if (_downloadBlocks.Contains(e.Key) || messageManagers.Values.Any(n => n.PullBlocksRequest.Contains(e.Key)))
                 {
                     Debug.WriteLine(string.Format("ConnectionManager: Pull Block (Upload) ({0})", NetworkConverter.ToBase64UrlString(e.Key.Hash)));
 
