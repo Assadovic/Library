@@ -412,6 +412,11 @@ namespace Library.Net.Amoeba
             return _getLockSignaturesEvent?.Invoke(this);
         }
 
+        protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
+        {
+            _uploadedEvent?.Invoke(this, keys);
+        }
+
         private static bool Check(Node node)
         {
             return !(node == null
@@ -2079,11 +2084,6 @@ namespace Library.Net.Amoeba
         }
 
         #endregion
-
-        protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
-        {
-            _uploadedEvent?.Invoke(this, keys);
-        }
 
         public void SetBaseNode(Node baseNode)
         {

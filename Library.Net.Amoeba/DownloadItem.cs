@@ -33,8 +33,8 @@ namespace Library.Net.Amoeba
         private Index _index;
         private string _path;
 
-        private long _decodeBytes;
-        private long _decodingBytes;
+        private long _decodeOffset;
+        private long _decodeLength;
 
         private IndexCollection _indexes;
 
@@ -174,40 +174,40 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "DecodeBytes")]
-        public long DecodeBytes
+        [DataMember(Name = "DecodeOffset")]
+        public long DecodeOffset
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _decodeBytes;
+                    return _decodeOffset;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _decodeBytes = value;
+                    _decodeOffset = value;
                 }
             }
         }
 
-        [DataMember(Name = "DecodingBytes")]
-        public long DecodingBytes
+        [DataMember(Name = "DecodeLength")]
+        public long DecodeLength
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _decodingBytes;
+                    return _decodeLength;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _decodingBytes = value;
+                    _decodeLength = value;
                 }
             }
         }

@@ -165,16 +165,16 @@ namespace Library.Net.Amoeba
                                 else contexts.Add(new InformationContext("DownloadBlockCount", item.Value.Index.Groups.Sum(n => _existManager.GetCount(n))));
                             }
 
-                            if (item.Value.Rank == 1) contexts.Add(new InformationContext("BlockCount", 1));
-                            else contexts.Add(new InformationContext("BlockCount", item.Value.Index.Groups.Sum(n => n.Keys.Count)));
-
                             if (item.Value.Rank == 1) contexts.Add(new InformationContext("ParityBlockCount", 0));
                             else contexts.Add(new InformationContext("ParityBlockCount", item.Value.Index.Groups.Sum(n => n.Keys.Count - n.InformationLength)));
+
+                            if (item.Value.Rank == 1) contexts.Add(new InformationContext("BlockCount", 1));
+                            else contexts.Add(new InformationContext("BlockCount", item.Value.Index.Groups.Sum(n => n.Keys.Count)));
                         }
                         else if (item.Value.State == DownloadState.Decoding || item.Value.State == DownloadState.ParityDecoding)
                         {
-                            contexts.Add(new InformationContext("DecodeBytes", item.Value.DecodeBytes));
-                            contexts.Add(new InformationContext("DecodingBytes", item.Value.DecodingBytes));
+                            contexts.Add(new InformationContext("DecodeOffset", item.Value.DecodeOffset));
+                            contexts.Add(new InformationContext("DecodeLength", item.Value.DecodeLength));
                         }
 
                         list.Add(new Information(contexts));
@@ -530,8 +530,8 @@ namespace Library.Net.Amoeba
 
                                 try
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = _cacheManager.GetLength(item.Seed.Key);
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = _cacheManager.GetLength(item.Seed.Key);
 
                                     using (FileStream stream = DownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
@@ -544,7 +544,7 @@ namespace Library.Net.Amoeba
                                             largeFlag = true;
                                         }
 
-                                        item.DecodingBytes = writeSize;
+                                        item.DecodeOffset = writeSize;
                                     }, 1024 * 1024, true))
                                     {
                                         fileName = stream.Name;
@@ -584,8 +584,8 @@ namespace Library.Net.Amoeba
 
                                 lock (this.ThisLock)
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = 0;
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = 0;
 
                                     this.UncheckState(item.Index);
 
@@ -636,8 +636,8 @@ namespace Library.Net.Amoeba
 
                                 try
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = _cacheManager.GetLength(item.Seed.Key);
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = _cacheManager.GetLength(item.Seed.Key);
 
                                     using (FileStream stream = DownloadManager.GetUniqueFileStream(Path.Combine(downloadDirectory, string.Format("{0}.tmp", DownloadManager.GetNormalizedPath(item.Seed.Name)))))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
@@ -650,7 +650,7 @@ namespace Library.Net.Amoeba
                                             largeFlag = true;
                                         }
 
-                                        item.DecodingBytes = writeSize;
+                                        item.DecodeOffset = writeSize;
                                     }, 1024 * 1024, true))
                                     {
                                         fileName = stream.Name;
@@ -685,8 +685,8 @@ namespace Library.Net.Amoeba
 
                                 lock (this.ThisLock)
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = 0;
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = 0;
 
                                     _cacheManager.SetSeed(item.Seed.Clone(), item.Indexes.Select(n => n.Clone()).ToArray());
                                     _settings.DownloadedSeeds.Add(item.Seed.Clone());
@@ -723,8 +723,8 @@ namespace Library.Net.Amoeba
                         else
                         {
                             item.State = DownloadState.ParityDecoding;
-                            item.DecodingBytes = 0;
-                            item.DecodeBytes = item.Index.Groups.Sum(n => n.Length);
+                            item.DecodeOffset = 0;
+                            item.DecodeLength = item.Index.Groups.Sum(n => n.Length);
 
                             var keys = new List<Key>();
 
@@ -746,7 +746,7 @@ namespace Library.Net.Amoeba
                                         keys.AddRange(task.Result);
                                     }
 
-                                    item.DecodingBytes += group.Length;
+                                    item.DecodeOffset += group.Length;
                                 }
                             }
                             catch (Exception)
@@ -763,7 +763,7 @@ namespace Library.Net.Amoeba
 
                                 try
                                 {
-                                    item.DecodingBytes = 0;
+                                    item.DecodeOffset = 0;
 
                                     using (FileStream stream = DownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
@@ -776,7 +776,7 @@ namespace Library.Net.Amoeba
                                             largeFlag = true;
                                         }
 
-                                        item.DecodingBytes = writeSize;
+                                        item.DecodeOffset = writeSize;
                                     }, 1024 * 1024, true))
                                     {
                                         fileName = stream.Name;
@@ -816,8 +816,8 @@ namespace Library.Net.Amoeba
 
                                 lock (this.ThisLock)
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = 0;
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = 0;
 
                                     this.UncheckState(item.Index);
 
@@ -868,7 +868,7 @@ namespace Library.Net.Amoeba
 
                                 try
                                 {
-                                    item.DecodingBytes = 0;
+                                    item.DecodeOffset = 0;
 
                                     using (FileStream stream = DownloadManager.GetUniqueFileStream(Path.Combine(downloadDirectory, string.Format("{0}.tmp", DownloadManager.GetNormalizedPath(item.Seed.Name)))))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
@@ -881,7 +881,7 @@ namespace Library.Net.Amoeba
                                             largeFlag = true;
                                         }
 
-                                        item.DecodingBytes = writeSize;
+                                        item.DecodeOffset = writeSize;
                                     }, 1024 * 1024, true))
                                     {
                                         fileName = stream.Name;
@@ -916,8 +916,8 @@ namespace Library.Net.Amoeba
 
                                 lock (this.ThisLock)
                                 {
-                                    item.DecodingBytes = 0;
-                                    item.DecodeBytes = 0;
+                                    item.DecodeOffset = 0;
+                                    item.DecodeLength = 0;
 
                                     _cacheManager.SetSeed(item.Seed.Clone(), item.Indexes.Select(n => n.Clone()).ToArray());
                                     _settings.DownloadedSeeds.Add(item.Seed.Clone());

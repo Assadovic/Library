@@ -183,18 +183,18 @@ namespace Library.Net.Amoeba
 
                         if (item.Value.State == UploadState.Uploading)
                         {
-                            contexts.Add(new InformationContext("BlockCount", item.Value.UploadKeys.Count + item.Value.UploadedKeys.Count));
                             contexts.Add(new InformationContext("UploadBlockCount", item.Value.UploadedKeys.Count));
+                            contexts.Add(new InformationContext("BlockCount", item.Value.UploadKeys.Count + item.Value.UploadedKeys.Count));
                         }
                         else if (item.Value.State == UploadState.Encoding || item.Value.State == UploadState.ComputeHash || item.Value.State == UploadState.ParityEncoding)
                         {
-                            contexts.Add(new InformationContext("EncodeBytes", item.Value.EncodeBytes));
-                            contexts.Add(new InformationContext("EncodingBytes", item.Value.EncodingBytes));
+                            contexts.Add(new InformationContext("EncodeOffset", item.Value.EncodeOffset));
+                            contexts.Add(new InformationContext("EncodeLength", item.Value.EncodeLength));
                         }
                         else if (item.Value.State == UploadState.Completed)
                         {
-                            contexts.Add(new InformationContext("BlockCount", item.Value.UploadKeys.Count + item.Value.UploadedKeys.Count));
                             contexts.Add(new InformationContext("UploadBlockCount", item.Value.UploadedKeys.Count));
+                            contexts.Add(new InformationContext("BlockCount", item.Value.UploadKeys.Count + item.Value.UploadedKeys.Count));
                         }
 
                         list.Add(new Information(contexts));
@@ -297,16 +297,16 @@ namespace Library.Net.Amoeba
                                 {
                                     isStop = (this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item));
 
-                                    item.EncodingBytes = Math.Min(readSize, stream.Length);
+                                    item.EncodeOffset = Math.Min(readSize, stream.Length);
                                 }, 1024 * 1024, true))
                                 using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                 {
                                     isStop = (this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item));
 
-                                    item.EncodingBytes = Math.Min(readSize, stream.Length);
+                                    item.EncodeOffset = Math.Min(readSize, stream.Length);
                                 }, 1024 * 1024, true))
                                 {
-                                    item.EncodeBytes = stream.Length;
+                                    item.EncodeLength = stream.Length;
                                     item.Seed.Length = stream.Length;
 
                                     if (item.Seed.Length == 0) throw new InvalidOperationException("Stream Length");
@@ -319,7 +319,7 @@ namespace Library.Net.Amoeba
                                     }
 
                                     stream.Seek(0, SeekOrigin.Begin);
-                                    item.EncodingBytes = 0;
+                                    item.EncodeOffset = 0;
 
                                     item.State = UploadState.Encoding;
                                     keys = _cacheManager.Encoding(encodingProgressStream, item.CompressionAlgorithm, item.CryptoAlgorithm, cryptoKey, item.BlockLength, item.HashAlgorithm);
@@ -338,8 +338,8 @@ namespace Library.Net.Amoeba
                                     item.LockedKeys.Add(key);
                                 }
 
-                                item.EncodingBytes = 0;
-                                item.EncodeBytes = 0;
+                                item.EncodeOffset = 0;
+                                item.EncodeLength = 0;
 
                                 item.CryptoKey = cryptoKey;
                                 item.Keys.AddRange(keys);
@@ -358,10 +358,10 @@ namespace Library.Net.Amoeba
                                 {
                                     isStop = (this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item));
 
-                                    item.EncodingBytes = Math.Min(readSize, stream.Length);
+                                    item.EncodeOffset = Math.Min(readSize, stream.Length);
                                 }, 1024 * 1024, true))
                                 {
-                                    item.EncodeBytes = stream.Length;
+                                    item.EncodeLength = stream.Length;
                                     item.Seed.Length = stream.Length;
 
                                     if (item.Seed.Length == 0) throw new InvalidOperationException("Stream Length");
@@ -378,8 +378,8 @@ namespace Library.Net.Amoeba
                             {
                                 lock (this.ThisLock)
                                 {
-                                    item.EncodingBytes = 0;
-                                    item.EncodeBytes = 0;
+                                    item.EncodeOffset = 0;
+                                    item.EncodeLength = 0;
 
                                     item.Keys.Add(keys[0]);
 
@@ -424,8 +424,8 @@ namespace Library.Net.Amoeba
 
                                 lock (this.ThisLock)
                                 {
-                                    item.EncodingBytes = 0;
-                                    item.EncodeBytes = 0;
+                                    item.EncodeOffset = 0;
+                                    item.EncodeLength = 0;
 
                                     foreach (var key in keys)
                                     {
@@ -504,7 +504,7 @@ namespace Library.Net.Amoeba
                     {
                         item.State = UploadState.ParityEncoding;
 
-                        item.EncodeBytes = item.Groups.Sum(n =>
+                        item.EncodeLength = item.Groups.Sum(n =>
                         {
                             long sumLength = 0;
 
@@ -562,7 +562,7 @@ namespace Library.Net.Amoeba
 
                             item.Groups.Add(group);
 
-                            item.EncodingBytes = item.Groups.Sum(n =>
+                            item.EncodeOffset = item.Groups.Sum(n =>
                             {
                                 long sumLength = 0;
 
@@ -622,16 +622,16 @@ namespace Library.Net.Amoeba
                             {
                                 isStop = (this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item));
 
-                                item.EncodingBytes = Math.Min(readSize, stream.Length);
+                                item.EncodeOffset = Math.Min(readSize, stream.Length);
                             }, 1024 * 1024, true))
                             using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                             {
                                 isStop = (this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item));
 
-                                item.EncodingBytes = Math.Min(readSize, stream.Length);
+                                item.EncodeOffset = Math.Min(readSize, stream.Length);
                             }, 1024 * 1024, true))
                             {
-                                item.EncodeBytes = stream.Length;
+                                item.EncodeLength = stream.Length;
 
                                 item.State = UploadState.ComputeHash;
 
@@ -641,7 +641,7 @@ namespace Library.Net.Amoeba
                                 }
 
                                 stream.Seek(0, SeekOrigin.Begin);
-                                item.EncodingBytes = 0;
+                                item.EncodeOffset = 0;
 
                                 item.State = UploadState.Encoding;
                                 keys = _cacheManager.Encoding(encodingProgressStream, item.CompressionAlgorithm, item.CryptoAlgorithm, cryptoKey, item.BlockLength, item.HashAlgorithm);
@@ -660,8 +660,8 @@ namespace Library.Net.Amoeba
                                 item.LockedKeys.Add(key);
                             }
 
-                            item.EncodingBytes = 0;
-                            item.EncodeBytes = 0;
+                            item.EncodeOffset = 0;
+                            item.EncodeLength = 0;
 
                             item.CryptoKey = cryptoKey;
                             item.Keys.AddRange(keys);

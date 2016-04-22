@@ -57,8 +57,8 @@ namespace Library.Net.Amoeba
         private DigitalSignature _digitalSignature;
         private Seed _seed;
 
-        private long _encodeBytes;
-        private long _encodingBytes;
+        private long _encodeOffset;
+        private long _encodeLength;
 
         private List<Key> _LockedKeys;
         private HashSet<Key> _uploadKeys;
@@ -364,40 +364,40 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "EncodeBytes")]
-        public long EncodeBytes
+        [DataMember(Name = "EncodeOffset")]
+        public long EncodeOffset
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _encodeBytes;
+                    return _encodeOffset;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _encodeBytes = value;
+                    _encodeOffset = value;
                 }
             }
         }
 
-        [DataMember(Name = "EncodingBytes")]
-        public long EncodingBytes
+        [DataMember(Name = "EncodeLength")]
+        public long EncodeLength
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _encodingBytes;
+                    return _encodeLength;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _encodingBytes = value;
+                    _encodeLength = value;
                 }
             }
         }
