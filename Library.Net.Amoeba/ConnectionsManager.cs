@@ -2347,7 +2347,7 @@ namespace Library.Net.Amoeba
 
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = new Node(new byte[0], null)},
+                    new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = null },
                     new Library.Configuration.SettingContent<NodeCollection>() { Name = "OtherNodes", Value = new NodeCollection() },
                     new Library.Configuration.SettingContent<int>() { Name = "ConnectionCountLimit", Value = 32 },
                     new Library.Configuration.SettingContent<int>() { Name = "BandwidthLimit", Value = 0 },
@@ -2365,6 +2365,19 @@ namespace Library.Net.Amoeba
                 lock (_thisLock)
                 {
                     base.Load(directoryPath);
+
+                    if (this.BaseNode == null)
+                    {
+                        byte[] id = new byte[32];
+                        {
+                            using (var random = RandomNumberGenerator.Create())
+                            {
+                                random.GetBytes(id);
+                            }
+                        }
+
+                        this.BaseNode = new Node(id, null);
+                    }
                 }
             }
 
