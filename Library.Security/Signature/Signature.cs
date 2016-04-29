@@ -101,21 +101,11 @@ namespace Library.Security
         {
             Encoding encoding = _threadLocalEncoding.Value;
 
-            byte[] buffer = null;
-
-            try
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(encoding.GetMaxByteCount(value.Length)))
             {
-                buffer = _bufferManager.TakeBuffer(encoding.GetMaxByteCount(value.Length));
-                var length = encoding.GetBytes(value, 0, value.Length, buffer, 0);
+                var length = encoding.GetBytes(value, 0, value.Length, safeBuffer.Value, 0);
 
-                stream.Write(buffer, 0, length);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
+                stream.Write(safeBuffer.Value, 0, length);
             }
         }
 

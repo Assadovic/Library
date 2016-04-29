@@ -26,8 +26,8 @@ namespace Library.Compression
 
 #if Linux
             _path = "xz";
-#endif           
-}
+#endif
+        }
 
         public static void Compress(Stream inStream, Stream outStream, BufferManager bufferManager)
         {
@@ -58,23 +58,15 @@ namespace Library.Compression
                     {
                         try
                         {
-                            byte[] buffer = bufferManager.TakeBuffer(1024 * 32);
-
-                            try
+                            using (var standardOutputStream = process.StandardOutput.BaseStream)
+                            using (var safeBuffer = bufferManager.CreateSafeBuffer(1024 * 32))
                             {
-                                using (var standardOutputStream = process.StandardOutput.BaseStream)
+                                int length;
+
+                                while ((length = standardOutputStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                 {
-                                    int length = 0;
-
-                                    while ((length = standardOutputStream.Read(buffer, 0, buffer.Length)) > 0)
-                                    {
-                                        outCacheStream.Write(buffer, 0, length);
-                                    }
+                                    outCacheStream.Write(safeBuffer.Value, 0, length);
                                 }
-                            }
-                            finally
-                            {
-                                bufferManager.ReturnBuffer(buffer);
                             }
                         }
                         catch (Exception e)
@@ -87,23 +79,15 @@ namespace Library.Compression
 
                     try
                     {
-                        byte[] buffer = bufferManager.TakeBuffer(1024 * 32);
-
-                        try
+                        using (var standardInputStream = process.StandardInput.BaseStream)
+                        using (var safeBuffer = bufferManager.CreateSafeBuffer(1024 * 32))
                         {
-                            using (var standardInputStream = process.StandardInput.BaseStream)
+                            int length;
+
+                            while ((length = inCacheStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                             {
-                                int length = 0;
-
-                                while ((length = inCacheStream.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    standardInputStream.Write(buffer, 0, length);
-                                }
+                                standardInputStream.Write(safeBuffer.Value, 0, length);
                             }
-                        }
-                        finally
-                        {
-                            bufferManager.ReturnBuffer(buffer);
                         }
                     }
                     catch (Exception)
@@ -148,23 +132,15 @@ namespace Library.Compression
                     {
                         try
                         {
-                            byte[] buffer = bufferManager.TakeBuffer(1024 * 32);
-
-                            try
+                            using (var standardOutputStream = process.StandardOutput.BaseStream)
+                            using (var safeBuffer = bufferManager.CreateSafeBuffer(1024 * 32))
                             {
-                                using (var standardOutputStream = process.StandardOutput.BaseStream)
+                                int length;
+
+                                while ((length = standardOutputStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                 {
-                                    int length = 0;
-
-                                    while ((length = standardOutputStream.Read(buffer, 0, buffer.Length)) > 0)
-                                    {
-                                        outCacheStream.Write(buffer, 0, length);
-                                    }
+                                    outCacheStream.Write(safeBuffer.Value, 0, length);
                                 }
-                            }
-                            finally
-                            {
-                                bufferManager.ReturnBuffer(buffer);
                             }
                         }
                         catch (Exception e)
@@ -177,23 +153,15 @@ namespace Library.Compression
 
                     try
                     {
-                        byte[] buffer = bufferManager.TakeBuffer(1024 * 32);
-
-                        try
+                        using (var standardInputStream = process.StandardInput.BaseStream)
+                        using (var safeBuffer = bufferManager.CreateSafeBuffer(1024 * 32))
                         {
-                            using (var standardInputStream = process.StandardInput.BaseStream)
+                            int length;
+
+                            while ((length = inCacheStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                             {
-                                int length = 0;
-
-                                while ((length = inCacheStream.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    standardInputStream.Write(buffer, 0, length);
-                                }
+                                standardInputStream.Write(safeBuffer.Value, 0, length);
                             }
-                        }
-                        finally
-                        {
-                            bufferManager.ReturnBuffer(buffer);
                         }
                     }
                     catch (Exception)

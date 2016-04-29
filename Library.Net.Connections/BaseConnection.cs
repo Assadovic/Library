@@ -206,15 +206,12 @@ namespace Library.Net.Connections
                     try
                     {
                         bufferStream = new BufferStream(_bufferManager);
-                        byte[] receiveBuffer = null;
 
-                        try
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                         {
-                            receiveBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
                             do
                             {
-                                int receiveLength = Math.Min(receiveBuffer.Length, length);
+                                int receiveLength = Math.Min(safeBuffer.Value.Length, length);
 
                                 if (_bandwidthLimit != null)
                                 {
@@ -225,17 +222,13 @@ namespace Library.Net.Connections
                                 var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                                 time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
-                                _cap.Receive(receiveBuffer, 0, receiveLength, time);
+                                _cap.Receive(safeBuffer.Value, 0, receiveLength, time);
 
                                 _receivedByteCount.Add(receiveLength);
-                                bufferStream.Write(receiveBuffer, 0, receiveLength);
+                                bufferStream.Write(safeBuffer.Value, 0, receiveLength);
 
                                 length -= receiveLength;
                             } while (length > 0);
-                        }
-                        finally
-                        {
-                            _bufferManager.ReturnBuffer(receiveBuffer);
                         }
                     }
                     catch (Exception e)
@@ -280,40 +273,30 @@ namespace Library.Net.Connections
                         Stream headerStream = new BufferStream(_bufferManager);
                         headerStream.Write(NetworkConverter.GetBytes((int)targetStream.Length), 0, 4);
 
-                        byte[] sendBuffer = null;
-
-                        try
+                        using (Stream dataStream = new UniteStream(headerStream, new WrapperStream(targetStream, true)))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                         {
-                            sendBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                            using (Stream dataStream = new UniteStream(headerStream, new WrapperStream(targetStream, true)))
+                            for (;;)
                             {
-                                for (;;)
+                                var sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, safeBuffer.Value.Length);
+                                if (sendLength == 0) break;
+
+                                if (_bandwidthLimit != null)
                                 {
-                                    var sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, sendBuffer.Length);
-                                    if (sendLength == 0) break;
-
-                                    if (_bandwidthLimit != null)
-                                    {
-                                        sendLength = _bandwidthLimit.GetOutBandwidth(this, sendLength);
-                                        if (sendLength < 0) throw new ConnectionException();
-                                    }
-
-                                    dataStream.Read(sendBuffer, 0, sendLength);
-
-                                    var time = Connection.CheckTimeout(_sendStopwatch.Elapsed, timeout);
-                                    time = (time < _sendTimeSpan) ? time : _sendTimeSpan;
-
-                                    _cap.Send(sendBuffer, 0, sendLength, time);
-
-                                    _aliveStopwatch.Restart();
-                                    _sentByteCount.Add(sendLength);
+                                    sendLength = _bandwidthLimit.GetOutBandwidth(this, sendLength);
+                                    if (sendLength < 0) throw new ConnectionException();
                                 }
+
+                                dataStream.Read(safeBuffer.Value, 0, sendLength);
+
+                                var time = Connection.CheckTimeout(_sendStopwatch.Elapsed, timeout);
+                                time = (time < _sendTimeSpan) ? time : _sendTimeSpan;
+
+                                _cap.Send(safeBuffer.Value, 0, sendLength, time);
+
+                                _aliveStopwatch.Restart();
+                                _sentByteCount.Add(sendLength);
                             }
-                        }
-                        finally
-                        {
-                            _bufferManager.ReturnBuffer(sendBuffer);
                         }
 
                         _aliveTimer.Change(1000 * 30);

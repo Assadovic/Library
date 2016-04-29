@@ -815,32 +815,33 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public KeyCollection Share(Stream inStream, string path, HashAlgorithm hashAlgorithm, int blockLength)
+        public KeyCollection Share(Stream stream, string path, HashAlgorithm hashAlgorithm, int blockLength)
         {
-            if (inStream == null) throw new ArgumentNullException(nameof(inStream));
-
-            byte[] buffer = _bufferManager.TakeBuffer(blockLength);
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
 
             var keys = new KeyCollection();
             var shareInfo = new ShareInfo();
             shareInfo.BlockLength = blockLength;
 
-            while (inStream.Position < inStream.Length)
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(blockLength))
             {
-                var length = (int)Math.Min(inStream.Length - inStream.Position, blockLength);
-                inStream.Read(buffer, 0, length);
-
-                Key key = null;
-
-                if (hashAlgorithm == HashAlgorithm.Sha256)
+                while (stream.Position < stream.Length)
                 {
-                    key = new Key(Sha256.ComputeHash(buffer, 0, length), HashAlgorithm.Sha256);
+                    var length = (int)Math.Min(stream.Length - stream.Position, blockLength);
+                    stream.Read(safeBuffer.Value, 0, length);
+
+                    Key key = null;
+
+                    if (hashAlgorithm == HashAlgorithm.Sha256)
+                    {
+                        key = new Key(Sha256.ComputeHash(safeBuffer.Value, 0, length), HashAlgorithm.Sha256);
+                    }
+
+                    if (!shareInfo.Indexes.ContainsKey(key))
+                        shareInfo.Indexes.Add(key, keys.Count);
+
+                    keys.Add(key);
                 }
-
-                if (!shareInfo.Indexes.ContainsKey(key))
-                    shareInfo.Indexes.Add(key, keys.Count);
-
-                keys.Add(key);
             }
 
             lock (this.ThisLock)
@@ -947,21 +948,13 @@ namespace Library.Net.Amoeba
                     try
                     {
                         using (var outStream = new CacheManagerStreamWriter(out keys, blockLength, hashAlgorithm, this, _bufferManager))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                         {
-                            byte[] buffer = _bufferManager.TakeBuffer(1024 * 4);
+                            int length;
 
-                            try
+                            while ((length = inStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                             {
-                                int length = 0;
-
-                                while ((length = inStream.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    outStream.Write(buffer, 0, length);
-                                }
-                            }
-                            finally
-                            {
-                                _bufferManager.ReturnBuffer(buffer);
+                                outStream.Write(safeBuffer.Value, 0, length);
                             }
                         }
                     }
@@ -1029,21 +1022,13 @@ namespace Library.Net.Amoeba
                 try
                 {
                     using (var inStream = new CacheManagerStreamReader(keys, this, _bufferManager))
+                    using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                     {
-                        byte[] buffer = _bufferManager.TakeBuffer(1024 * 4);
+                        int length;
 
-                        try
+                        while ((length = inStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                         {
-                            int length = 0;
-
-                            while (0 != (length = inStream.Read(buffer, 0, buffer.Length)))
-                            {
-                                outStream.Write(buffer, 0, length);
-                            }
-                        }
-                        finally
-                        {
-                            _bufferManager.ReturnBuffer(buffer);
+                            outStream.Write(safeBuffer.Value, 0, length);
                         }
                     }
                 }

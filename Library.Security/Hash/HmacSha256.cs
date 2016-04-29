@@ -33,65 +33,52 @@ namespace Library.Security
 
             var bufferManager = BufferManager.Instance;
 
-            byte[] buffer = null;
-
-            try
+            using (var hashAlgorithm = SHA256.Create())
             {
-                buffer = bufferManager.TakeBuffer(1024 * 4);
-
-                using (var hashAlgorithm = SHA256.Create())
+                if (key.Length > _blockLength)
                 {
-                    if (key.Length > _blockLength)
+                    key = hashAlgorithm.ComputeHash(key);
+                }
+
+                var ixor = new byte[_blockLength];
+                Unsafe.Xor(_ipad, key, ixor);
+
+                var oxor = new byte[_blockLength];
+                Unsafe.Xor(_opad, key, oxor);
+
+                byte[] ihash;
+
+                {
+                    hashAlgorithm.Initialize();
+                    hashAlgorithm.TransformBlock(ixor, 0, ixor.Length, ixor, 0);
+
+                    using (var safeBuffer = bufferManager.CreateSafeBuffer(1024 * 4))
                     {
-                        key = hashAlgorithm.ComputeHash(key);
-                    }
+                        int length;
 
-                    var ixor = new byte[_blockLength];
-                    Unsafe.Xor(_ipad, key, ixor);
-
-                    var oxor = new byte[_blockLength];
-                    Unsafe.Xor(_opad, key, oxor);
-
-                    byte[] ihash;
-
-                    {
-                        hashAlgorithm.Initialize();
-                        hashAlgorithm.TransformBlock(ixor, 0, ixor.Length, ixor, 0);
-
+                        while ((length = inputStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                         {
-                            int length = 0;
-
-                            while ((length = inputStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                hashAlgorithm.TransformBlock(buffer, 0, length, buffer, 0);
-                            }
+                            hashAlgorithm.TransformBlock(safeBuffer.Value, 0, length, safeBuffer.Value, 0);
                         }
-
-                        hashAlgorithm.TransformFinalBlock(new byte[0], 0, 0);
-
-                        ihash = hashAlgorithm.Hash;
                     }
 
-                    byte[] ohash;
+                    hashAlgorithm.TransformFinalBlock(new byte[0], 0, 0);
 
-                    {
-                        hashAlgorithm.Initialize();
-                        hashAlgorithm.TransformBlock(oxor, 0, oxor.Length, oxor, 0);
-                        hashAlgorithm.TransformBlock(ihash, 0, ihash.Length, ihash, 0);
-                        hashAlgorithm.TransformFinalBlock(new byte[0], 0, 0);
-
-                        ohash = hashAlgorithm.Hash;
-                    }
-
-                    return ohash;
+                    ihash = hashAlgorithm.Hash;
                 }
-            }
-            finally
-            {
-                if (buffer != null)
+
+                byte[] ohash;
+
                 {
-                    bufferManager.ReturnBuffer(buffer);
+                    hashAlgorithm.Initialize();
+                    hashAlgorithm.TransformBlock(oxor, 0, oxor.Length, oxor, 0);
+                    hashAlgorithm.TransformBlock(ihash, 0, ihash.Length, ihash, 0);
+                    hashAlgorithm.TransformFinalBlock(new byte[0], 0, 0);
+
+                    ohash = hashAlgorithm.Hash;
                 }
+
+                return ohash;
             }
         }
     }

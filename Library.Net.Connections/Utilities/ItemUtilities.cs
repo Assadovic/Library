@@ -11,6 +11,7 @@ namespace Library.Net.Connections
     {
         private static readonly BufferManager _bufferManager = BufferManager.Instance;
         private static readonly ThreadLocal<Encoding> _threadLocalEncoding = new ThreadLocal<Encoding>(() => new UTF8Encoding(false));
+        private static readonly ThreadLocal<byte[]> _threadLocalBuffer = new ThreadLocal<byte[]>(() => new byte[8]);
         private static readonly byte[] _vector;
 
         static ItemUtilities()
@@ -56,24 +57,13 @@ namespace Library.Net.Connections
             stream.WriteByte(type);
             stream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
 
-            byte[] buffer = null;
-
-            try
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
             {
+                int length;
 
-                buffer = _bufferManager.TakeBuffer(1024 * 4);
-                int length = 0;
-
-                while ((length = exportStream.Read(buffer, 0, buffer.Length)) > 0)
+                while ((length = exportStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                 {
-                    stream.Write(buffer, 0, length);
-                }
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
+                    stream.Write(safeBuffer.Value, 0, length);
                 }
             }
         }
@@ -82,23 +72,13 @@ namespace Library.Net.Connections
         {
             Encoding encoding = _threadLocalEncoding.Value;
 
-            byte[] buffer = null;
-
-            try
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(encoding.GetMaxByteCount(value.Length)))
             {
-                buffer = _bufferManager.TakeBuffer(encoding.GetMaxByteCount(value.Length));
-                var length = encoding.GetBytes(value, 0, value.Length, buffer, 0);
+                var length = encoding.GetBytes(value, 0, value.Length, safeBuffer.Value, 0);
 
                 stream.WriteByte(type);
                 stream.Write(NetworkConverter.GetBytes(length), 0, 4);
-                stream.Write(buffer, 0, length);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
+                stream.Write(safeBuffer.Value, 0, length);
             }
         }
 
@@ -148,23 +128,13 @@ namespace Library.Net.Connections
         {
             Encoding encoding = _threadLocalEncoding.Value;
 
-            byte[] buffer = null;
+            var length = (int)stream.Length;
 
-            try
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(length))
             {
-                var length = (int)stream.Length;
-                buffer = _bufferManager.TakeBuffer(length);
+                stream.Read(safeBuffer.Value, 0, length);
 
-                stream.Read(buffer, 0, length);
-
-                return encoding.GetString(buffer, 0, length);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
+                return encoding.GetString(safeBuffer.Value, 0, length);
             }
         }
 
@@ -172,92 +142,44 @@ namespace Library.Net.Connections
         {
             if (stream.Length != 1) throw new ArgumentException();
 
-            byte[] buffer = null;
+            byte[] buffer = _threadLocalBuffer.Value;
 
-            try
-            {
-                buffer = _bufferManager.TakeBuffer(1);
+            stream.Read(buffer, 0, 1);
 
-                stream.Read(buffer, 0, 1);
-
-                return buffer[0];
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
-            }
+            return buffer[0];
         }
 
         public static int GetShort(Stream stream)
         {
             if (stream.Length != 2) throw new ArgumentException();
 
-            byte[] buffer = null;
+            byte[] buffer = _threadLocalBuffer.Value;
 
-            try
-            {
-                buffer = _bufferManager.TakeBuffer(2);
+            stream.Read(buffer, 0, 2);
 
-                stream.Read(buffer, 0, 2);
-
-                return NetworkConverter.ToInt16(buffer);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
-            }
+            return NetworkConverter.ToInt16(buffer);
         }
 
         public static int GetInt(Stream stream)
         {
             if (stream.Length != 4) throw new ArgumentException();
 
-            byte[] buffer = null;
+            byte[] buffer = _threadLocalBuffer.Value;
 
-            try
-            {
-                buffer = _bufferManager.TakeBuffer(4);
+            stream.Read(buffer, 0, 4);
 
-                stream.Read(buffer, 0, 4);
-
-                return NetworkConverter.ToInt32(buffer);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
-            }
+            return NetworkConverter.ToInt32(buffer);
         }
 
         public static long GetLong(Stream stream)
         {
             if (stream.Length != 8) throw new ArgumentException();
 
-            byte[] buffer = null;
+            byte[] buffer = _threadLocalBuffer.Value;
 
-            try
-            {
-                buffer = _bufferManager.TakeBuffer(8);
+            stream.Read(buffer, 0, 8);
 
-                stream.Read(buffer, 0, 8);
-
-                return NetworkConverter.ToInt64(buffer);
-            }
-            finally
-            {
-                if (buffer != null)
-                {
-                    _bufferManager.ReturnBuffer(buffer);
-                }
-            }
+            return NetworkConverter.ToInt64(buffer);
         }
     }
 }

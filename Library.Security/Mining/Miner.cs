@@ -220,15 +220,14 @@ namespace Library.Security
                 {
 
                     byte[] result;
-
                     {
-                        byte[] buffer = bufferManager.TakeBuffer(64);
-                        Unsafe.Copy(key, 0, buffer, 0, 32);
-                        Unsafe.Copy(value, 0, buffer, 32, 32);
+                        using (var safeBuffer = bufferManager.CreateSafeBuffer(64))
+                        {
+                            Unsafe.Copy(key, 0, safeBuffer.Value, 0, 32);
+                            Unsafe.Copy(value, 0, safeBuffer.Value, 32, 32);
 
-                        result = Sha256.ComputeHash(buffer, 0, 64);
-
-                        bufferManager.ReturnBuffer(buffer);
+                            result = Sha256.ComputeHash(safeBuffer.Value, 0, 64);
+                        }
                     }
 
                     int count = 0;

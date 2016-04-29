@@ -182,28 +182,15 @@ namespace Library.Net.Connections
                                 deflateBufferStream = new BufferStream(_bufferManager);
 
                                 using (DeflateStream deflateStream = new DeflateStream(dataStream, CompressionMode.Decompress, true))
+                                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                                 {
-                                    byte[] decompressBuffer = null;
+                                    int length;
 
-                                    try
+                                    while ((length = deflateStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                     {
-                                        decompressBuffer = _bufferManager.TakeBuffer(1024 * 4);
+                                        deflateBufferStream.Write(safeBuffer.Value, 0, length);
 
-                                        int i = -1;
-
-                                        while ((i = deflateStream.Read(decompressBuffer, 0, decompressBuffer.Length)) > 0)
-                                        {
-                                            deflateBufferStream.Write(decompressBuffer, 0, i);
-
-                                            if (deflateBufferStream.Length > _maxReceiveCount) throw new ConnectionException();
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        if (decompressBuffer != null)
-                                        {
-                                            _bufferManager.ReturnBuffer(decompressBuffer);
-                                        }
+                                        if (deflateBufferStream.Length > _maxReceiveCount) throw new ConnectionException();
                                     }
                                 }
                             }
@@ -295,26 +282,13 @@ namespace Library.Net.Connections
                                     deflateBufferStream = new BufferStream(_bufferManager);
 
                                     using (DeflateStream deflateStream = new DeflateStream(deflateBufferStream, CompressionMode.Compress, true))
+                                    using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                                     {
-                                        byte[] compressBuffer = null;
+                                        int length;
 
-                                        try
+                                        while ((length = targetStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                         {
-                                            compressBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                                            int i = -1;
-
-                                            while ((i = targetStream.Read(compressBuffer, 0, compressBuffer.Length)) > 0)
-                                            {
-                                                deflateStream.Write(compressBuffer, 0, i);
-                                            }
-                                        }
-                                        finally
-                                        {
-                                            if (compressBuffer != null)
-                                            {
-                                                _bufferManager.ReturnBuffer(compressBuffer);
-                                            }
+                                            deflateStream.Write(safeBuffer.Value, 0, length);
                                         }
                                     }
 

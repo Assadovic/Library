@@ -42,26 +42,13 @@ namespace Library.Net.Outopos
                         deflateBufferStream = new BufferStream(_bufferManager);
 
                         using (DeflateStream deflateStream = new DeflateStream(deflateBufferStream, CompressionMode.Compress, true))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                         {
-                            byte[] compressBuffer = null;
+                            int length;
 
-                            try
+                            while ((length = stream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                             {
-                                compressBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                                int i = -1;
-
-                                while ((i = stream.Read(compressBuffer, 0, compressBuffer.Length)) > 0)
-                                {
-                                    deflateStream.Write(compressBuffer, 0, i);
-                                }
-                            }
-                            finally
-                            {
-                                if (compressBuffer != null)
-                                {
-                                    _bufferManager.ReturnBuffer(compressBuffer);
-                                }
+                                deflateStream.Write(safeBuffer.Value, 0, length);
                             }
                         }
 
@@ -95,7 +82,7 @@ namespace Library.Net.Outopos
 #if DEBUG
                 if (list[0].Value.Length != stream.Length)
                 {
-                    Debug.WriteLine("OutoposConverter ToStream : {0}→{1} {2}",
+                    Debug.WriteLine("AmoebaConverter ToStream : {0}→{1} {2}",
                         NetworkConverter.ToSizeString(stream.Length),
                         NetworkConverter.ToSizeString(list[0].Value.Length),
                         NetworkConverter.ToSizeString(list[0].Value.Length - stream.Length));
@@ -107,10 +94,10 @@ namespace Library.Net.Outopos
                     list[i].Value.Dispose();
                 }
 
-                var metadataStream = new BufferStream(_bufferManager);
-                metadataStream.WriteByte((byte)list[0].Key);
+                var headerStream = new BufferStream(_bufferManager);
+                headerStream.WriteByte((byte)list[0].Key);
 
-                var dataStream = new UniteStream(metadataStream, list[0].Value);
+                var dataStream = new UniteStream(headerStream, list[0].Value);
 
                 var crcStream = new MemoryStream(Crc32_Castagnoli.ComputeHash(dataStream));
                 return new UniteStream(dataStream, crcStream);
@@ -162,32 +149,19 @@ namespace Library.Net.Outopos
                         {
                             using (BufferStream deflateBufferStream = new BufferStream(_bufferManager))
                             {
-                                byte[] decompressBuffer = null;
-
-                                try
+                                using (DeflateStream deflateStream = new DeflateStream(dataStream, CompressionMode.Decompress, true))
+                                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                                 {
-                                    decompressBuffer = _bufferManager.TakeBuffer(1024 * 4);
+                                    int length;
 
-                                    using (DeflateStream deflateStream = new DeflateStream(dataStream, CompressionMode.Decompress, true))
+                                    while ((length = deflateStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                     {
-                                        int i = -1;
-
-                                        while ((i = deflateStream.Read(decompressBuffer, 0, decompressBuffer.Length)) > 0)
-                                        {
-                                            deflateBufferStream.Write(decompressBuffer, 0, i);
-                                        }
-                                    }
-                                }
-                                finally
-                                {
-                                    if (decompressBuffer != null)
-                                    {
-                                        _bufferManager.ReturnBuffer(decompressBuffer);
+                                        deflateBufferStream.Write(safeBuffer.Value, 0, length);
                                     }
                                 }
 
 #if DEBUG
-                                Debug.WriteLine("OutoposConverter FromStream : {0}→{1} {2}",
+                                Debug.WriteLine("AmoebaConverter FromStream : {0}→{1} {2}",
                                     NetworkConverter.ToSizeString(dataStream.Length),
                                     NetworkConverter.ToSizeString(deflateBufferStream.Length),
                                     NetworkConverter.ToSizeString(dataStream.Length - deflateBufferStream.Length));
@@ -214,24 +188,12 @@ namespace Library.Net.Outopos
         private static string ToBase64String(Stream stream)
         {
             using (var targetStream = new RangeStream(stream, true))
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer((int)targetStream.Length))
             {
-                byte[] buffer = null;
+                targetStream.Seek(0, SeekOrigin.Begin);
+                targetStream.Read(safeBuffer.Value, 0, (int)targetStream.Length);
 
-                try
-                {
-                    buffer = _bufferManager.TakeBuffer((int)targetStream.Length);
-                    targetStream.Seek(0, SeekOrigin.Begin);
-                    targetStream.Read(buffer, 0, (int)targetStream.Length);
-
-                    return NetworkConverter.ToBase64UrlString(buffer, 0, (int)targetStream.Length);
-                }
-                finally
-                {
-                    if (buffer != null)
-                    {
-                        _bufferManager.ReturnBuffer(buffer);
-                    }
-                }
+                return NetworkConverter.ToBase64UrlString(safeBuffer.Value, 0, (int)targetStream.Length);
             }
         }
 

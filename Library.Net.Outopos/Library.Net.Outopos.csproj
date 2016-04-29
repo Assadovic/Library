@@ -113,7 +113,6 @@
     <Compile Include="ServerManager.cs" />
     <Compile Include="NodeCollection.cs" />
     <Compile Include="Node.cs" />
-    <Compile Include="ProtocolVersion.cs" />
     <Compile Include="UploadManager.cs" />
     <Compile Include="UriCollection.cs" />
     <Compile Include="Utilities\WatchTimer.cs" />

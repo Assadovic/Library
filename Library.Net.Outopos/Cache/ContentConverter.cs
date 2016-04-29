@@ -50,26 +50,13 @@ namespace Library.Net.Outopos
                     deflateBufferStream = new BufferStream(_bufferManager);
 
                     using (DeflateStream deflateStream = new DeflateStream(deflateBufferStream, CompressionMode.Compress, true))
+                    using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                     {
-                        byte[] compressBuffer = null;
+                        int length;
 
-                        try
+                        while ((length = targetStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                         {
-                            compressBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                            int i = -1;
-
-                            while ((i = targetStream.Read(compressBuffer, 0, compressBuffer.Length)) > 0)
-                            {
-                                deflateStream.Write(compressBuffer, 0, i);
-                            }
-                        }
-                        finally
-                        {
-                            if (compressBuffer != null)
-                            {
-                                _bufferManager.ReturnBuffer(compressBuffer);
-                            }
+                            deflateStream.Write(safeBuffer.Value, 0, length);
                         }
                     }
 
@@ -147,26 +134,13 @@ namespace Library.Net.Outopos
                             deflateBufferStream = new BufferStream(_bufferManager);
 
                             using (DeflateStream deflateStream = new DeflateStream(dataStream, CompressionMode.Decompress, true))
+                            using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                             {
-                                byte[] decompressBuffer = null;
+                                int length;
 
-                                try
+                                while ((length = deflateStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                 {
-                                    decompressBuffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                                    int i = -1;
-
-                                    while ((i = deflateStream.Read(decompressBuffer, 0, decompressBuffer.Length)) > 0)
-                                    {
-                                        deflateBufferStream.Write(decompressBuffer, 0, i);
-                                    }
-                                }
-                                finally
-                                {
-                                    if (decompressBuffer != null)
-                                    {
-                                        _bufferManager.ReturnBuffer(decompressBuffer);
-                                    }
+                                    deflateBufferStream.Write(safeBuffer.Value, 0, length);
                                 }
                             }
 
@@ -228,30 +202,15 @@ namespace Library.Net.Outopos
                     outStream.Write(iv, 0, iv.Length);
 
                     using (Stream inStream = new WrapperStream(stream, true))
+                    using (var rijndael = new RijndaelManaged() { KeySize = 256, BlockSize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 })
+                    using (CryptoStream cs = new CryptoStream(inStream, rijndael.CreateEncryptor(cryptoKey, iv), CryptoStreamMode.Read))
+                    using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                     {
-                        using (var rijndael = new RijndaelManaged() { KeySize = 256, BlockSize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 })
-                        using (CryptoStream cs = new CryptoStream(inStream, rijndael.CreateEncryptor(cryptoKey, iv), CryptoStreamMode.Read))
+                        int length;
+
+                        while ((length = cs.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                         {
-                            byte[] buffer = null;
-
-                            try
-                            {
-                                buffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                                int i = -1;
-
-                                while ((i = cs.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    outStream.Write(buffer, 0, i);
-                                }
-                            }
-                            finally
-                            {
-                                if (buffer != null)
-                                {
-                                    _bufferManager.ReturnBuffer(buffer);
-                                }
-                            }
+                            outStream.Write(safeBuffer.Value, 0, length);
                         }
                     }
 
@@ -310,26 +269,16 @@ namespace Library.Net.Outopos
                             var iv = new byte[32];
                             dataStream.Read(iv, 0, iv.Length);
 
-                            using (var rijndael = new RijndaelManaged() { KeySize = 256, BlockSize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 })
                             using (var inStream = new RangeStream(dataStream, dataStream.Position, dataStream.Length - dataStream.Position))
+                            using (var rijndael = new RijndaelManaged() { KeySize = 256, BlockSize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 })
                             using (CryptoStream cs = new CryptoStream(inStream, rijndael.CreateDecryptor(cryptoKey, iv), CryptoStreamMode.Read))
+                            using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
                             {
-                                byte[] buffer = null;
+                                int length;
 
-                                try
+                                while ((length = cs.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                 {
-                                    buffer = _bufferManager.TakeBuffer(1024 * 4);
-
-                                    int i = -1;
-
-                                    while ((i = cs.Read(buffer, 0, buffer.Length)) > 0)
-                                    {
-                                        outStream.Write(buffer, 0, i);
-                                    }
-                                }
-                                finally
-                                {
-                                    _bufferManager.ReturnBuffer(buffer);
+                                    outStream.Write(safeBuffer.Value, 0, length);
                                 }
                             }
                         }
@@ -374,27 +323,18 @@ namespace Library.Net.Outopos
                 int paddingLength = size - ((int)stream.Length + 4);
 
                 var paddingStream = new BufferStream(_bufferManager);
-
                 {
-                    byte[] buffer = null;
-
-                    try
+                    using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024))
                     {
-                        buffer = _bufferManager.TakeBuffer(1024);
-
                         while (paddingLength > 0)
                         {
-                            int writeSize = Math.Min(paddingLength, buffer.Length);
+                            int writeSize = Math.Min(paddingLength, safeBuffer.Value.Length);
 
-                            random.NextBytes(buffer);
-                            paddingStream.Write(buffer, 0, writeSize);
+                            random.NextBytes(safeBuffer.Value);
+                            paddingStream.Write(safeBuffer.Value, 0, writeSize);
 
                             paddingLength -= writeSize;
                         }
-                    }
-                    finally
-                    {
-                        _bufferManager.ReturnBuffer(buffer);
                     }
                 }
 

@@ -127,6 +127,16 @@ namespace Library
             }
         }
 
+        public SafeBuffer CreateSafeBuffer(int bufferSize)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+
+            lock (_thisLock)
+            {
+                return new SafeBuffer(this, this.TakeBuffer(bufferSize));
+            }
+        }
+
         public byte[] TakeBuffer(int bufferSize)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
@@ -184,6 +194,42 @@ namespace Library
                 for (int i = 0; i < _buffers.Length; i++)
                 {
                     _buffers[i].Clear();
+                }
+            }
+        }
+
+        public class SafeBuffer : ManagerBase
+        {
+            private volatile BufferManager _bufferManager;
+            private volatile byte[] _value;
+            private volatile bool _disposed;
+
+            internal SafeBuffer(BufferManager bufferManager, byte[] value)
+            {
+                _bufferManager = bufferManager;
+                _value = value;
+            }
+
+            public byte[] Value
+            {
+                get
+                {
+                    return _value;
+                }
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if (_disposed) return;
+                _disposed = true;
+
+                if (disposing)
+                {
+                    if (_value != null)
+                    {
+                        _bufferManager.ReturnBuffer(_value);
+                        _value = null;
+                    }
                 }
             }
         }
