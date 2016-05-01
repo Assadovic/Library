@@ -596,14 +596,14 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public void RemoveShare(int id)
+        public void RemoveShare(string path)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
 
             lock (this.ThisLock)
             {
-                _cacheManager.RemoveShare(id);
+                _cacheManager.RemoveShare(path);
             }
         }
 

@@ -38,9 +38,6 @@ namespace Library.Net.Amoeba
         private bool _spaceSectors_Initialized;
         private SortedSet<long> _spaceSectors = new SortedSet<long>();
 
-        private Dictionary<int, string> _ids = new Dictionary<int, string>();
-        private int _id;
-
         private bool _shareIndexLink_Initialized;
         private Dictionary<Key, string> _shareIndexLink = new Dictionary<Key, string>();
 
@@ -240,15 +237,12 @@ namespace Library.Net.Amoeba
                 {
                     var list = new List<Information>();
 
-                    foreach (var item in _ids)
+                    foreach (var item in _settings.ShareIndex)
                     {
                         var contexts = new List<InformationContext>();
 
-                        contexts.Add(new InformationContext("Id", item.Key));
-                        contexts.Add(new InformationContext("Path", item.Value));
-
-                        var shareInfo = _settings.ShareIndex[item.Value];
-                        contexts.Add(new InformationContext("BlockCount", shareInfo.Indexes.Count));
+                        contexts.Add(new InformationContext("Path", item.Key));
+                        contexts.Add(new InformationContext("BlockCount", item.Value.Indexes.Count));
 
                         list.Add(new Information(contexts));
                     }
@@ -630,15 +624,7 @@ namespace Library.Net.Amoeba
 
                     if (info.Path != null)
                     {
-                        foreach (var item in _ids.ToArray())
-                        {
-                            if (item.Value == info.Path)
-                            {
-                                this.RemoveShare(item.Key);
-
-                                break;
-                            }
-                        }
+                        this.RemoveShare(info.Path);
                     }
 
                     _settings.SeedsInformation.RemoveAt(i);
@@ -846,20 +832,9 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                // 既にShareされている場合は、新しいShareInfoで置き換える。
-                if (_settings.ShareIndex.ContainsKey(path))
-                {
-                    _settings.ShareIndex[path] = shareInfo;
+                _settings.ShareIndex[path] = shareInfo;
 
-                    _shareIndexLink_Initialized = false;
-                }
-                else
-                {
-                    _settings.ShareIndex.Add(path, shareInfo);
-                    _ids.Add(_id++, path);
-
-                    _shareIndexLink_Initialized = false;
-                }
+                _shareIndexLink_Initialized = false;
             }
 
             this.OnSetKeyEvent(keys);
@@ -867,17 +842,14 @@ namespace Library.Net.Amoeba
             return keys;
         }
 
-        public void RemoveShare(int id)
+        public void RemoveShare(string path)
         {
             lock (this.ThisLock)
             {
-                string path = _ids[id];
-
                 var keys = new List<Key>();
                 keys.AddRange(_settings.ShareIndex[path].Indexes.Keys);
 
                 _settings.ShareIndex.Remove(path);
-                _ids.Remove(id);
 
                 _shareIndexLink_Initialized = false;
 
@@ -1320,6 +1292,7 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
+                    // Cache
                     {
                         ClusterInfo clusterInfo = null;
 
@@ -1396,6 +1369,7 @@ namespace Library.Net.Amoeba
                         }
                     }
 
+                    // Share
                     {
                         string path = null;
 
@@ -1422,15 +1396,7 @@ namespace Library.Net.Amoeba
                                     {
                                         if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), key.Hash))
                                         {
-                                            foreach (var item in _ids.ToArray())
-                                            {
-                                                if (item.Value == path)
-                                                {
-                                                    this.RemoveShare(item.Key);
-
-                                                    break;
-                                                }
-                                            }
+                                            this.RemoveShare(path);
 
                                             throw new BlockNotFoundException();
                                         }
@@ -1561,14 +1527,6 @@ namespace Library.Net.Amoeba
             lock (this.ThisLock)
             {
                 _settings.Load(directoryPath);
-
-                _ids.Clear();
-                _id = 0;
-
-                foreach (var item in _settings.ShareIndex)
-                {
-                    _ids.Add(_id++, item.Key);
-                }
 
                 _shareIndexLink_Initialized = false;
 

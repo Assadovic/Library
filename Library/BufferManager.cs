@@ -225,10 +225,17 @@ namespace Library
 
                 if (disposing)
                 {
-                    if (_value != null)
+                    try
                     {
-                        _bufferManager.ReturnBuffer(_value);
-                        _value = null;
+                        if (_value != null)
+                        {
+                            _bufferManager.ReturnBuffer(_value);
+                            _value = null;
+                        }
+                    }
+                    catch (Exception)
+                    {
+
                     }
                 }
             }

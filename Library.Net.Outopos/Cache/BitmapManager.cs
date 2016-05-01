@@ -130,21 +130,17 @@ namespace Library.Net.Outopos
             {
                 if (point >= _length) throw new ArgumentOutOfRangeException(nameof(point));
 
+                var sectorOffset = (point / 8) / BitmapManager.SectorSize;
+                var bufferOffset = (int)((point / 8) % BitmapManager.SectorSize);
+                var bitOffset = (byte)(point % 8);
+
                 if (state)
                 {
-                    var sectorOffset = (point / 8) / BitmapManager.SectorSize;
-                    var bufferOffset = (int)((point / 8) % BitmapManager.SectorSize);
-                    var bitOffset = (byte)(point % 8);
-
                     var buffer = this.GetBuffer(sectorOffset);
                     buffer.Array[buffer.Offset + bufferOffset] |= (byte)(0x80 >> bitOffset);
                 }
                 else
                 {
-                    var sectorOffset = (point / 8) / BitmapManager.SectorSize;
-                    var bufferOffset = (int)((point / 8) % BitmapManager.SectorSize);
-                    var bitOffset = (byte)(point % 8);
-
                     var buffer = this.GetBuffer(sectorOffset);
                     buffer.Array[buffer.Offset + bufferOffset] &= (byte)(~(0x80 >> bitOffset));
                 }
