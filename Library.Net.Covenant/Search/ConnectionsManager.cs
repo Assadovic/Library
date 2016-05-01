@@ -13,12 +13,11 @@ namespace Library.Net.Covenant
 {
     public delegate IEnumerable<string> GetSignaturesEventHandler(object sender);
 
-    delegate void UploadedEventHandler(object sender, IEnumerable<Key> keys);
+    public delegate Cap CreateCapEventHandler(object sender, string uri);
+    public delegate Cap AcceptCapEventHandler(object sender, out string uri);
 
     class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
-        private ClientManager _clientManager;
-        private ServerManager _serverManager;
         private BufferManager _bufferManager;
 
         private Settings _settings;
@@ -82,10 +81,15 @@ namespace Library.Net.Covenant
         private readonly SafeInteger _connectConnectionCount = new SafeInteger();
         private readonly SafeInteger _acceptConnectionCount = new SafeInteger();
 
+        private CreateCapEventHandler _createCapEvent;
+        private AcceptCapEventHandler _acceptCapEvent;
+
         private GetSignaturesEventHandler _getLockSignaturesEvent;
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
+
+        private const int _maxReceiveCount = 1024 * 1024;
 
         private const int _maxNodeCount = 128;
         private const int _maxLocationRequestCount = 1024;
@@ -95,20 +99,8 @@ namespace Library.Net.Covenant
 
         private const int _routeTableMinCount = 100;
 
-        //#if DEBUG
-        //        private const int _downloadingConnectionCountLowerLimit = 0;
-        //        private const int _uploadingConnectionCountLowerLimit = 0;
-        //        private const int _diffusionConnectionCountLowerLimit = 3;
-        //#else
-        private const int _downloadingConnectionCountLowerLimit = 3;
-        private const int _uploadingConnectionCountLowerLimit = 3;
-        private const int _diffusionConnectionCountLowerLimit = 12;
-        //#endif
-
-        public ConnectionsManager(ClientManager clientManager, ServerManager serverManager, BufferManager bufferManager)
+        public ConnectionsManager(BufferManager bufferManager)
         {
-            _clientManager = clientManager;
-            _serverManager = serverManager;
             _bufferManager = bufferManager;
 
             _settings = new Settings(this.ThisLock);
@@ -156,6 +148,28 @@ namespace Library.Net.Covenant
             _pushLocationsRequestList.TrimExcess();
             _pushLinkMetadatasRequestList.TrimExcess();
             _pushStoreMetadatasRequestList.TrimExcess();
+        }
+
+        public CreateCapEventHandler CreateCapEvent
+        {
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _createCapEvent = value;
+                }
+            }
+        }
+
+        public AcceptCapEventHandler AcceptCapEvent
+        {
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _acceptCapEvent = value;
+                }
+            }
         }
 
         public GetSignaturesEventHandler GetLockSignaturesEvent
@@ -338,6 +352,17 @@ namespace Library.Net.Covenant
                     return _sentByteCount + _connectionManagers.Sum(n => n.SentByteCount);
                 }
             }
+        }
+
+        protected virtual Cap OnCreateCapEvent(string uri)
+        {
+            return _createCapEvent?.Invoke(this, uri);
+        }
+
+        protected virtual Cap OnAcceptCapEvent(out string uri)
+        {
+            uri = null;
+            return _acceptCapEvent?.Invoke(this, out uri);
         }
 
         protected virtual IEnumerable<string> OnLockSignaturesEvent()
@@ -543,12 +568,11 @@ namespace Library.Net.Covenant
                     {
                         if (this.State == ManagerState.Stop) return;
 
-                        ProtocolVersion version;
-                        var connection = _clientManager.CreateConnection(uri, out version, ProtocolType.Search);
+                        var connection = this.CreateConnection(uri);
 
                         if (connection != null)
                         {
-                            var connectionManager = new ConnectionManager(version, connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
+                            var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
 
                             try
                             {
@@ -620,12 +644,11 @@ namespace Library.Net.Covenant
                 }
 
                 string uri;
-                ProtocolVersion version;
-                var connection = _serverManager.AcceptConnection(out uri, out version, ProtocolType.Search);
+                var connection = this.AcceptConnection(out uri);
 
                 if (connection != null)
                 {
-                    var connectionManager = new ConnectionManager(version, connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
+                    var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
 
                     try
                     {
@@ -654,6 +677,84 @@ namespace Library.Net.Covenant
                     }
                 }
             }
+        }
+
+        public Connection CreateConnection(string uri)
+        {
+            var garbages = new List<IDisposable>();
+
+            try
+            {
+                Connection connection = null;
+                {
+                    var cap = this.OnCreateCapEvent(uri);
+                    if (cap == null) goto End;
+
+                    garbages.Add(cap);
+
+                    connection = new BaseConnection(cap, _bandwidthLimit, _maxReceiveCount, _bufferManager);
+                    garbages.Add(connection);
+
+                    End:;
+                }
+
+                if (connection == null) return null;
+
+                var compressConnection = new CompressConnection(connection, _maxReceiveCount, _bufferManager);
+                garbages.Add(compressConnection);
+
+                compressConnection.Connect(new TimeSpan(0, 0, 10));
+
+                return compressConnection;
+            }
+            catch (Exception)
+            {
+                foreach (var item in garbages)
+                {
+                    item.Dispose();
+                }
+            }
+
+            return null;
+        }
+
+        public Connection AcceptConnection(out string uri)
+        {
+            uri = null;
+            var garbages = new List<IDisposable>();
+
+            try
+            {
+                Connection connection = null;
+                {
+                    // Overlay network
+                    var cap = this.OnAcceptCapEvent(out uri);
+                    if (cap == null) return null;
+
+                    garbages.Add(cap);
+
+                    connection = new BaseConnection(cap, _bandwidthLimit, _maxReceiveCount, _bufferManager);
+                    garbages.Add(connection);
+                }
+
+                if (connection == null) return null;
+
+                var compressConnection = new CompressConnection(connection, _maxReceiveCount, _bufferManager);
+                garbages.Add(compressConnection);
+
+                compressConnection.Connect(new TimeSpan(0, 0, 10));
+
+                return compressConnection;
+            }
+            catch (Exception)
+            {
+                foreach (var item in garbages)
+                {
+                    item.Dispose();
+                }
+            }
+
+            return null;
         }
 
         private class NodeSortItem
@@ -863,8 +964,7 @@ namespace Library.Net.Covenant
                 }
 
                 // 拡散アップロード
-                if (connectionCount >= _uploadingConnectionCountLowerLimit
-                    && pushUploadStopwatch.Elapsed.TotalSeconds >= 30)
+                if (pushUploadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushUploadStopwatch.Restart();
 
@@ -952,8 +1052,7 @@ namespace Library.Net.Covenant
                 }
 
                 // ダウンロード
-                if (connectionCount >= _downloadingConnectionCountLowerLimit
-                    && pushDownloadStopwatch.Elapsed.TotalSeconds >= 30)
+                if (pushDownloadStopwatch.Elapsed.TotalSeconds >= 30)
                 {
                     pushDownloadStopwatch.Restart();
 
@@ -1322,7 +1421,6 @@ namespace Library.Net.Covenant
                         updateTime.Restart();
 
                         // PushLocationsRequest
-                        if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
                             List<Key> targetList = null;
 
@@ -1349,7 +1447,6 @@ namespace Library.Net.Covenant
                         }
 
                         // PushMetadatasRequest
-                        if (connectionCount >= _downloadingConnectionCountLowerLimit)
                         {
                             var queryList = new List<QueryMetadata>();
 
@@ -1420,7 +1517,6 @@ namespace Library.Net.Covenant
                         locationUpdateTime.Restart();
 
                         // PushLocations
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             var locations = new List<Location>();
 
@@ -1450,7 +1546,6 @@ namespace Library.Net.Covenant
                         metadataUpdateTime.Restart();
 
                         // PushMetadatas
-                        if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
                             var linkMetadatas = new List<Metadata>();
 
@@ -1778,8 +1873,6 @@ namespace Library.Net.Covenant
 
                     this.UpdateSessionId();
 
-                    _serverManager.Start();
-
                     _connectionsManagerThread = new Thread(this.ConnectionsManagerThread);
                     _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
                     _connectionsManagerThread.Priority = ThreadPriority.Lowest;
@@ -1818,8 +1911,6 @@ namespace Library.Net.Covenant
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
-
-                    _serverManager.Stop();
                 }
 
                 foreach (var thread in _createConnectionThreads)

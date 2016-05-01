@@ -16,6 +16,14 @@ using Library.Security;
 
 namespace Library.Net.Covenant
 {
+    [Flags]
+    [DataContract(Name = "SearchProtocolVersion", Namespace = "http://Library/Net/Covenant")]
+    enum SearchProtocolVersion
+    {
+        [EnumMember(Value = "Version1")]
+        Version1 = 0x01,
+    }
+
     class PullNodesEventArgs : EventArgs
     {
         public IEnumerable<Node> Nodes { get; set; }
@@ -82,7 +90,9 @@ namespace Library.Net.Covenant
             Metadatas = 8,
         }
 
-        private ProtocolVersion _protocolVersion;
+        private SearchProtocolVersion _protocolVersion;
+        private SearchProtocolVersion _myProtocolVersion;
+        private SearchProtocolVersion _otherProtocolVersion;
         private Connection _connection;
         private byte[] _mySessionId;
         private byte[] _otherSessionId;
@@ -124,9 +134,9 @@ namespace Library.Net.Covenant
 
         public event CloseEventHandler CloseEvent;
 
-        public ConnectionManager(ProtocolVersion protocolVersion, Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
+        public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
-            _protocolVersion = protocolVersion;
+            _myProtocolVersion = SearchProtocolVersion.Version1;
             _connection = connection;
             _mySessionId = mySessionId;
             _baseNode = baseNode;
@@ -186,7 +196,7 @@ namespace Library.Net.Covenant
             }
         }
 
-        public ProtocolVersion ProtocolVersion
+        public SearchProtocolVersion ProtocolVersion
         {
             get
             {
@@ -242,7 +252,53 @@ namespace Library.Net.Covenant
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
-                    if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+                    using (BufferStream stream = new BufferStream(_bufferManager))
+                    using (XmlTextWriter xml = new XmlTextWriter(stream, new UTF8Encoding(false)))
+                    {
+                        xml.WriteStartDocument();
+
+                        xml.WriteStartElement("Protocol");
+
+                        if (_myProtocolVersion.HasFlag(SearchProtocolVersion.Version1))
+                        {
+                            xml.WriteStartElement("Covenant_Search");
+                            xml.WriteAttributeString("Version", "1");
+                            xml.WriteEndElement(); //Covenant
+                        }
+
+                        xml.WriteEndElement(); //Protocol
+
+                        xml.WriteEndDocument();
+                        xml.Flush();
+                        stream.Flush();
+
+                        stream.Seek(0, SeekOrigin.Begin);
+                        _connection.Send(stream, timeout - stopwatch.Elapsed);
+                    }
+
+                    using (Stream stream = _connection.Receive(timeout - stopwatch.Elapsed))
+                    using (XmlTextReader xml = new XmlTextReader(stream))
+                    {
+                        while (xml.Read())
+                        {
+                            if (xml.NodeType == XmlNodeType.Element)
+                            {
+                                if (xml.LocalName == "Covenant_Search")
+                                {
+                                    var version = xml.GetAttribute("Version");
+
+                                    if (version == "1")
+                                    {
+                                        _otherProtocolVersion |= SearchProtocolVersion.Version1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    _protocolVersion = _myProtocolVersion & _otherProtocolVersion;
+
+                    if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
                     {
                         using (Stream stream = new MemoryStream(_mySessionId))
                         {
@@ -336,7 +392,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 try
                 {
@@ -370,7 +426,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 try
                 {
@@ -402,7 +458,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 try
                 {
@@ -445,7 +501,7 @@ namespace Library.Net.Covenant
 
                     sw.Restart();
 
-                    if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+                    if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
                     {
                         using (Stream stream = _connection.Receive(_receiveTimeSpan))
                         {
@@ -618,7 +674,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -655,7 +711,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -692,7 +748,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -729,7 +785,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -766,7 +822,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -803,7 +859,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(SearchProtocolVersion.Version1))
             {
                 try
                 {

@@ -13,7 +13,7 @@ namespace Library.Net.Covenant
         Store = 1,
     }
 
-    interface IMetadata : IComputeHash
+    interface IMetadata
     {
         MetadataType Type { get; }
         DateTime CreationTime { get; }

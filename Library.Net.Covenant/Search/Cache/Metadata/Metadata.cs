@@ -232,34 +232,5 @@ namespace Library.Net.Covenant
         }
 
         #endregion
-
-        #region IComputeHash
-
-        private volatile byte[] _sha256_hash;
-
-        public byte[] CreateHash(HashAlgorithm hashAlgorithm)
-        {
-            if (_sha256_hash == null)
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    _sha256_hash = Sha256.ComputeHash(stream);
-                }
-            }
-
-            if (hashAlgorithm == HashAlgorithm.Sha256)
-            {
-                return _sha256_hash;
-            }
-
-            return null;
-        }
-
-        public bool VerifyHash(byte[] hash, HashAlgorithm hashAlgorithm)
-        {
-            return Unsafe.Equals(this.CreateHash(hashAlgorithm), hash);
-        }
-
-        #endregion
     }
 }
