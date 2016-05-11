@@ -71,7 +71,7 @@ namespace Library.Net.Covenant
         Out = 1,
     }
 
-    class ConnectionManager : ManagerBase, IThisLock
+    class SearchConnectionManager : ManagerBase, IThisLock
     {
         private enum SerializeId : byte
         {
@@ -134,7 +134,7 @@ namespace Library.Net.Covenant
 
         public event CloseEventHandler CloseEvent;
 
-        public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
+        public SearchConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
             _myProtocolVersion = SearchProtocolVersion.Version1;
             _connection = connection;
@@ -307,7 +307,7 @@ namespace Library.Net.Covenant
 
                         using (Stream stream = _connection.Receive(timeout - stopwatch.Elapsed))
                         {
-                            if (stream.Length > 32) throw new ConnectionManagerException();
+                            if (stream.Length > 32) throw new SearchConnectionManagerException();
 
                             _otherSessionId = new byte[stream.Length];
                             stream.Read(_otherSessionId, 0, _otherSessionId.Length);
@@ -340,12 +340,12 @@ namespace Library.Net.Covenant
                     }
                     else
                     {
-                        throw new ConnectionManagerException();
+                        throw new SearchConnectionManagerException();
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new ConnectionManagerException(ex.Message, ex);
+                    throw new SearchConnectionManagerException(ex.Message, ex);
                 }
             }
         }
@@ -364,7 +364,7 @@ namespace Library.Net.Covenant
                 }
                 catch (Exception ex)
                 {
-                    throw new ConnectionManagerException(ex.Message, ex);
+                    throw new SearchConnectionManagerException(ex.Message, ex);
                 }
             }
         }
@@ -418,7 +418,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -450,7 +450,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -482,7 +482,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -592,7 +592,7 @@ namespace Library.Net.Covenant
                     }
                     else
                     {
-                        throw new ConnectionManagerException();
+                        throw new SearchConnectionManagerException();
                     }
 
                     sw.Stop();
@@ -703,7 +703,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -740,7 +740,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -777,7 +777,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -814,7 +814,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -851,7 +851,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -882,7 +882,7 @@ namespace Library.Net.Covenant
             }
             else
             {
-                throw new ConnectionManagerException();
+                throw new SearchConnectionManagerException();
             }
         }
 
@@ -1388,10 +1388,10 @@ namespace Library.Net.Covenant
     }
 
     [Serializable]
-    class ConnectionManagerException : ManagerException
+    class SearchConnectionManagerException : ManagerException
     {
-        public ConnectionManagerException() : base() { }
-        public ConnectionManagerException(string message) : base(message) { }
-        public ConnectionManagerException(string message, Exception innerException) : base(message, innerException) { }
+        public SearchConnectionManagerException() : base() { }
+        public SearchConnectionManagerException(string message) : base(message) { }
+        public SearchConnectionManagerException(string message, Exception innerException) : base(message, innerException) { }
     }
 }

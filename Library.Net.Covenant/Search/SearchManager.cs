@@ -16,7 +16,7 @@ namespace Library.Net.Covenant
     public delegate Cap CreateCapEventHandler(object sender, string uri);
     public delegate Cap AcceptCapEventHandler(object sender, out string uri);
 
-    class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class SearchManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
         private BufferManager _bufferManager;
 
@@ -28,7 +28,7 @@ namespace Library.Net.Covenant
 
         private byte[] _mySessionId;
 
-        private LockedList<ConnectionManager> _connectionManagers;
+        private LockedList<SearchConnectionManager> _searchConnectionManagers;
         private MessagesManager _messagesManager;
         private LocationsManager _locationsManager;
 
@@ -53,7 +53,7 @@ namespace Library.Net.Covenant
         private LockedHashDictionary<string, DateTime> _linkMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
         private LockedHashDictionary<string, DateTime> _storeMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
 
-        private Thread _connectionsManagerThread;
+        private Thread _searchManagerThread;
         private List<Thread> _createConnectionThreads = new List<Thread>();
         private List<Thread> _acceptConnectionThreads = new List<Thread>();
 
@@ -99,7 +99,7 @@ namespace Library.Net.Covenant
 
         private const int _routeTableMinCount = 100;
 
-        public ConnectionsManager(BufferManager bufferManager)
+        public SearchManager(BufferManager bufferManager)
         {
             _bufferManager = bufferManager;
 
@@ -107,14 +107,14 @@ namespace Library.Net.Covenant
 
             _routeTable = new Kademlia<Node>(512, 20);
 
-            _connectionManagers = new LockedList<ConnectionManager>();
+            _searchConnectionManagers = new LockedList<SearchConnectionManager>();
 
             _messagesManager = new MessagesManager();
             _messagesManager.GetLockNodesEvent = (object sender) =>
             {
                 lock (this.ThisLock)
                 {
-                    return _connectionManagers.Select(n => n.Node).ToArray();
+                    return _searchConnectionManagers.Select(n => n.Node).ToArray();
                 }
             };
 
@@ -264,18 +264,18 @@ namespace Library.Net.Covenant
                 {
                     var list = new List<Information>();
 
-                    foreach (var connectionManager in _connectionManagers.ToArray())
+                    foreach (var searchConnectionManager in _searchConnectionManagers.ToArray())
                     {
                         var contexts = new List<InformationContext>();
 
-                        var messageManager = _messagesManager[connectionManager.Node];
+                        var messageManager = _messagesManager[searchConnectionManager.Node];
 
                         contexts.Add(new InformationContext("Id", messageManager.Id));
-                        contexts.Add(new InformationContext("Node", connectionManager.Node));
-                        contexts.Add(new InformationContext("Uri", _nodeToUri[connectionManager.Node]));
-                        contexts.Add(new InformationContext("ReceivedByteCount", (long)messageManager.ReceivedByteCount + connectionManager.ReceivedByteCount));
-                        contexts.Add(new InformationContext("SentByteCount", (long)messageManager.SentByteCount + connectionManager.SentByteCount));
-                        contexts.Add(new InformationContext("Direction", connectionManager.Direction));
+                        contexts.Add(new InformationContext("Node", searchConnectionManager.Node));
+                        contexts.Add(new InformationContext("Uri", _nodeToUri[searchConnectionManager.Node]));
+                        contexts.Add(new InformationContext("ReceivedByteCount", (long)messageManager.ReceivedByteCount + searchConnectionManager.ReceivedByteCount));
+                        contexts.Add(new InformationContext("SentByteCount", (long)messageManager.SentByteCount + searchConnectionManager.SentByteCount));
+                        contexts.Add(new InformationContext("Direction", searchConnectionManager.Direction));
 
                         list.Add(new Information(contexts));
                     }
@@ -315,9 +315,9 @@ namespace Library.Net.Covenant
                     {
                         var nodes = new HashSet<Node>();
 
-                        foreach (var connectionManager in _connectionManagers)
+                        foreach (var searchConnectionManager in _searchConnectionManagers)
                         {
-                            nodes.Add(connectionManager.Node);
+                            nodes.Add(searchConnectionManager.Node);
                         }
 
                         contexts.Add(new InformationContext("SurroundingNodeCount", nodes.Count));
@@ -336,7 +336,7 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    return _receivedByteCount + _connectionManagers.Sum(n => n.ReceivedByteCount);
+                    return _receivedByteCount + _searchConnectionManagers.Sum(n => n.ReceivedByteCount);
                 }
             }
         }
@@ -349,7 +349,7 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    return _sentByteCount + _connectionManagers.Sum(n => n.SentByteCount);
+                    return _sentByteCount + _searchConnectionManagers.Sum(n => n.SentByteCount);
                 }
             }
         }
@@ -415,77 +415,77 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void AddConnectionManager(ConnectionManager connectionManager, string uri)
+        private void AddConnectionManager(SearchConnectionManager searchConnectionManager, string uri)
         {
             lock (this.ThisLock)
             {
-                if (CollectionUtilities.Equals(connectionManager.Node.Id, this.BaseNode.Id)
-                    || _connectionManagers.Any(n => CollectionUtilities.Equals(n.Node.Id, connectionManager.Node.Id)))
+                if (CollectionUtilities.Equals(searchConnectionManager.Node.Id, this.BaseNode.Id)
+                    || _searchConnectionManagers.Any(n => CollectionUtilities.Equals(n.Node.Id, searchConnectionManager.Node.Id)))
                 {
-                    connectionManager.Dispose();
+                    searchConnectionManager.Dispose();
                     return;
                 }
 
-                if (_connectionManagers.Count >= this.ConnectionCountLimit)
+                if (_searchConnectionManagers.Count >= this.ConnectionCountLimit)
                 {
-                    connectionManager.Dispose();
+                    searchConnectionManager.Dispose();
                     return;
                 }
 
-                Debug.WriteLine("ConnectionManager: Connect");
+                Debug.WriteLine("SearchConnectionManager: Connect");
 
-                connectionManager.PullNodesEvent += this.connectionManager_NodesEvent;
-                connectionManager.PullLocationsRequestEvent += this.connectionManager_LocationsRequestEvent;
-                connectionManager.PullLocationsEvent += this.connectionManager_LocationsEvent;
-                connectionManager.PullMetadatasRequestEvent += this.connectionManager_MetadatasRequestEvent;
-                connectionManager.PullMetadatasEvent += this.connectionManager_MetadatasEvent;
-                connectionManager.PullCancelEvent += this.connectionManager_PullCancelEvent;
-                connectionManager.CloseEvent += this.connectionManager_CloseEvent;
+                searchConnectionManager.PullNodesEvent += this.searchConnectionManager_NodesEvent;
+                searchConnectionManager.PullLocationsRequestEvent += this.searchConnectionManager_LocationsRequestEvent;
+                searchConnectionManager.PullLocationsEvent += this.searchConnectionManager_LocationsEvent;
+                searchConnectionManager.PullMetadatasRequestEvent += this.searchConnectionManager_MetadatasRequestEvent;
+                searchConnectionManager.PullMetadatasEvent += this.searchConnectionManager_MetadatasEvent;
+                searchConnectionManager.PullCancelEvent += this.searchConnectionManager_PullCancelEvent;
+                searchConnectionManager.CloseEvent += this.searchConnectionManager_CloseEvent;
 
-                _nodeToUri.Add(connectionManager.Node, uri);
-                _connectionManagers.Add(connectionManager);
+                _nodeToUri.Add(searchConnectionManager.Node, uri);
+                _searchConnectionManagers.Add(searchConnectionManager);
 
                 {
-                    var tempMessageManager = _messagesManager[connectionManager.Node];
+                    var tempMessageManager = _messagesManager[searchConnectionManager.Node];
 
                     if (tempMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
+                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, searchConnectionManager.SesstionId))
                     {
-                        _messagesManager.Remove(connectionManager.Node);
+                        _messagesManager.Remove(searchConnectionManager.Node);
                     }
                 }
 
-                var messageManager = _messagesManager[connectionManager.Node];
-                messageManager.SessionId = connectionManager.SesstionId;
+                var messageManager = _messagesManager[searchConnectionManager.Node];
+                messageManager.SessionId = searchConnectionManager.SesstionId;
                 messageManager.LastPullTime = DateTime.UtcNow;
 
-                Task.Factory.StartNew(this.ConnectionManagerThread, connectionManager, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
+                Task.Factory.StartNew(this.ConnectionManagerThread, searchConnectionManager, TaskCreationOptions.LongRunning | TaskCreationOptions.AttachedToParent);
             }
         }
 
-        private void RemoveConnectionManager(ConnectionManager connectionManager)
+        private void RemoveConnectionManager(SearchConnectionManager searchConnectionManager)
         {
             lock (this.ThisLock)
             {
-                lock (_connectionManagers.ThisLock)
+                lock (_searchConnectionManagers.ThisLock)
                 {
                     try
                     {
-                        if (_connectionManagers.Contains(connectionManager))
+                        if (_searchConnectionManagers.Contains(searchConnectionManager))
                         {
-                            Debug.WriteLine("ConnectionManager: Close");
+                            Debug.WriteLine("SearchConnectionManager: Close");
 
-                            _sentByteCount += connectionManager.SentByteCount;
-                            _receivedByteCount += connectionManager.ReceivedByteCount;
+                            _sentByteCount += searchConnectionManager.SentByteCount;
+                            _receivedByteCount += searchConnectionManager.ReceivedByteCount;
 
-                            var messageManager = _messagesManager[connectionManager.Node];
-                            messageManager.SentByteCount.Add(connectionManager.SentByteCount);
-                            messageManager.ReceivedByteCount.Add(connectionManager.ReceivedByteCount);
+                            var messageManager = _messagesManager[searchConnectionManager.Node];
+                            messageManager.SentByteCount.Add(searchConnectionManager.SentByteCount);
+                            messageManager.ReceivedByteCount.Add(searchConnectionManager.ReceivedByteCount);
 
-                            _nodeToUri.Remove(connectionManager.Node);
-                            _connectionManagers.Remove(connectionManager);
+                            _nodeToUri.Remove(searchConnectionManager.Node);
+                            _searchConnectionManagers.Remove(searchConnectionManager);
 
-                            connectionManager.Dispose();
+                            searchConnectionManager.Dispose();
                         }
                     }
                     catch (Exception)
@@ -509,7 +509,7 @@ namespace Library.Net.Covenant
 
                     lock (this.ThisLock)
                     {
-                        connectionCount = _connectionManagers.Count(n => n.Direction == ConnectDirection.Out);
+                        connectionCount = _searchConnectionManagers.Count(n => n.Direction == ConnectDirection.Out);
                     }
 
                     if (connectionCount >= (this.ConnectionCountLimit / 2))
@@ -524,7 +524,7 @@ namespace Library.Net.Covenant
                 {
                     node = _cuttingNodes
                         .ToArray()
-                        .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                        .Where(n => !_searchConnectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
                             && !_creatingNodes.Contains(n)
                             && !_waitingNodes.Contains(n))
                         .Randomize()
@@ -534,7 +534,7 @@ namespace Library.Net.Covenant
                     {
                         node = _routeTable
                             .ToArray()
-                            .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                            .Where(n => !_searchConnectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
                                 && !_creatingNodes.Contains(n)
                                 && !_waitingNodes.Contains(n))
                             .Randomize()
@@ -572,12 +572,12 @@ namespace Library.Net.Covenant
 
                         if (connection != null)
                         {
-                            var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
+                            var searchConnectionManager = new SearchConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.Out, _bufferManager);
 
                             try
                             {
-                                connectionManager.Connect();
-                                if (!ConnectionsManager.Check(connectionManager.Node)) throw new ArgumentException();
+                                searchConnectionManager.Connect();
+                                if (!SearchManager.Check(searchConnectionManager.Node)) throw new ArgumentException();
 
                                 _succeededUris.Add(uri);
 
@@ -585,20 +585,20 @@ namespace Library.Net.Covenant
                                 {
                                     _cuttingNodes.Remove(node);
 
-                                    if (node != connectionManager.Node)
+                                    if (node != searchConnectionManager.Node)
                                     {
-                                        this.RemoveNode(connectionManager.Node);
+                                        this.RemoveNode(searchConnectionManager.Node);
                                     }
 
-                                    if (connectionManager.Node.Uris.Count() != 0)
+                                    if (searchConnectionManager.Node.Uris.Count() != 0)
                                     {
-                                        _routeTable.Live(connectionManager.Node);
+                                        _routeTable.Live(searchConnectionManager.Node);
                                     }
                                 }
 
                                 _connectConnectionCount.Increment();
 
-                                this.AddConnectionManager(connectionManager, uri);
+                                this.AddConnectionManager(searchConnectionManager, uri);
 
                                 goto End;
                             }
@@ -606,7 +606,7 @@ namespace Library.Net.Covenant
                             {
                                 Debug.WriteLine(e);
 
-                                connectionManager.Dispose();
+                                searchConnectionManager.Dispose();
                             }
                         }
                     }
@@ -634,7 +634,7 @@ namespace Library.Net.Covenant
 
                     lock (this.ThisLock)
                     {
-                        connectionCount = _connectionManagers.Count(n => n.Direction == ConnectDirection.In);
+                        connectionCount = _searchConnectionManagers.Count(n => n.Direction == ConnectDirection.In);
                     }
 
                     if (connectionCount >= ((this.ConnectionCountLimit + 1) / 2))
@@ -648,24 +648,24 @@ namespace Library.Net.Covenant
 
                 if (connection != null)
                 {
-                    var connectionManager = new ConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
+                    var searchConnectionManager = new SearchConnectionManager(connection, _mySessionId, this.BaseNode, ConnectDirection.In, _bufferManager);
 
                     try
                     {
-                        connectionManager.Connect();
-                        if (!ConnectionsManager.Check(connectionManager.Node) || _removeNodes.Contains(connectionManager.Node)) throw new ArgumentException();
+                        searchConnectionManager.Connect();
+                        if (!SearchManager.Check(searchConnectionManager.Node) || _removeNodes.Contains(searchConnectionManager.Node)) throw new ArgumentException();
 
                         lock (this.ThisLock)
                         {
-                            if (connectionManager.Node.Uris.Count() != 0)
+                            if (searchConnectionManager.Node.Uris.Count() != 0)
                             {
-                                _routeTable.Add(connectionManager.Node);
+                                _routeTable.Add(searchConnectionManager.Node);
                             }
 
-                            _cuttingNodes.Remove(connectionManager.Node);
+                            _cuttingNodes.Remove(searchConnectionManager.Node);
                         }
 
-                        this.AddConnectionManager(connectionManager, uri);
+                        this.AddConnectionManager(searchConnectionManager, uri);
 
                         _acceptConnectionCount.Increment();
                     }
@@ -673,7 +673,7 @@ namespace Library.Net.Covenant
                     {
                         Debug.WriteLine(e);
 
-                        connectionManager.Dispose();
+                        searchConnectionManager.Dispose();
                     }
                 }
             }
@@ -765,7 +765,7 @@ namespace Library.Net.Covenant
 
         private volatile bool _refreshThreadRunning;
 
-        private void ConnectionsManagerThread()
+        private void SearchManagerThread()
         {
             var connectionCheckStopwatch = new Stopwatch();
             connectionCheckStopwatch.Start();
@@ -821,7 +821,7 @@ namespace Library.Net.Covenant
 
                 lock (this.ThisLock)
                 {
-                    connectionCount = _connectionManagers.Count;
+                    connectionCount = _searchConnectionManagers.Count;
                 }
 
                 if (connectionCount > ((this.ConnectionCountLimit / 3) * 1)
@@ -833,12 +833,12 @@ namespace Library.Net.Covenant
 
                     lock (this.ThisLock)
                     {
-                        foreach (var connectionManager in _connectionManagers)
+                        foreach (var searchConnectionManager in _searchConnectionManagers)
                         {
                             nodeSortItems.Add(new NodeSortItem()
                             {
-                                Node = connectionManager.Node,
-                                LastPullTime = _messagesManager[connectionManager.Node].LastPullTime,
+                                Node = searchConnectionManager.Node,
+                                LastPullTime = _messagesManager[searchConnectionManager.Node].LastPullTime,
                             });
                         }
                     }
@@ -850,32 +850,32 @@ namespace Library.Net.Covenant
 
                     foreach (var node in nodeSortItems.Select(n => n.Node).Take(1))
                     {
-                        ConnectionManager connectionManager = null;
+                        SearchConnectionManager searchConnectionManager = null;
 
                         lock (this.ThisLock)
                         {
-                            connectionManager = _connectionManagers.FirstOrDefault(n => n.Node == node);
+                            searchConnectionManager = _searchConnectionManagers.FirstOrDefault(n => n.Node == node);
                         }
 
-                        if (connectionManager != null)
+                        if (searchConnectionManager != null)
                         {
                             try
                             {
                                 lock (this.ThisLock)
                                 {
-                                    this.RemoveNode(connectionManager.Node);
+                                    this.RemoveNode(searchConnectionManager.Node);
                                 }
 
-                                connectionManager.PushCancel();
+                                searchConnectionManager.PushCancel();
 
-                                Debug.WriteLine("ConnectionManager: Push Cancel");
+                                Debug.WriteLine("SearchConnectionManager: Push Cancel");
                             }
                             catch (Exception)
                             {
 
                             }
 
-                            this.RemoveConnectionManager(connectionManager);
+                            this.RemoveConnectionManager(searchConnectionManager);
                         }
                     }
                 }
@@ -974,7 +974,7 @@ namespace Library.Net.Covenant
 
                     lock (this.ThisLock)
                     {
-                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+                        otherNodes.AddRange(_searchConnectionManagers.Select(n => n.Node));
                     }
 
                     var messageManagers = new Dictionary<Node, MessageManager>();
@@ -1062,7 +1062,7 @@ namespace Library.Net.Covenant
 
                     lock (this.ThisLock)
                     {
-                        otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
+                        otherNodes.AddRange(_searchConnectionManagers.Select(n => n.Node));
                     }
 
                     var messageManagers = new Dictionary<Node, MessageManager>();
@@ -1349,15 +1349,15 @@ namespace Library.Net.Covenant
 
         private void ConnectionManagerThread(object state)
         {
-            Thread.CurrentThread.Name = "ConnectionsManager_ConnectionManagerThread";
+            Thread.CurrentThread.Name = "SearchManager_ConnectionManagerThread";
             Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
-            var connectionManager = state as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = state as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
             try
             {
-                var messageManager = _messagesManager[connectionManager.Node];
+                var messageManager = _messagesManager[searchConnectionManager.Node];
 
                 var nodeUpdateTime = new Stopwatch();
                 var updateTime = new Stopwatch();
@@ -1371,13 +1371,13 @@ namespace Library.Net.Covenant
                 {
                     Thread.Sleep(1000);
                     if (this.State == ManagerState.Stop) return;
-                    if (!_connectionManagers.Contains(connectionManager)) return;
+                    if (!_searchConnectionManagers.Contains(searchConnectionManager)) return;
 
                     var connectionCount = 0;
 
                     lock (this.ThisLock)
                     {
-                        connectionCount = _connectionManagers.Count;
+                        connectionCount = _searchConnectionManagers.Count;
                     }
 
                     // PushNodes
@@ -1409,9 +1409,9 @@ namespace Library.Net.Covenant
 
                         if (nodes.Count > 0)
                         {
-                            connectionManager.PushNodes(nodes.Randomize());
+                            searchConnectionManager.PushNodes(nodes.Randomize());
 
-                            Debug.WriteLine(string.Format("ConnectionManager: Push Nodes ({0})", nodes.Count));
+                            Debug.WriteLine(string.Format("SearchConnectionManager: Push Nodes ({0})", nodes.Count));
                             _pushNodeCount.Add(nodes.Count);
                         }
                     }
@@ -1426,22 +1426,22 @@ namespace Library.Net.Covenant
 
                             lock (_pushLocationsRequestDictionary.ThisLock)
                             {
-                                if (_pushLocationsRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                if (_pushLocationsRequestDictionary.TryGetValue(searchConnectionManager.Node, out targetList))
                                 {
-                                    _pushLocationsRequestDictionary.Remove(connectionManager.Node);
+                                    _pushLocationsRequestDictionary.Remove(searchConnectionManager.Node);
                                 }
                             }
 
                             if (targetList != null)
                             {
-                                connectionManager.PushLocationsRequest(targetList);
+                                searchConnectionManager.PushLocationsRequest(targetList);
 
                                 foreach (var item in targetList)
                                 {
                                     _pushLocationsRequestList.Remove(item);
                                 }
 
-                                Debug.WriteLine(string.Format("ConnectionManager: Push LocationsRequest ({0})", targetList.Count));
+                                Debug.WriteLine(string.Format("SearchConnectionManager: Push LocationsRequest ({0})", targetList.Count));
                                 _pushLocationRequestCount.Add(targetList.Count);
                             }
                         }
@@ -1457,9 +1457,9 @@ namespace Library.Net.Covenant
 
                                     lock (_pushLinkMetadatasRequestDictionary.ThisLock)
                                     {
-                                        if (_pushLinkMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                        if (_pushLinkMetadatasRequestDictionary.TryGetValue(searchConnectionManager.Node, out targetList))
                                         {
-                                            _pushLinkMetadatasRequestDictionary.Remove(connectionManager.Node);
+                                            _pushLinkMetadatasRequestDictionary.Remove(searchConnectionManager.Node);
                                         }
                                     }
 
@@ -1476,9 +1476,9 @@ namespace Library.Net.Covenant
 
                                     lock (_pushStoreMetadatasRequestDictionary.ThisLock)
                                     {
-                                        if (_pushStoreMetadatasRequestDictionary.TryGetValue(connectionManager.Node, out targetList))
+                                        if (_pushStoreMetadatasRequestDictionary.TryGetValue(searchConnectionManager.Node, out targetList))
                                         {
-                                            _pushStoreMetadatasRequestDictionary.Remove(connectionManager.Node);
+                                            _pushStoreMetadatasRequestDictionary.Remove(searchConnectionManager.Node);
                                         }
                                     }
 
@@ -1492,7 +1492,7 @@ namespace Library.Net.Covenant
 
                             if (queryList.Count > 0)
                             {
-                                connectionManager.PushMetadatasRequest(queryList);
+                                searchConnectionManager.PushMetadatasRequest(queryList);
 
                                 foreach (var item in queryList)
                                 {
@@ -1506,7 +1506,7 @@ namespace Library.Net.Covenant
                                     }
                                 }
 
-                                Debug.WriteLine(string.Format("ConnectionManager: Push SeedsRequest ({0})", queryList.Count));
+                                Debug.WriteLine(string.Format("SearchConnectionManager: Push SeedsRequest ({0})", queryList.Count));
                                 _pushMetadataRequestCount.Add(queryList.Count);
                             }
                         }
@@ -1533,9 +1533,9 @@ namespace Library.Net.Covenant
                             {
                                 _random.Shuffle(locations);
 
-                                connectionManager.PushLocations(locations);
+                                searchConnectionManager.PushLocations(locations);
 
-                                Debug.WriteLine(string.Format("ConnectionManager: Push Locations ({0})", locations.Count));
+                                Debug.WriteLine(string.Format("SearchConnectionManager: Push Locations ({0})", locations.Count));
                                 _pushLocationCount.Add(locations.Count);
                             }
                         }
@@ -1587,9 +1587,9 @@ namespace Library.Net.Covenant
 
                                 _random.Shuffle(metadatas);
 
-                                connectionManager.PushMetadatas(metadatas);
+                                searchConnectionManager.PushMetadatas(metadatas);
 
-                                Debug.WriteLine(string.Format("ConnectionManager: Push Metadatas ({0})", metadatas.Count));
+                                Debug.WriteLine(string.Format("SearchConnectionManager: Push Metadatas ({0})", metadatas.Count));
                                 _pushMetadataCount.Add(metadatas.Count);
                             }
                         }
@@ -1602,42 +1602,42 @@ namespace Library.Net.Covenant
             }
             finally
             {
-                this.RemoveConnectionManager(connectionManager);
+                this.RemoveConnectionManager(searchConnectionManager);
             }
         }
 
-        #region connectionManager_Event
+        #region searchConnectionManager_Event
 
-        private void connectionManager_NodesEvent(object sender, PullNodesEventArgs e)
+        private void searchConnectionManager_NodesEvent(object sender, PullNodesEventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull Nodes ({0})", e.Nodes.Count()));
+            Debug.WriteLine(string.Format("SearchConnectionManager: Pull Nodes ({0})", e.Nodes.Count()));
 
             foreach (var node in e.Nodes.Take(_maxNodeCount))
             {
-                if (!ConnectionsManager.Check(node) || node.Uris.Count() == 0 || _removeNodes.Contains(node)) continue;
+                if (!SearchManager.Check(node) || node.Uris.Count() == 0 || _removeNodes.Contains(node)) continue;
 
                 _routeTable.Add(node);
                 _pullNodeCount.Increment();
             }
         }
 
-        private void connectionManager_LocationsRequestEvent(object sender, PullLocationsRequestEventArgs e)
+        private void searchConnectionManager_LocationsRequestEvent(object sender, PullLocationsRequestEventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            var messageManager = _messagesManager[connectionManager.Node];
+            var messageManager = _messagesManager[searchConnectionManager.Node];
 
             if (messageManager.PullLocationsRequest.Count > _maxLocationRequestCount * messageManager.PullLocationsRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull LocationsRequest ({0})", e.Keys.Count()));
+            Debug.WriteLine(string.Format("SearchConnectionManager: Pull LocationsRequest ({0})", e.Keys.Count()));
 
             foreach (var key in e.Keys.Take(_maxLocationRequestCount))
             {
-                if (!ConnectionsManager.Check(key)) continue;
+                if (!SearchManager.Check(key)) continue;
 
                 messageManager.PullLocationsRequest.Add(key);
 
@@ -1645,16 +1645,16 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void connectionManager_LocationsEvent(object sender, PullLocationsEventArgs e)
+        private void searchConnectionManager_LocationsEvent(object sender, PullLocationsEventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            var messageManager = _messagesManager[connectionManager.Node];
+            var messageManager = _messagesManager[searchConnectionManager.Node];
 
             if (messageManager.PullLocationsCount.Get() > _maxLocationCount * messageManager.PullLocationsCount.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull Locations ({0})", e.Locations.Count()));
+            Debug.WriteLine(string.Format("SearchConnectionManager: Pull Locations ({0})", e.Locations.Count()));
 
             foreach (var location in e.Locations.Take(_maxLocationCount))
             {
@@ -1665,21 +1665,21 @@ namespace Library.Net.Covenant
             messageManager.PullLocationsCount.Add(e.Locations.Count());
         }
 
-        private void connectionManager_MetadatasRequestEvent(object sender, PullMetadatasRequestEventArgs e)
+        private void searchConnectionManager_MetadatasRequestEvent(object sender, PullMetadatasRequestEventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            var messageManager = _messagesManager[connectionManager.Node];
+            var messageManager = _messagesManager[searchConnectionManager.Node];
 
             if (messageManager.PullLinkMetadatasRequest.Count > (_maxMetadataRequestCount / 2) * messageManager.PullLinkMetadatasRequest.SurvivalTime.TotalMinutes) return;
             if (messageManager.PullStoreMetadatasRequest.Count > (_maxMetadataRequestCount / 2) * messageManager.PullStoreMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull MetadatasRequest ({0})", e.QueryMetadatas.Count()));
+            Debug.WriteLine(string.Format("SearchConnectionManager: Pull MetadatasRequest ({0})", e.QueryMetadatas.Count()));
 
             foreach (var queryMetadata in e.QueryMetadatas.Take(_maxMetadataRequestCount))
             {
-                if (!ConnectionsManager.Check(queryMetadata.Signature)) continue;
+                if (!SearchManager.Check(queryMetadata.Signature)) continue;
 
                 if (queryMetadata.Type == MetadataType.Link)
                 {
@@ -1696,16 +1696,16 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void connectionManager_MetadatasEvent(object sender, PullMetadatasEventArgs e)
+        private void searchConnectionManager_MetadatasEvent(object sender, PullMetadatasEventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            var messageManager = _messagesManager[connectionManager.Node];
+            var messageManager = _messagesManager[searchConnectionManager.Node];
 
             if (messageManager.PullMetadatasCount.Get() > _maxMetadataCount * messageManager.PullMetadatasCount.SurvivalTime.TotalMinutes) return;
 
-            Debug.WriteLine(string.Format("ConnectionManager: Pull Metadatas ({0})", e.Metadatas.Count()));
+            Debug.WriteLine(string.Format("SearchConnectionManager: Pull Metadatas ({0})", e.Metadatas.Count()));
 
             foreach (var metadata in e.Metadatas.Take(_maxMetadataCount))
             {
@@ -1728,21 +1728,21 @@ namespace Library.Net.Covenant
             messageManager.PullMetadatasCount.Add(e.Metadatas.Count());
         }
 
-        private void connectionManager_PullCancelEvent(object sender, EventArgs e)
+        private void searchConnectionManager_PullCancelEvent(object sender, EventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
-            Debug.WriteLine("ConnectionManager: Pull Cancel");
+            Debug.WriteLine("SearchConnectionManager: Pull Cancel");
 
             try
             {
                 lock (this.ThisLock)
                 {
-                    this.RemoveNode(connectionManager.Node);
+                    this.RemoveNode(searchConnectionManager.Node);
                 }
 
-                this.RemoveConnectionManager(connectionManager);
+                this.RemoveConnectionManager(searchConnectionManager);
             }
             catch (Exception)
             {
@@ -1750,22 +1750,22 @@ namespace Library.Net.Covenant
             }
         }
 
-        private void connectionManager_CloseEvent(object sender, EventArgs e)
+        private void searchConnectionManager_CloseEvent(object sender, EventArgs e)
         {
-            var connectionManager = sender as ConnectionManager;
-            if (connectionManager == null) return;
+            var searchConnectionManager = sender as SearchConnectionManager;
+            if (searchConnectionManager == null) return;
 
             try
             {
                 lock (this.ThisLock)
                 {
-                    if (!_removeNodes.Contains(connectionManager.Node))
+                    if (!_removeNodes.Contains(searchConnectionManager.Node))
                     {
-                        _cuttingNodes.Add(connectionManager.Node);
+                        _cuttingNodes.Add(searchConnectionManager.Node);
                     }
                 }
 
-                this.RemoveConnectionManager(connectionManager);
+                this.RemoveConnectionManager(searchConnectionManager);
             }
             catch (Exception)
             {
@@ -1778,7 +1778,7 @@ namespace Library.Net.Covenant
         public void SetBaseNode(Node baseNode)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!ConnectionsManager.Check(baseNode)) throw new ArgumentException("baseNode");
+            if (!SearchManager.Check(baseNode)) throw new ArgumentException("baseNode");
 
             lock (this.ThisLock)
             {
@@ -1794,7 +1794,7 @@ namespace Library.Net.Covenant
             {
                 foreach (var node in nodes)
                 {
-                    if (!ConnectionsManager.Check(node) || node.Uris.Count() == 0 || _removeNodes.Contains(node)) continue;
+                    if (!SearchManager.Check(node) || node.Uris.Count() == 0 || _removeNodes.Contains(node)) continue;
 
                     _routeTable.Add(node);
                 }
@@ -1873,15 +1873,15 @@ namespace Library.Net.Covenant
 
                     this.UpdateSessionId();
 
-                    _connectionsManagerThread = new Thread(this.ConnectionsManagerThread);
-                    _connectionsManagerThread.Name = "ConnectionsManager_ConnectionsManagerThread";
-                    _connectionsManagerThread.Priority = ThreadPriority.Lowest;
-                    _connectionsManagerThread.Start();
+                    _searchManagerThread = new Thread(this.SearchManagerThread);
+                    _searchManagerThread.Name = "SearchManager_SearchManagerThread";
+                    _searchManagerThread.Priority = ThreadPriority.Lowest;
+                    _searchManagerThread.Start();
 
                     for (int i = 0; i < 3; i++)
                     {
                         var thread = new Thread(this.CreateConnectionThread);
-                        thread.Name = "ConnectionsManager_CreateConnectionThread";
+                        thread.Name = "SearchManager_CreateConnectionThread";
                         thread.Priority = ThreadPriority.Lowest;
                         thread.Start();
 
@@ -1891,7 +1891,7 @@ namespace Library.Net.Covenant
                     for (int i = 0; i < 3; i++)
                     {
                         var thread = new Thread(this.AcceptConnectionThread);
-                        thread.Name = "ConnectionsManager_AcceptConnectionThread";
+                        thread.Name = "SearchManager_AcceptConnectionThread";
                         thread.Priority = ThreadPriority.Lowest;
                         thread.Start();
 
@@ -1925,12 +1925,12 @@ namespace Library.Net.Covenant
                 }
                 _acceptConnectionThreads.Clear();
 
-                _connectionsManagerThread.Join();
-                _connectionsManagerThread = null;
+                _searchManagerThread.Join();
+                _searchManagerThread = null;
 
                 lock (this.ThisLock)
                 {
-                    foreach (var item in _connectionManagers.ToArray())
+                    foreach (var item in _searchConnectionManagers.ToArray())
                     {
                         this.RemoveConnectionManager(item);
                     }
@@ -1957,7 +1957,7 @@ namespace Library.Net.Covenant
 
                 foreach (var node in _settings.OtherNodes.ToArray())
                 {
-                    if (!ConnectionsManager.Check(node) || node.Uris.Count() == 0) continue;
+                    if (!SearchManager.Check(node) || node.Uris.Count() == 0) continue;
 
                     _routeTable.Add(node);
                 }
@@ -2510,15 +2510,15 @@ namespace Library.Net.Covenant
     }
 
     [Serializable]
-    class ConnectionsManagerException : ManagerException
+    class SearchManagerException : ManagerException
     {
-        public ConnectionsManagerException() : base() { }
-        public ConnectionsManagerException(string message) : base(message) { }
-        public ConnectionsManagerException(string message, Exception innerException) : base(message, innerException) { }
+        public SearchManagerException() : base() { }
+        public SearchManagerException(string message) : base(message) { }
+        public SearchManagerException(string message, Exception innerException) : base(message, innerException) { }
     }
 
     [Serializable]
-    class CertificateException : ConnectionsManagerException
+    class CertificateException : SearchManagerException
     {
         public CertificateException() : base() { }
         public CertificateException(string message) : base(message) { }

@@ -30,22 +30,6 @@ namespace Library.Net.Covenant
             _settings = new Settings(this.ThisLock);
         }
 
-        private Stream GetStream(string path)
-        {
-            lock (this.ThisLock)
-            {
-                Stream stream;
-
-                if (!_streams.TryGetValue(path, out stream))
-                {
-                    stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    _streams.Add(path, stream);
-                }
-
-                return stream;
-            }
-        }
-
         public Task<Key> Import(string path, CancellationToken token)
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
@@ -58,36 +42,36 @@ namespace Library.Net.Covenant
                 {
                     Key key;
                     Bitmap bitmap;
-                    Index index;
+                    BlockInfo blockInfo;
 
                     using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        int unit = 1024 * 1024;
+                        int blockLength = 1024 * 1024;
 
                         int count;
                         {
                             long i = 0;
-                            while ((i = (stream.Length + (unit - 1)) / unit) > Bitmap.MaxLength) unit *= 2;
+                            while ((i = (stream.Length + (blockLength - 1)) / blockLength) > Bitmap.MaxLength) blockLength *= 2;
                             count = (int)i;
                         }
 
-                        var map = new byte[count * _hashSize];
+                        var hashes = new byte[count * _hashSize];
 
-                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(unit))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(blockLength))
                         {
                             for (int i = 0; stream.Position < stream.Length; i++)
                             {
                                 token.ThrowIfCancellationRequested();
 
-                                var length = (int)Math.Min(stream.Length - stream.Position, unit);
+                                var length = (int)Math.Min(stream.Length - stream.Position, blockLength);
                                 stream.Read(safeBuffer.Value, 0, length);
 
                                 var hash = Sha256.ComputeHash(safeBuffer.Value, 0, length);
-                                Unsafe.Copy(hash, 0, map, i * _hashSize, _hashSize);
+                                Unsafe.Copy(hash, 0, hashes, i * _hashSize, _hashSize);
                             }
                         }
 
-                        index = new Index(unit, _hashAlgorithm, map);
+                        blockInfo = new BlockInfo(blockLength, _hashAlgorithm, hashes);
                         bitmap = new Bitmap(count);
                         {
                             for (int i = 0; i < count; i++)
@@ -95,12 +79,12 @@ namespace Library.Net.Covenant
                                 bitmap.Set(i, true);
                             }
                         }
-                        key = new Key(_hashAlgorithm, index.CreateHash(_hashAlgorithm));
+                        key = new Key(_hashAlgorithm, blockInfo.CreateHash(_hashAlgorithm));
                     }
 
                     var options = new ContentOptions();
                     options.Bitmap = bitmap;
-                    options.Index = index;
+                    options.BlockInfo = blockInfo;
                     options.Path = path;
 
                     _settings.ContentItems.Add(key, options);
@@ -110,23 +94,31 @@ namespace Library.Net.Covenant
             }
         }
 
-        public void Export(Key key, Index index, string path)
+        public void Export(Key key, BlockInfo blockInfo, string path)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (index == null) throw new ArgumentNullException(nameof(index));
+            if (blockInfo == null) throw new ArgumentNullException(nameof(blockInfo));
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             lock (this.ThisLock)
             {
                 if (_settings.ContentItems.Values.Any(n => n.Path == path)) throw new ContentManagerException();
-                if (!Unsafe.Equals(key.Hash, index.CreateHash(key.HashAlgorithm))) throw new ContentManagerException();
+                if (!Unsafe.Equals(key.Hash, blockInfo.CreateHash(key.HashAlgorithm))) throw new ContentManagerException();
 
                 var options = new ContentOptions();
-                options.Bitmap = new Bitmap(index.Count);
-                options.Index = index;
+                options.Bitmap = new Bitmap(blockInfo.Count);
+                options.BlockInfo = blockInfo;
                 options.Path = path;
 
                 _settings.ContentItems.Add(key, options);
+            }
+        }
+
+        public bool Contains(Key key)
+        {
+            lock (this.ThisLock)
+            {
+                return _settings.ContentItems.ContainsKey(key);
             }
         }
 
@@ -138,20 +130,139 @@ namespace Library.Net.Covenant
             }
         }
 
-        public ArraySegment<byte> Get(Key key, int index)
+        public byte[] GetBitmap(Key key)
         {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
             lock (this.ThisLock)
             {
                 ContentOptions options;
                 if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
 
-                if (index >= options.Index.Count) throw new ArgumentOutOfRangeException();
+                return options.Bitmap.ToBinary();
+            }
+        }
+
+        public BlockInfo GetBlockInfo(Key key)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            lock (this.ThisLock)
+            {
+                ContentOptions options;
+                if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
+
+                return options.BlockInfo;
+            }
+        }
+
+        public ArraySegment<byte> GetBlock(Key key, int index)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            lock (this.ThisLock)
+            {
+                ContentOptions options;
+                if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
+
+                if (index < 0 || index >= options.BlockInfo.Count) throw new ArgumentOutOfRangeException();
                 if (!options.Bitmap.Get(index)) throw new BlockNotFoundException();
 
-                using (var stream = new FileStream(options.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
+                byte[] buffer = _bufferManager.TakeBuffer(options.BlockInfo.BlockLength);
 
+                try
+                {
+                    int length;
+
+                    try
+                    {
+                        using (var stream = new FileStream(options.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            stream.Seek((long)index * options.BlockInfo.BlockLength, SeekOrigin.Begin);
+
+                            length = (int)Math.Min(stream.Length - stream.Position, options.BlockInfo.BlockLength);
+                            stream.Read(buffer, 0, length);
+                        }
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        throw new BlockNotFoundException();
+                    }
+                    catch (IOException)
+                    {
+                        throw new BlockNotFoundException();
+                    }
+
+                    if (options.BlockInfo.HashAlgorithm == HashAlgorithm.Sha256)
+                    {
+                        if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), options.BlockInfo.Get(index)))
+                        {
+                            options.Bitmap.Set(index, false);
+
+                            throw new BlockNotFoundException();
+                        }
+                    }
+                    else
+                    {
+                        throw new FormatException();
+                    }
+
+                    return new ArraySegment<byte>(buffer, 0, length);
                 }
+                catch (Exception)
+                {
+                    _bufferManager.ReturnBuffer(buffer);
+
+                    throw;
+                }
+            }
+        }
+
+        public void SetBlock(Key key, int index, ArraySegment<byte> buffer)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            lock (this.ThisLock)
+            {
+                ContentOptions options;
+                if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
+
+                if (index < 0 || index >= options.BlockInfo.Count) throw new ArgumentOutOfRangeException();
+                if (!(index < (options.BlockInfo.Count - 1) && buffer.Count == options.BlockInfo.BlockLength
+                    || index == (options.BlockInfo.Count - 1) && buffer.Count <= options.BlockInfo.BlockLength)) throw new ArgumentOutOfRangeException();
+
+                if (options.BlockInfo.HashAlgorithm == HashAlgorithm.Sha256)
+                {
+                    if (!Unsafe.Equals(Sha256.ComputeHash(buffer), options.BlockInfo.Get(index)))
+                    {
+                        throw new BadBlockException();
+                    }
+                }
+                else
+                {
+                    throw new FormatException();
+                }
+
+                try
+                {
+                    using (var stream = new FileStream(options.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        stream.Seek((long)index * options.BlockInfo.BlockLength, SeekOrigin.Begin);
+
+                        stream.Write(buffer.Array, buffer.Offset, buffer.Count);
+                        stream.Flush();
+                    }
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    throw new ContentManagerException();
+                }
+                catch (IOException)
+                {
+                    throw new ContentManagerException();
+                }
+
+                options.Bitmap.Set(index, true);
             }
         }
 
@@ -162,11 +273,6 @@ namespace Library.Net.Covenant
             lock (this.ThisLock)
             {
                 _settings.Load(directoryPath);
-
-                foreach (var key in _settings.ContentItems.Keys)
-                {
-
-                }
             }
         }
 
@@ -261,4 +367,11 @@ namespace Library.Net.Covenant
         public BlockNotFoundException(string message, Exception innerException) : base(message, innerException) { }
     }
 
+    [Serializable]
+    class BadBlockException : ContentManagerException
+    {
+        public BadBlockException() : base() { }
+        public BadBlockException(string message) : base(message) { }
+        public BadBlockException(string message, Exception innerException) : base(message, innerException) { }
+    }
 }

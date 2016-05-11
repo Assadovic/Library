@@ -6,31 +6,31 @@ using Library.Security;
 
 namespace Library.Net.Covenant
 {
-    [DataContract(Name = "Index", Namespace = "http://Library/Net/Covenant")]
-    public sealed class Index : ItemBase<Index>, IIndex
+    [DataContract(Name = "BlockInfo", Namespace = "http://Library/Net/Covenant")]
+    public sealed class BlockInfo : ItemBase<BlockInfo>, IBlockInfo
     {
         private enum SerializeId : byte
         {
             BlockLength = 0,
             HashAlgorithm = 1,
-            Map = 2,
+            Hashes = 2,
         }
 
         private volatile int _blockLength;
         private volatile HashAlgorithm _hashAlgorithm = 0;
-        private volatile byte[] _map;
+        private volatile byte[] _hashes;
 
         private volatile int _hashCode;
 
-        public static readonly int MaxMapLength = Bitmap.MaxLength * 32;
+        private static readonly int MaxHashesLength = Bitmap.MaxLength * 32;
 
-        public Index(int blockLength, HashAlgorithm hashAlgorithm, byte[] map)
+        public BlockInfo(int blockLength, HashAlgorithm hashAlgorithm, byte[] hashes)
         {
-            if (hashAlgorithm == HashAlgorithm.Sha256 && map.Length % 32 != 0) throw new ArgumentException(nameof(map));
+            if (hashAlgorithm == HashAlgorithm.Sha256 && hashes.Length % 32 != 0) throw new ArgumentException(nameof(hashes));
 
             this.BlockLength = blockLength;
             this.HashAlgorithm = hashAlgorithm;
-            this.Map = map;
+            this.Hashes = hashes;
         }
 
         protected override void Initialize()
@@ -66,9 +66,9 @@ namespace Library.Net.Covenant
                     {
                         this.HashAlgorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.Map)
+                    else if (id == (byte)SerializeId.Hashes)
                     {
-                        this.Map = ItemUtilities.GetByteArray(rangeStream);
+                        this.Hashes = ItemUtilities.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -88,10 +88,10 @@ namespace Library.Net.Covenant
             {
                 ItemUtilities.Write(bufferStream, (byte)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
             }
-            // Map
-            if (this.Map != null)
+            // Hashes
+            if (this.Hashes != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Map, this.Map);
+                ItemUtilities.Write(bufferStream, (byte)SerializeId.Hashes, this.Hashes);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -105,26 +105,26 @@ namespace Library.Net.Covenant
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is Index)) return false;
+            if ((object)obj == null || !(obj is BlockInfo)) return false;
 
-            return this.Equals((Index)obj);
+            return this.Equals((BlockInfo)obj);
         }
 
-        public override bool Equals(Index other)
+        public override bool Equals(BlockInfo other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
             if (this.BlockLength != other.BlockLength
                 || this.HashAlgorithm != other.HashAlgorithm
-                || (this.Map == null) != (other.Map == null))
+                || (this.Hashes == null) != (other.Hashes == null))
             {
                 return false;
             }
 
-            if (this.Map != null && other.Map != null)
+            if (this.Hashes != null && other.Hashes != null)
             {
-                if (!Unsafe.Equals(this.Map, other.Map)) return false;
+                if (!Unsafe.Equals(this.Hashes, other.Hashes)) return false;
             }
 
             return true;
@@ -165,22 +165,22 @@ namespace Library.Net.Covenant
             }
         }
 
-        [DataMember(Name = "Map")]
-        private byte[] Map
+        [DataMember(Name = "Hashes")]
+        private byte[] Hashes
         {
             get
             {
-                return _map;
+                return _hashes;
             }
             set
             {
-                if (value != null && value.Length > Index.MaxMapLength)
+                if (value != null && value.Length > BlockInfo.MaxHashesLength)
                 {
                     throw new ArgumentException();
                 }
                 else
                 {
-                    _map = value;
+                    _hashes = value;
                 }
 
                 if (value != null)
@@ -198,9 +198,9 @@ namespace Library.Net.Covenant
         {
             if (this.HashAlgorithm == HashAlgorithm.Sha256)
             {
-                if ((this.Map.Length / 32) <= index) throw new ArgumentOutOfRangeException(nameof(index));
+                if ((this.Hashes.Length / 32) <= index) throw new ArgumentOutOfRangeException(nameof(index));
 
-                return new ArraySegment<byte>(this.Map, index, 32);
+                return new ArraySegment<byte>(this.Hashes, index, 32);
             }
             else
             {
@@ -214,7 +214,7 @@ namespace Library.Net.Covenant
             {
                 if (this.HashAlgorithm == HashAlgorithm.Sha256)
                 {
-                    return this.Map.Length / 32;
+                    return this.Hashes.Length / 32;
                 }
                 else
                 {
