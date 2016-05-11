@@ -172,6 +172,7 @@ namespace Library.Net.Amoeba
                         contexts.Add(new InformationContext("Priority", item.Value.Priority));
                         contexts.Add(new InformationContext("Name", item.Value.Seed.Name));
                         contexts.Add(new InformationContext("Length", item.Value.Seed.Length));
+                        contexts.Add(new InformationContext("CreationTime", item.Value.Seed.CreationTime));
                         contexts.Add(new InformationContext("State", item.Value.State));
                         contexts.Add(new InformationContext("Rank", item.Value.Rank));
                         contexts.Add(new InformationContext("Path", item.Value.FilePath));

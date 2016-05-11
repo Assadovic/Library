@@ -19,12 +19,14 @@ namespace Library
         [SuppressUnmanagedCodeSecurity]
         private delegate int CompareDelegate(byte* source1, byte* source2, int len);
         [SuppressUnmanagedCodeSecurity]
-        private delegate void XorDelegate(byte* source1, byte* source2, byte* result, int len);
+        private delegate void BitwiseOperationDelegate(byte* source1, byte* source2, byte* result, int len);
 
         private static CopyDelegate _copy;
         private static EqualsDelegate _equals;
         private static CompareDelegate _compare;
-        private static XorDelegate _xor;
+        private static BitwiseOperationDelegate _and;
+        private static BitwiseOperationDelegate _or;
+        private static BitwiseOperationDelegate _xor;
 
         static Unsafe()
         {
@@ -33,11 +35,11 @@ namespace Library
 #if Windows
                 if (System.Environment.Is64BitProcess)
                 {
-					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.dll");
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.dll");
                 }
                 else
                 {
-					_nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.dll");
+                    _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.dll");
                 }
 #endif
 
@@ -45,7 +47,7 @@ namespace Library
                 if (System.Environment.Is64BitProcess)
                 {
                     _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.so");
-				}
+                }
                 else
                 {
                     _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x86.so");
@@ -55,7 +57,9 @@ namespace Library
                 _copy = _nativeLibraryManager.GetMethod<CopyDelegate>("copy");
                 _equals = _nativeLibraryManager.GetMethod<EqualsDelegate>("equals");
                 _compare = _nativeLibraryManager.GetMethod<CompareDelegate>("compare");
-                _xor = _nativeLibraryManager.GetMethod<XorDelegate>("math_xor");
+                _and = _nativeLibraryManager.GetMethod<BitwiseOperationDelegate>("math_and");
+                _or = _nativeLibraryManager.GetMethod<BitwiseOperationDelegate>("math_or");
+                _xor = _nativeLibraryManager.GetMethod<BitwiseOperationDelegate>("math_xor");
             }
             catch (Exception e)
             {
@@ -232,7 +236,37 @@ namespace Library
             }
         }
 
+        public static void And(byte[] source1, byte[] source2, byte[] destination)
+        {
+            Unsafe.BitwiseOperation(_and, source1, source2, destination);
+        }
+
+        public static void And(byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
+        {
+            Unsafe.BitwiseOperation(_and, source1, source1Index, source2, source2Index, destination, destinationIndex, length);
+        }
+
+        public static void Or(byte[] source1, byte[] source2, byte[] destination)
+        {
+            Unsafe.BitwiseOperation(_or, source1, source2, destination);
+        }
+
+        public static void Or(byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
+        {
+            Unsafe.BitwiseOperation(_or, source1, source1Index, source2, source2Index, destination, destinationIndex, length);
+        }
+
         public static void Xor(byte[] source1, byte[] source2, byte[] destination)
+        {
+            Unsafe.BitwiseOperation(_xor, source1, source2, destination);
+        }
+
+        public static void Xor(byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
+        {
+            Unsafe.BitwiseOperation(_xor, source1, source1Index, source2, source2Index, destination, destinationIndex, length);
+        }
+
+        private static void BitwiseOperation(BitwiseOperationDelegate operation, byte[] source1, byte[] source2, byte[] destination)
         {
             if (source1 == null) throw new ArgumentNullException(nameof(source1));
             if (source2 == null) throw new ArgumentNullException(nameof(source2));
@@ -263,12 +297,12 @@ namespace Library
             {
                 fixed (byte* p_buffer = destination)
                 {
-                    _xor(p_x, p_y, p_buffer, length);
+                    operation(p_x, p_y, p_buffer, length);
                 }
             }
         }
 
-        public static void Xor(byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
+        private static void BitwiseOperation(BitwiseOperationDelegate operation, byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
         {
             if (source1 == null) throw new ArgumentNullException(nameof(source1));
             if (source2 == null) throw new ArgumentNullException(nameof(source2));
@@ -289,7 +323,7 @@ namespace Library
                 {
                     byte* t_buffer = p_buffer + destinationIndex;
 
-                    _xor(t_x, t_y, t_buffer, length);
+                    operation(t_x, t_y, t_buffer, length);
                 }
             }
         }

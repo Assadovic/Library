@@ -1383,43 +1383,48 @@ namespace Library.Net.Amoeba
 
                             try
                             {
-                                using (Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                int length;
+
+                                try
                                 {
-                                    int i = shareInfo.Indexes[key];
-
-                                    stream.Seek((long)shareInfo.BlockLength * i, SeekOrigin.Begin);
-
-                                    var length = (int)Math.Min(stream.Length - stream.Position, shareInfo.BlockLength);
-                                    stream.Read(buffer, 0, length);
-
-                                    if (key.HashAlgorithm == HashAlgorithm.Sha256)
+                                    using (Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                                     {
-                                        if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), key.Hash))
-                                        {
-                                            this.RemoveShare(path);
+                                        stream.Seek((long)shareInfo.Indexes[key] * shareInfo.BlockLength, SeekOrigin.Begin);
 
-                                            throw new BlockNotFoundException();
-                                        }
+                                        length = (int)Math.Min(stream.Length - stream.Position, shareInfo.BlockLength);
+                                        stream.Read(buffer, 0, length);
                                     }
-                                    else
-                                    {
-                                        throw new FormatException();
-                                    }
-
-                                    return new ArraySegment<byte>(buffer, 0, length);
                                 }
+                                catch (ArgumentOutOfRangeException)
+                                {
+                                    throw new BlockNotFoundException();
+                                }
+                                catch (IOException)
+                                {
+                                    throw new BlockNotFoundException();
+                                }
+
+                                if (key.HashAlgorithm == HashAlgorithm.Sha256)
+                                {
+                                    if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), key.Hash))
+                                    {
+                                        this.RemoveShare(path);
+
+                                        throw new BlockNotFoundException();
+                                    }
+                                }
+                                else
+                                {
+                                    throw new FormatException();
+                                }
+
+                                return new ArraySegment<byte>(buffer, 0, length);
                             }
-                            catch (ArgumentOutOfRangeException)
+                            catch (Exception)
                             {
                                 _bufferManager.ReturnBuffer(buffer);
 
-                                throw new BlockNotFoundException();
-                            }
-                            catch (IOException)
-                            {
-                                _bufferManager.ReturnBuffer(buffer);
-
-                                throw new BlockNotFoundException();
+                                throw;
                             }
                         }
                     }
