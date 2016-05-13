@@ -215,7 +215,7 @@ namespace Library.Net.Connections
 
                                 if (_bandwidthLimit != null)
                                 {
-                                    receiveLength = _bandwidthLimit.GetInBandwidth(this, receiveLength);
+                                    receiveLength = _bandwidthLimit.GetInBandwidth(this, Math.Min(_cap.Available, receiveLength));
                                     if (receiveLength < 0) throw new ConnectionException();
                                 }
 

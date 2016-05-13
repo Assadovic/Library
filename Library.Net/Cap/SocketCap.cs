@@ -38,6 +38,14 @@ namespace Library.Net
             }
         }
 
+        public override int Available
+        {
+            get
+            {
+                return _socket.Available;
+            }
+        }
+
         public override void Receive(byte[] buffer, int offset, int size, TimeSpan timeout)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);

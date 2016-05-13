@@ -19,6 +19,8 @@ namespace Library.Net
             }
         }
 
+        public abstract int Available { get; }
+
         public abstract void Receive(byte[] buffer, int offset, int size, TimeSpan timeout);
 
         public virtual Task ReceiveAsync(byte[] buffer, int offset, int size, TimeSpan timeout)
