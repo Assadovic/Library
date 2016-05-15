@@ -6,7 +6,7 @@ namespace Library.Net.Covenant
     sealed class ContentOptions
     {
         private Bitmap _bitmap;
-        private BlockInfo _blockInfo;
+        private BlocksInfo _blocksInfo;
         private string _path;
 
         private static readonly object _initializeLock = new object();
@@ -50,21 +50,21 @@ namespace Library.Net.Covenant
             }
         }
 
-        [DataMember(Name = "BlockInfo")]
-        public BlockInfo BlockInfo
+        [DataMember(Name = "BlocksInfo")]
+        public BlocksInfo BlocksInfo
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _blockInfo;
+                    return _blocksInfo;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _blockInfo = value;
+                    _blocksInfo = value;
                 }
             }
         }

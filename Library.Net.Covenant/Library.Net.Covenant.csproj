@@ -61,12 +61,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Connection\ConnectDirection.cs" />
+    <Compile Include="Connection\EventHandlers.cs" />
     <Compile Include="Exchange\Information\Bitmap\Bitmap.cs" />
-    <Compile Include="Exchange\Information\BlockInfo\BlockInfo.cs" />
+    <Compile Include="Exchange\Information\BlocksInfo\BlocksInfo.cs" />
     <Compile Include="Exchange\Information\_Interface\Bitmap\IBitmap.cs" />
-    <Compile Include="Exchange\Information\_Interface\BlockInfo\IBlockInfo.cs" />
-    <Compile Include="Exchange\ExchangeConnectionManager.cs" />
-    <Compile Include="Exchange\ExchangeManager.cs" />
+    <Compile Include="Exchange\Information\_Interface\BlocksInfo\IBlocksInfo.cs" />
+    <Compile Include="Connection\ExchangeConnectionManager.cs" />
+    <Compile Include="ExchangeManager.cs" />
     <Compile Include="Search\Cache\Key\Key.cs" />
     <Compile Include="Search\Cache\Key\KeyCollection.cs" />
     <Compile Include="Search\Cache\Metadata\MetadataCollection.cs" />
@@ -75,9 +77,9 @@
     <Compile Include="Search\Cache\_Interface\Metadata\IMetadata.cs" />
     <Compile Include="Exchange\Information\_Interface\IComputeHash.cs" />
     <Compile Include="Search\Cache\_Interface\Metadata\IQueryMetadata.cs" />
-    <Compile Include="Search\SearchManager.cs" />
+    <Compile Include="SearchManager.cs" />
     <Compile Include="Exchange\ContentOptions.cs" />
-    <Compile Include="Exchange\ExchangeItem.cs" />
+    <Compile Include="ExchangeItem.cs" />
     <Compile Include="Exchange\ContentManager.cs" />
     <Compile Include="Search\Information\Link\Link.cs" />
     <Compile Include="Search\Information\Link\LinkCollection.cs" />
@@ -91,7 +93,7 @@
     <Compile Include="Search\Information\_Interface\Store\IBox.cs" />
     <Compile Include="Search\Information\_Interface\Store\ISeed.cs" />
     <Compile Include="Search\Information\_Interface\Store\IStore.cs" />
-    <Compile Include="Search\MessagesManager.cs" />
+    <Compile Include="MessagesManager.cs" />
     <Compile Include="Search\Cache\_Interface\HashAlgorithm.cs" />
     <Compile Include="Search\Cache\_Interface\Key\IKey.cs" />
     <Compile Include="Search\Cache\Location\Location.cs" />
@@ -99,7 +101,7 @@
     <Compile Include="Search\Cache\Metadata\QueryMetadata.cs" />
     <Compile Include="Search\Cache\Metadata\QueryMetadataCollection.cs" />
     <Compile Include="CovenantConverter.cs" />
-    <Compile Include="Search\SearchConnectionManager.cs" />
+    <Compile Include="Connection\SearchConnectionManager.cs" />
     <Compile Include="Utilities\CountManager.cs" />
     <Compile Include="Utilities\EqualityComparer.cs" />
     <Compile Include="Utilities\ItemUtilities.cs" />

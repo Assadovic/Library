@@ -42,7 +42,7 @@ namespace Library.Net.Covenant
                 {
                     Key key;
                     Bitmap bitmap;
-                    BlockInfo blockInfo;
+                    BlocksInfo blocksInfo;
 
                     using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
@@ -71,7 +71,7 @@ namespace Library.Net.Covenant
                             }
                         }
 
-                        blockInfo = new BlockInfo(blockLength, _hashAlgorithm, hashes);
+                        blocksInfo = new BlocksInfo(blockLength, _hashAlgorithm, hashes);
                         bitmap = new Bitmap(count);
                         {
                             for (int i = 0; i < count; i++)
@@ -79,12 +79,12 @@ namespace Library.Net.Covenant
                                 bitmap.Set(i, true);
                             }
                         }
-                        key = new Key(_hashAlgorithm, blockInfo.CreateHash(_hashAlgorithm));
+                        key = new Key(_hashAlgorithm, blocksInfo.CreateHash(_hashAlgorithm));
                     }
 
                     var options = new ContentOptions();
                     options.Bitmap = bitmap;
-                    options.BlockInfo = blockInfo;
+                    options.BlocksInfo = blocksInfo;
                     options.Path = path;
 
                     _settings.ContentItems.Add(key, options);
@@ -94,20 +94,20 @@ namespace Library.Net.Covenant
             }
         }
 
-        public void Export(Key key, BlockInfo blockInfo, string path)
+        public void Export(Key key, BlocksInfo blocksInfo, string path)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (blockInfo == null) throw new ArgumentNullException(nameof(blockInfo));
+            if (blocksInfo == null) throw new ArgumentNullException(nameof(blocksInfo));
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             lock (this.ThisLock)
             {
                 if (_settings.ContentItems.Values.Any(n => n.Path == path)) throw new ContentManagerException();
-                if (!Unsafe.Equals(key.Hash, blockInfo.CreateHash(key.HashAlgorithm))) throw new ContentManagerException();
+                if (!Unsafe.Equals(key.Hash, blocksInfo.CreateHash(key.HashAlgorithm))) throw new ContentManagerException();
 
                 var options = new ContentOptions();
-                options.Bitmap = new Bitmap(blockInfo.Count);
-                options.BlockInfo = blockInfo;
+                options.Bitmap = new Bitmap(blocksInfo.Count);
+                options.BlocksInfo = blocksInfo;
                 options.Path = path;
 
                 _settings.ContentItems.Add(key, options);
@@ -143,7 +143,7 @@ namespace Library.Net.Covenant
             }
         }
 
-        public BlockInfo GetBlockInfo(Key key)
+        public BlocksInfo GetBlocksInfo(Key key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
@@ -152,7 +152,7 @@ namespace Library.Net.Covenant
                 ContentOptions options;
                 if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
 
-                return options.BlockInfo;
+                return options.BlocksInfo;
             }
         }
 
@@ -165,10 +165,10 @@ namespace Library.Net.Covenant
                 ContentOptions options;
                 if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
 
-                if (index < 0 || index >= options.BlockInfo.Count) throw new ArgumentOutOfRangeException();
+                if (index < 0 || index >= options.BlocksInfo.Count) throw new ArgumentOutOfRangeException();
                 if (!options.Bitmap.Get(index)) throw new BlockNotFoundException();
 
-                byte[] buffer = _bufferManager.TakeBuffer(options.BlockInfo.BlockLength);
+                byte[] buffer = _bufferManager.TakeBuffer(options.BlocksInfo.BlockLength);
 
                 try
                 {
@@ -178,9 +178,9 @@ namespace Library.Net.Covenant
                     {
                         using (var stream = new FileStream(options.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            stream.Seek((long)index * options.BlockInfo.BlockLength, SeekOrigin.Begin);
+                            stream.Seek((long)index * options.BlocksInfo.BlockLength, SeekOrigin.Begin);
 
-                            length = (int)Math.Min(stream.Length - stream.Position, options.BlockInfo.BlockLength);
+                            length = (int)Math.Min(stream.Length - stream.Position, options.BlocksInfo.BlockLength);
                             stream.Read(buffer, 0, length);
                         }
                     }
@@ -193,9 +193,9 @@ namespace Library.Net.Covenant
                         throw new BlockNotFoundException();
                     }
 
-                    if (options.BlockInfo.HashAlgorithm == HashAlgorithm.Sha256)
+                    if (options.BlocksInfo.HashAlgorithm == HashAlgorithm.Sha256)
                     {
-                        if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), options.BlockInfo.Get(index)))
+                        if (!Unsafe.Equals(Sha256.ComputeHash(buffer, 0, length), options.BlocksInfo.Get(index)))
                         {
                             options.Bitmap.Set(index, false);
 
@@ -227,13 +227,13 @@ namespace Library.Net.Covenant
                 ContentOptions options;
                 if (!_settings.ContentItems.TryGetValue(key, out options)) throw new KeyNotFoundException();
 
-                if (index < 0 || index >= options.BlockInfo.Count) throw new ArgumentOutOfRangeException();
-                if (!(index < (options.BlockInfo.Count - 1) && buffer.Count == options.BlockInfo.BlockLength
-                    || index == (options.BlockInfo.Count - 1) && buffer.Count <= options.BlockInfo.BlockLength)) throw new ArgumentOutOfRangeException();
+                if (index < 0 || index >= options.BlocksInfo.Count) throw new ArgumentOutOfRangeException();
+                if (!(index < (options.BlocksInfo.Count - 1) && buffer.Count == options.BlocksInfo.BlockLength
+                    || index == (options.BlocksInfo.Count - 1) && buffer.Count <= options.BlocksInfo.BlockLength)) throw new ArgumentOutOfRangeException();
 
-                if (options.BlockInfo.HashAlgorithm == HashAlgorithm.Sha256)
+                if (options.BlocksInfo.HashAlgorithm == HashAlgorithm.Sha256)
                 {
-                    if (!Unsafe.Equals(Sha256.ComputeHash(buffer), options.BlockInfo.Get(index)))
+                    if (!Unsafe.Equals(Sha256.ComputeHash(buffer), options.BlocksInfo.Get(index)))
                     {
                         throw new BadBlockException();
                     }
@@ -247,7 +247,7 @@ namespace Library.Net.Covenant
                 {
                     using (var stream = new FileStream(options.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        stream.Seek((long)index * options.BlockInfo.BlockLength, SeekOrigin.Begin);
+                        stream.Seek((long)index * options.BlocksInfo.BlockLength, SeekOrigin.Begin);
 
                         stream.Write(buffer.Array, buffer.Offset, buffer.Count);
                         stream.Flush();

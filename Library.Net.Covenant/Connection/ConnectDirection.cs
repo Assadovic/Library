@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Library.Net.Covenant
 {
-    [DataContract(Name = "SearchConnectDirection", Namespace = "http://Library/Net/Covenant")]
+    [DataContract(Name = "ConnectDirection", Namespace = "http://Library/Net/Covenant")]
     public enum ConnectDirection
     {
         [EnumMember(Value = "In")]

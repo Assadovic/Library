@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Library.Net.Covenant
 {
-    interface IBlockInfo : IComputeHash
+    interface IBlocksInfo : IComputeHash
     {
         int BlockLength { get; }
         HashAlgorithm HashAlgorithm { get; }

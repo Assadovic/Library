@@ -6,8 +6,8 @@ using Library.Security;
 
 namespace Library.Net.Covenant
 {
-    [DataContract(Name = "BlockInfo", Namespace = "http://Library/Net/Covenant")]
-    public sealed class BlockInfo : ItemBase<BlockInfo>, IBlockInfo
+    [DataContract(Name = "BlocksInfo", Namespace = "http://Library/Net/Covenant")]
+    public sealed class BlocksInfo : ItemBase<BlocksInfo>, IBlocksInfo
     {
         private enum SerializeId : byte
         {
@@ -24,7 +24,7 @@ namespace Library.Net.Covenant
 
         private static readonly int MaxHashesLength = Bitmap.MaxLength * 32;
 
-        public BlockInfo(int blockLength, HashAlgorithm hashAlgorithm, byte[] hashes)
+        public BlocksInfo(int blockLength, HashAlgorithm hashAlgorithm, byte[] hashes)
         {
             if (hashAlgorithm == HashAlgorithm.Sha256 && hashes.Length % 32 != 0) throw new ArgumentException(nameof(hashes));
 
@@ -105,12 +105,12 @@ namespace Library.Net.Covenant
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is BlockInfo)) return false;
+            if ((object)obj == null || !(obj is BlocksInfo)) return false;
 
-            return this.Equals((BlockInfo)obj);
+            return this.Equals((BlocksInfo)obj);
         }
 
-        public override bool Equals(BlockInfo other)
+        public override bool Equals(BlocksInfo other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
@@ -174,7 +174,7 @@ namespace Library.Net.Covenant
             }
             set
             {
-                if (value != null && value.Length > BlockInfo.MaxHashesLength)
+                if (value != null && value.Length > BlocksInfo.MaxHashesLength)
                 {
                     throw new ArgumentException();
                 }
