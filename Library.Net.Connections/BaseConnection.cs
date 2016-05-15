@@ -179,16 +179,16 @@ namespace Library.Net.Connections
                     int length = 0;
 
                     {
-                        byte[] lengthbuffer = new byte[4];
+                        byte[] lengthBuffer = new byte[4];
 
                         var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                         time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
-                        _cap.Receive(lengthbuffer, time);
+                        _cap.Receive(lengthBuffer, time);
 
                         _receivedByteCount.Add(4);
 
-                        length = NetworkConverter.ToInt32(lengthbuffer);
+                        length = NetworkConverter.ToInt32(lengthBuffer);
                     }
 
                     if (length == 0)
@@ -213,14 +213,20 @@ namespace Library.Net.Connections
                             {
                                 int receiveLength = Math.Min(safeBuffer.Value.Length, length);
 
+                                var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
+                                time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
+
                                 if (_bandwidthLimit != null)
                                 {
+                                    if (_cap.Available == 0)
+                                    {
+                                        Thread.Sleep(100);
+                                        continue;
+                                    }
+
                                     receiveLength = _bandwidthLimit.GetInBandwidth(this, Math.Min(_cap.Available, receiveLength));
                                     if (receiveLength < 0) throw new ConnectionException();
                                 }
-
-                                var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
-                                time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
                                 _cap.Receive(safeBuffer.Value, 0, receiveLength, time);
 

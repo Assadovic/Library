@@ -2516,12 +2516,4 @@ namespace Library.Net.Covenant
         public ExchangeManagerException(string message) : base(message) { }
         public ExchangeManagerException(string message, Exception innerException) : base(message, innerException) { }
     }
-
-    [Serializable]
-    class CertificateException : ExchangeManagerException
-    {
-        public CertificateException() : base() { }
-        public CertificateException(string message) : base(message) { }
-        public CertificateException(string message, Exception innerException) : base(message, innerException) { }
-    }
 }
