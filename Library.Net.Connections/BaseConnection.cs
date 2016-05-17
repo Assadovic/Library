@@ -207,7 +207,7 @@ namespace Library.Net.Connections
                     {
                         bufferStream = new BufferStream(_bufferManager);
 
-                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 32))
                         {
                             do
                             {
@@ -216,7 +216,7 @@ namespace Library.Net.Connections
                                 var time = Connection.CheckTimeout(_receiveStopwatch.Elapsed, timeout);
                                 time = (time < _receiveTimeSpan) ? time : _receiveTimeSpan;
 
-                                if (_bandwidthLimit != null)
+                                if (_bandwidthLimit != null && _bandwidthLimit.In != 0)
                                 {
                                     if (_cap.Available == 0)
                                     {
@@ -280,14 +280,14 @@ namespace Library.Net.Connections
                         headerStream.Write(NetworkConverter.GetBytes((int)targetStream.Length), 0, 4);
 
                         using (Stream dataStream = new UniteStream(headerStream, new WrapperStream(targetStream, true)))
-                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 32))
                         {
                             for (;;)
                             {
                                 var sendLength = (int)Math.Min(dataStream.Length - dataStream.Position, safeBuffer.Value.Length);
                                 if (sendLength == 0) break;
 
-                                if (_bandwidthLimit != null)
+                                if (_bandwidthLimit != null && _bandwidthLimit.Out != 0)
                                 {
                                     sendLength = _bandwidthLimit.GetOutBandwidth(this, sendLength);
                                     if (sendLength < 0) throw new ConnectionException();
