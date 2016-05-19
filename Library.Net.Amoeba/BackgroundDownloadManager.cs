@@ -10,7 +10,7 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    class BackgroundDownloadManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class BackgroundDownloadManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ConnectionsManager _connectionsManager;
         private CacheManager _cacheManager;
@@ -41,7 +41,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _cacheManager.SetKeyEvent += (object sender, IEnumerable<Key> keys) =>
             {
@@ -67,7 +67,7 @@ namespace Library.Net.Amoeba
                     {
                         var key = _setKeys.Dequeue();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             _existManager.Set(key, true);
                         }
@@ -90,7 +90,7 @@ namespace Library.Net.Amoeba
                     {
                         var key = _removeKeys.Dequeue();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             _existManager.Set(key, false);
                         }
@@ -115,7 +115,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.Signatures.ToArray();
                 }
@@ -124,7 +124,7 @@ namespace Library.Net.Amoeba
 
         public void SetSearchSignatures(IEnumerable<string> signatures)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 lock (_settings.Signatures.ThisLock)
                 {
@@ -136,7 +136,7 @@ namespace Library.Net.Amoeba
 
         private void CheckState(Index index)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (index == null) return;
 
@@ -161,7 +161,7 @@ namespace Library.Net.Amoeba
 
         private void UncheckState(Index index)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (index == null) return;
 
@@ -230,7 +230,7 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.BackgroundDownloadItems.Count > 0)
                         {
@@ -362,7 +362,7 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.BackgroundDownloadItems.Count > 0)
                         {
@@ -446,7 +446,7 @@ namespace Library.Net.Amoeba
 
                                 File.Delete(fileName);
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     this.UncheckState(item.Index);
 
@@ -519,7 +519,7 @@ namespace Library.Net.Amoeba
                                     throw;
                                 }
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.Value = value;
 
@@ -636,7 +636,7 @@ namespace Library.Net.Amoeba
 
                                 File.Delete(fileName);
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     this.UncheckState(item.Index);
 
@@ -711,7 +711,7 @@ namespace Library.Net.Amoeba
                                     throw;
                                 }
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.Value = value;
 
@@ -815,7 +815,7 @@ namespace Library.Net.Amoeba
                     {
                         watchStopwatch.Restart();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var item in _settings.BackgroundDownloadItems.ToArray())
                             {
@@ -893,7 +893,7 @@ namespace Library.Net.Amoeba
 
         private void Remove(BackgroundDownloadItem item)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (item.State != BackgroundDownloadState.Completed)
                 {
@@ -924,7 +924,7 @@ namespace Library.Net.Amoeba
         {
             if (seed == null) return;
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (_settings.BackgroundDownloadItems.Any(n => n.Seed == seed)) return;
 
@@ -976,7 +976,7 @@ namespace Library.Net.Amoeba
 
         public Link GetLink(string signature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var item = _settings.BackgroundDownloadItems
                     .Where(n => n.Type == BackgroundItemType.Link)
@@ -992,7 +992,7 @@ namespace Library.Net.Amoeba
 
         public Store GetStore(string signature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var item = _settings.BackgroundDownloadItems
                     .Where(n => n.Type == BackgroundItemType.Store)
@@ -1020,7 +1020,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -1047,7 +1047,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -1068,7 +1068,7 @@ namespace Library.Net.Amoeba
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
 
@@ -1110,7 +1110,7 @@ namespace Library.Net.Amoeba
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -1198,17 +1198,5 @@ namespace Library.Net.Amoeba
                 _removeThread.Join();
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

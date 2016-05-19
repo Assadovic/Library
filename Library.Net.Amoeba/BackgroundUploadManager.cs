@@ -10,7 +10,7 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    class BackgroundUploadManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class BackgroundUploadManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ConnectionsManager _connectionsManager;
         private CacheManager _cacheManager;
@@ -36,7 +36,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _connectionsManager.UploadedEvent += (object sender, IEnumerable<Key> keys) =>
             {
@@ -62,7 +62,7 @@ namespace Library.Net.Amoeba
                     {
                         var key = _uploadedKeys.Dequeue();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var item in _settings.BackgroundUploadItems.ToArray())
                             {
@@ -94,7 +94,7 @@ namespace Library.Net.Amoeba
 
         private void SetKeyCount(BackgroundUploadItem item)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 foreach (var key in item.UploadKeys.ToArray())
                 {
@@ -126,7 +126,7 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.BackgroundUploadItems.Count > 0)
                         {
@@ -172,7 +172,7 @@ namespace Library.Net.Amoeba
 
                             if (stream.Length == 0)
                             {
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.Seed.Rank = 0;
 
@@ -218,7 +218,7 @@ namespace Library.Net.Amoeba
                                     continue;
                                 }
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     foreach (var key in keys)
                                     {
@@ -238,7 +238,7 @@ namespace Library.Net.Amoeba
                     }
                     else if (item.Groups.Count == 0 && item.Keys.Count == 1)
                     {
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             item.Seed.Rank = item.Rank;
                             item.Seed.Key = item.Keys[0];
@@ -302,7 +302,7 @@ namespace Library.Net.Amoeba
                             continue;
                         }
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var key in group.Keys.Skip(group.InformationLength))
                             {
@@ -350,7 +350,7 @@ namespace Library.Net.Amoeba
                             continue;
                         }
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var key in keys)
                             {
@@ -391,7 +391,7 @@ namespace Library.Net.Amoeba
                     {
                         watchStopwatch.Restart();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             var now = DateTime.UtcNow;
 
@@ -418,7 +418,7 @@ namespace Library.Net.Amoeba
             if (link == null) throw new ArgumentNullException(nameof(link));
             if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 {
                     foreach (var item in _settings.BackgroundUploadItems.ToArray())
@@ -456,7 +456,7 @@ namespace Library.Net.Amoeba
             if (store == null) throw new ArgumentNullException(nameof(store));
             if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 {
                     foreach (var item in _settings.BackgroundUploadItems.ToArray())
@@ -491,7 +491,7 @@ namespace Library.Net.Amoeba
 
         private void Remove(BackgroundUploadItem item)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 foreach (var key in item.LockedKeys)
                 {
@@ -516,7 +516,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -538,7 +538,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -556,7 +556,7 @@ namespace Library.Net.Amoeba
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
 
@@ -584,7 +584,7 @@ namespace Library.Net.Amoeba
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -644,17 +644,5 @@ namespace Library.Net.Amoeba
                 _uploadedThread.Join();
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

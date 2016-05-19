@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
 {
     public delegate Cap AcceptCapEventHandler(object sender, out string uri);
 
-    class ServerManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class ServerManager : StateManagerBase, Library.Configuration.ISettings
     {
         private BufferManager _bufferManager;
         private Settings _settings;
@@ -41,7 +41,7 @@ namespace Library.Net.Amoeba
         {
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
         }
@@ -52,7 +52,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var contexts = new List<InformationContext>();
 
@@ -67,7 +67,7 @@ namespace Library.Net.Amoeba
         {
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _acceptCapEvent = value;
                 }
@@ -78,7 +78,7 @@ namespace Library.Net.Amoeba
         {
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _checkUriEvent = value;
                 }
@@ -89,7 +89,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.ListenUris;
                 }
@@ -122,7 +122,7 @@ namespace Library.Net.Amoeba
 
                     if (type == 0)
                     {
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var item in _tcpListeners)
                             {
@@ -195,7 +195,7 @@ namespace Library.Net.Amoeba
 
         private void WatchTimer()
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (this.State == ManagerState.Stop) return;
 
@@ -254,7 +254,7 @@ namespace Library.Net.Amoeba
 
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -270,7 +270,7 @@ namespace Library.Net.Amoeba
 
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -292,7 +292,7 @@ namespace Library.Net.Amoeba
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
             }
@@ -300,7 +300,7 @@ namespace Library.Net.Amoeba
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -370,18 +370,6 @@ namespace Library.Net.Amoeba
                 }
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 
     [Serializable]

@@ -7,7 +7,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    class UploadManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class UploadManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ConnectionsManager _connectionsManager;
         private CacheManager _cacheManager;
@@ -32,7 +32,7 @@ namespace Library.Net.Outopos
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
         }
@@ -41,7 +41,7 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var list = new List<Information>();
 
@@ -76,7 +76,7 @@ namespace Library.Net.Outopos
 
         private void WatchTimer()
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (this.State == ManagerState.Stop) return;
 
@@ -103,7 +103,7 @@ namespace Library.Net.Outopos
                 {
                     UploadItem item = null;
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.UploadItems.Count > 0)
                         {
@@ -171,7 +171,7 @@ namespace Library.Net.Outopos
                                 {
                                     if (this.State == ManagerState.Stop) miner.Cancel();
 
-                                    lock (this.ThisLock)
+                                    lock (_thisLock)
                                     {
                                         if (!_settings.UploadItems.Contains(item))
                                         {
@@ -184,7 +184,7 @@ namespace Library.Net.Outopos
 
                                 if (task.Exception != null) throw task.Exception;
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     _settings.UploadItems.Remove(item);
                                 }
@@ -208,7 +208,7 @@ namespace Library.Net.Outopos
 
         private void Lock(Key key)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (!_settings.LifeSpans.ContainsKey(key))
                 {
@@ -228,7 +228,7 @@ namespace Library.Net.Outopos
 
             DigitalSignature digitalSignature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var uploadItem = new UploadItem();
                 uploadItem.Type = "BroadcastMessage";
@@ -253,7 +253,7 @@ namespace Library.Net.Outopos
             ExchangePublicKey exchangePublicKey,
             DigitalSignature digitalSignature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var uploadItem = new UploadItem();
                 uploadItem.Type = "UnicastMessage";
@@ -274,7 +274,7 @@ namespace Library.Net.Outopos
             TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var uploadItem = new UploadItem();
                 uploadItem.Type = "MulticastMessage";
@@ -293,7 +293,7 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _state;
                 }
@@ -306,7 +306,7 @@ namespace Library.Net.Outopos
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -325,7 +325,7 @@ namespace Library.Net.Outopos
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -342,7 +342,7 @@ namespace Library.Net.Outopos
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
 
@@ -355,7 +355,7 @@ namespace Library.Net.Outopos
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -425,17 +425,5 @@ namespace Library.Net.Outopos
 
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

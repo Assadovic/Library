@@ -15,7 +15,7 @@ namespace Library.Net.Amoeba
 
     delegate void UploadedEventHandler(object sender, IEnumerable<Key> keys);
 
-    class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ClientManager _clientManager;
         private ServerManager _serverManager;
@@ -125,7 +125,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _routeTable = new Kademlia<Node>(512, 20);
 
@@ -134,7 +134,7 @@ namespace Library.Net.Amoeba
             _messagesManager = new MessagesManager();
             _messagesManager.GetLockNodesEvent = (object sender) =>
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _connectionManagers.Select(n => n.Node).ToArray();
                 }
@@ -175,7 +175,7 @@ namespace Library.Net.Amoeba
         {
             var otherNodes = new List<Node>();
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
             }
@@ -204,7 +204,7 @@ namespace Library.Net.Amoeba
         {
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _getLockSignaturesEvent = value;
                 }
@@ -215,14 +215,14 @@ namespace Library.Net.Amoeba
         {
             add
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _uploadedEvent += value;
                 }
             }
             remove
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _uploadedEvent -= value;
                 }
@@ -235,7 +235,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _routeTable.BaseNode;
                 }
@@ -248,7 +248,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _routeTable.ToArray();
                 }
@@ -261,7 +261,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.ConnectionCountLimit;
                 }
@@ -270,7 +270,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _settings.ConnectionCountLimit = value;
                 }
@@ -283,7 +283,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.BandwidthLimit;
                 }
@@ -292,7 +292,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _settings.BandwidthLimit = value;
                     _bandwidthLimit.In = value;
@@ -307,7 +307,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var list = new List<Information>();
 
@@ -339,7 +339,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var contexts = new List<InformationContext>();
 
@@ -387,7 +387,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _receivedByteCount + _connectionManagers.Sum(n => n.ReceivedByteCount);
                 }
@@ -400,7 +400,7 @@ namespace Library.Net.Amoeba
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _sentByteCount + _connectionManagers.Sum(n => n.SentByteCount);
                 }
@@ -437,7 +437,7 @@ namespace Library.Net.Amoeba
 
         private void UpdateSessionId()
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _mySessionId = new byte[32];
 
@@ -450,7 +450,7 @@ namespace Library.Net.Amoeba
 
         private void RemoveNode(Node node)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _removeNodes.Add(node);
                 _cuttingNodes.Remove(node);
@@ -466,7 +466,7 @@ namespace Library.Net.Amoeba
         {
             const int average = 256;
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var priority = (long)_messagesManager[node].Priority;
 
@@ -476,7 +476,7 @@ namespace Library.Net.Amoeba
 
         private void AddConnectionManager(ConnectionManager connectionManager, string uri)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (CollectionUtilities.Equals(connectionManager.Node.Id, this.BaseNode.Id)
                     || _connectionManagers.Any(n => CollectionUtilities.Equals(n.Node.Id, connectionManager.Node.Id)))
@@ -525,7 +525,7 @@ namespace Library.Net.Amoeba
 
         private void RemoveConnectionManager(ConnectionManager connectionManager)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 lock (_connectionManagers.ThisLock)
                 {
@@ -567,7 +567,7 @@ namespace Library.Net.Amoeba
                 {
                     var connectionCount = 0;
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         connectionCount = _connectionManagers.Count(n => n.Direction == ConnectDirection.Out);
                     }
@@ -580,7 +580,7 @@ namespace Library.Net.Amoeba
 
                 Node node = null;
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     node = _cuttingNodes
                         .ToArray()
@@ -614,7 +614,7 @@ namespace Library.Net.Amoeba
 
                     if (uris.Count == 0)
                     {
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             _removeNodes.Remove(node);
                             _cuttingNodes.Remove(node);
@@ -641,7 +641,7 @@ namespace Library.Net.Amoeba
 
                                 _succeededUris.Add(uri);
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     _cuttingNodes.Remove(node);
 
@@ -692,7 +692,7 @@ namespace Library.Net.Amoeba
                 {
                     var connectionCount = 0;
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         connectionCount = _connectionManagers.Count(n => n.Direction == ConnectDirection.In);
                     }
@@ -715,7 +715,7 @@ namespace Library.Net.Amoeba
                         connectionManager.Connect();
                         if (!ConnectionsManager.Check(connectionManager.Node) || _removeNodes.Contains(connectionManager.Node)) throw new ArgumentException();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             if (connectionManager.Node.Uris.Count() != 0)
                             {
@@ -805,7 +805,7 @@ namespace Library.Net.Amoeba
 
                 var connectionCount = 0;
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     connectionCount = _connectionManagers.Count;
                 }
@@ -817,7 +817,7 @@ namespace Library.Net.Amoeba
 
                     var nodeSortItems = new List<NodeSortItem>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         foreach (var connectionManager in _connectionManagers)
                         {
@@ -842,7 +842,7 @@ namespace Library.Net.Amoeba
                     {
                         ConnectionManager connectionManager = null;
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             connectionManager = _connectionManagers.FirstOrDefault(n => n.Node == node);
                         }
@@ -851,7 +851,7 @@ namespace Library.Net.Amoeba
                         {
                             try
                             {
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     this.RemoveNode(connectionManager.Node);
                                 }
@@ -930,7 +930,7 @@ namespace Library.Net.Amoeba
                     pushBlockDiffusionStopwatch.Restart();
 
                     // 拡散アップロードするブロック数を10000以下に抑える。
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         lock (_settings.DiffusionBlocksRequest.ThisLock)
                         {
@@ -946,7 +946,7 @@ namespace Library.Net.Amoeba
                     }
 
                     // 存在しないブロックのKeyをRemoveする。
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         lock (_settings.DiffusionBlocksRequest.ThisLock)
                         {
@@ -969,7 +969,7 @@ namespace Library.Net.Amoeba
 
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -1072,7 +1072,7 @@ namespace Library.Net.Amoeba
 
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -1120,7 +1120,7 @@ namespace Library.Net.Amoeba
 
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -1323,7 +1323,7 @@ namespace Library.Net.Amoeba
 
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -1368,7 +1368,7 @@ namespace Library.Net.Amoeba
 
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -1501,7 +1501,7 @@ namespace Library.Net.Amoeba
 
                     var connectionCount = 0;
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         connectionCount = _connectionManagers.Count;
                     }
@@ -1513,7 +1513,7 @@ namespace Library.Net.Amoeba
 
                         if ((DateTime.UtcNow - messageManager.LastPullTime).TotalMinutes >= 5)
                         {
-                            lock (this.ThisLock)
+                            lock (_thisLock)
                             {
                                 this.RemoveNode(connectionManager.Node);
                             }
@@ -1532,7 +1532,7 @@ namespace Library.Net.Amoeba
 
                         var nodes = new HashSet<Node>();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             foreach (var node in _routeTable.Randomize())
                             {
@@ -1933,7 +1933,7 @@ namespace Library.Net.Amoeba
                 {
                     var otherNodes = new List<Node>();
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         otherNodes.AddRange(_connectionManagers.Select(n => n.Node));
                     }
@@ -2047,7 +2047,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     this.RemoveNode(connectionManager.Node);
                 }
@@ -2067,7 +2067,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (!_removeNodes.Contains(connectionManager.Node))
                     {
@@ -2090,7 +2090,7 @@ namespace Library.Net.Amoeba
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!ConnectionsManager.Check(baseNode)) throw new ArgumentException("baseNode");
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _routeTable.BaseNode = baseNode;
             }
@@ -2100,7 +2100,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 foreach (var node in nodes)
                 {
@@ -2115,7 +2115,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (_downloadBlocks.Contains(key))
                     return true;
@@ -2128,7 +2128,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (_settings.UploadBlocksRequest.Contains(key))
                     return true;
@@ -2141,7 +2141,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _downloadBlocks.Add(key);
             }
@@ -2151,7 +2151,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.UploadBlocksRequest.Add(key);
             }
@@ -2159,7 +2159,7 @@ namespace Library.Net.Amoeba
 
         public void SendSeedsRequest(string signature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _pushSeedsRequestList.Add(signature);
             }
@@ -2169,7 +2169,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 return _settings.GetLinkSeed(signature);
             }
@@ -2179,7 +2179,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 return _settings.GetStoreSeed(signature);
             }
@@ -2189,7 +2189,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.SetLinkSeed(seed);
                 _settings.SetStoreSeed(seed);
@@ -2214,7 +2214,7 @@ namespace Library.Net.Amoeba
 
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -2257,7 +2257,7 @@ namespace Library.Net.Amoeba
 
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -2280,7 +2280,7 @@ namespace Library.Net.Amoeba
                 _connectionsManagerThread.Join();
                 _connectionsManagerThread = null;
 
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     foreach (var item in _connectionManagers.ToArray())
                     {
@@ -2301,7 +2301,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
 
@@ -2323,7 +2323,7 @@ namespace Library.Net.Amoeba
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 {
                     var otherNodes = _routeTable.ToArray();
@@ -2673,18 +2673,6 @@ namespace Library.Net.Amoeba
                 }
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 
     [Serializable]

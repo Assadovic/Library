@@ -6,7 +6,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    class DownloadManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class DownloadManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ConnectionsManager _connectionsManager;
         private CacheManager _cacheManager;
@@ -39,7 +39,7 @@ namespace Library.Net.Outopos
 
             _watchTimer = new WatchTimer(this.WatchTimer, new TimeSpan(0, 0, 30));
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _connectionsManager.GetLockSignaturesEvent = (object sender) =>
             {
@@ -62,7 +62,7 @@ namespace Library.Net.Outopos
 
         private void WatchTimer()
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _cache_Metadata_BroadcastMessage_Pairs.TrimExcess();
                 _cache_Metadata_UnicastMessage_Pairs_Dictionary.TrimExcess();
@@ -74,7 +74,7 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.TrustSignatures.ToArray();
                 }
@@ -83,7 +83,7 @@ namespace Library.Net.Outopos
 
         public void SetTrustSignatures(IEnumerable<string> signatures)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 lock (_settings.TrustSignatures.ThisLock)
                 {
@@ -95,7 +95,7 @@ namespace Library.Net.Outopos
 
         public BroadcastMessage GetBroadcastMessage(string signature)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 BroadcastMessage broadcastMessage = null;
 
@@ -150,7 +150,7 @@ namespace Library.Net.Outopos
             if (signature == null) throw new ArgumentNullException(nameof(signature));
             if (exchangePrivateKey == null) throw new ArgumentNullException(nameof(exchangePrivateKey));
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 Dictionary<UnicastMetadata, UnicastMessage> dic;
 
@@ -224,7 +224,7 @@ namespace Library.Net.Outopos
         {
             if (tag == null) throw new ArgumentNullException(nameof(tag));
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 Dictionary<MulticastMetadata, MulticastMessage> dic;
 
@@ -298,7 +298,7 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _state;
                 }
@@ -311,7 +311,7 @@ namespace Library.Net.Outopos
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -323,7 +323,7 @@ namespace Library.Net.Outopos
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -335,7 +335,7 @@ namespace Library.Net.Outopos
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
             }
@@ -343,7 +343,7 @@ namespace Library.Net.Outopos
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -413,18 +413,6 @@ namespace Library.Net.Outopos
                 }
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 
     [Serializable]

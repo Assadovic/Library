@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
 {
     public delegate Cap CreateCapEventHandler(object sender, string uri);
 
-    class ClientManager : ManagerBase, Library.Configuration.ISettings, IThisLock
+    class ClientManager : ManagerBase, Library.Configuration.ISettings
     {
         private BufferManager _bufferManager;
 
@@ -32,14 +32,14 @@ namespace Library.Net.Amoeba
         {
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
         }
 
         public CreateCapEventHandler CreateCapEvent
         {
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _createCapEvent = value;
                 }
@@ -50,7 +50,7 @@ namespace Library.Net.Amoeba
         {
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _checkUriEvent = value;
                 }
@@ -61,7 +61,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.ConnectionFilters;
                 }
@@ -262,7 +262,7 @@ namespace Library.Net.Amoeba
                 {
                     ConnectionFilter connectionFilter = null;
 
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         foreach (var filter in this.Filters)
                         {
@@ -501,7 +501,7 @@ namespace Library.Net.Amoeba
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
             }
@@ -509,7 +509,7 @@ namespace Library.Net.Amoeba
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -567,18 +567,6 @@ namespace Library.Net.Amoeba
 
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 
     [Serializable]

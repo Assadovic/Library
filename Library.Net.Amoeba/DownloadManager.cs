@@ -10,7 +10,7 @@ namespace Library.Net.Amoeba
 {
     // データ構造が複雑で、一時停止や途中からの再開なども考えるとこうなった
 
-    class DownloadManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
+    class DownloadManager : StateManagerBase, Library.Configuration.ISettings
     {
         private ConnectionsManager _connectionsManager;
         private CacheManager _cacheManager;
@@ -46,7 +46,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
@@ -74,7 +74,7 @@ namespace Library.Net.Amoeba
                     {
                         var key = _setKeys.Dequeue();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             _existManager.Set(key, true);
                         }
@@ -97,7 +97,7 @@ namespace Library.Net.Amoeba
                     {
                         var key = _removeKeys.Dequeue();
 
-                        lock (this.ThisLock)
+                        lock (_thisLock)
                         {
                             _existManager.Set(key, false);
                         }
@@ -117,7 +117,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var contexts = new List<InformationContext>();
 
@@ -133,7 +133,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     var list = new List<Information>();
 
@@ -190,14 +190,14 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.BaseDirectory;
                 }
             }
             set
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     _settings.BaseDirectory = value;
                 }
@@ -208,7 +208,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _settings.DownloadedSeeds;
                 }
@@ -217,7 +217,7 @@ namespace Library.Net.Amoeba
 
         private void CheckState(Index index)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (index == null) return;
 
@@ -242,7 +242,7 @@ namespace Library.Net.Amoeba
 
         private void UncheckState(Index index)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (index == null) return;
 
@@ -349,7 +349,7 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.DownloadItems.Count > 0)
                         {
@@ -486,7 +486,7 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    lock (this.ThisLock)
+                    lock (_thisLock)
                     {
                         if (_settings.DownloadItems.Count > 0)
                         {
@@ -583,7 +583,7 @@ namespace Library.Net.Amoeba
 
                                 File.Delete(fileName);
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
@@ -684,7 +684,7 @@ namespace Library.Net.Amoeba
 
                                 File.Move(fileName, DownloadManager.GetUniqueFilePath(Path.Combine(downloadDirectory, DownloadManager.GetNormalizedPath(item.Seed.Name))));
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
@@ -815,7 +815,7 @@ namespace Library.Net.Amoeba
 
                                 File.Delete(fileName);
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
@@ -915,7 +915,7 @@ namespace Library.Net.Amoeba
 
                                 File.Move(fileName, DownloadManager.GetUniqueFilePath(Path.Combine(downloadDirectory, DownloadManager.GetNormalizedPath(item.Seed.Name))));
 
-                                lock (this.ThisLock)
+                                lock (_thisLock)
                                 {
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
@@ -1015,7 +1015,7 @@ namespace Library.Net.Amoeba
         public void Download(Seed seed,
             int priority)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 this.Download(seed, null, priority);
             }
@@ -1027,7 +1027,7 @@ namespace Library.Net.Amoeba
         {
             if (seed == null) return;
 
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (_settings.DownloadItems.Any(n => n.Seed == seed && n.Path == path)) return;
 
@@ -1055,7 +1055,7 @@ namespace Library.Net.Amoeba
 
         public void Remove(int id)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var item = _ids[id];
 
@@ -1087,7 +1087,7 @@ namespace Library.Net.Amoeba
 
         public void Reset(int id)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 var item = _ids[id];
 
@@ -1098,7 +1098,7 @@ namespace Library.Net.Amoeba
 
         public void SetPriority(int id, int priority)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _ids[id].Priority = priority;
             }
@@ -1126,7 +1126,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
@@ -1143,7 +1143,7 @@ namespace Library.Net.Amoeba
         {
             lock (_stateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
@@ -1160,7 +1160,7 @@ namespace Library.Net.Amoeba
         {
             lock (_decodeStateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.DecodeState == ManagerState.Start) return;
                     _decodeState = ManagerState.Start;
@@ -1182,7 +1182,7 @@ namespace Library.Net.Amoeba
         {
             lock (_decodeStateLock)
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     if (this.DecodeState == ManagerState.Stop) return;
                     _decodeState = ManagerState.Stop;
@@ -1203,7 +1203,7 @@ namespace Library.Net.Amoeba
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
 
@@ -1253,7 +1253,7 @@ namespace Library.Net.Amoeba
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Save(directoryPath);
             }
@@ -1360,17 +1360,5 @@ namespace Library.Net.Amoeba
                 _removeThread.Join();
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }
