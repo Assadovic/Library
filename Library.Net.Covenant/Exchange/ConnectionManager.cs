@@ -14,17 +14,55 @@ using Library.Io;
 using Library.Net.Connections;
 using Library.Security;
 
-namespace Library.Net.Covenant
+namespace Library.Net.Covenant.Exchange
 {
     [Flags]
-    [DataContract(Name = "ExchangeProtocolVersion", Namespace = "http://Library/Net/Covenant")]
-    enum ExchangeProtocolVersion
+    [DataContract(Name = "ProtocolVersion", Namespace = "http://Library/Net/Covenant/Exchange")]
+    enum ProtocolVersion
     {
         [EnumMember(Value = "Version1")]
         Version1 = 0x01,
     }
 
-    class ExchangeConnectionManager : ManagerBase, IThisLock
+    class PullUrisEventArgs : EventArgs
+    {
+        public IEnumerable<string> Uris { get; set; }
+    }
+
+    class PullBlocksInfoEventArgs : EventArgs
+    {
+        public BlocksInfo BlocksInfo { get; set; }
+    }
+
+    class PullBlockEventArgs : EventArgs
+    {
+        public int Index { get; set; }
+        public ArraySegment<byte> Value { get; set; }
+    }
+
+    delegate void PullUrisEventHandler(object sender, PullUrisEventArgs e);
+
+    delegate void PullBlocksInfoRequestEventHandler(object sender, EventArgs e);
+    delegate void PullBlocksInfoEventHandler(object sender, PullBlocksInfoEventArgs e);
+
+    delegate void PullBlockRequestEventHandler(object sender, EventArgs e);
+    delegate void PullBlockEventHandler(object sender, PullBlockEventArgs e);
+
+    delegate void PullCancelEventHandler(object sender, EventArgs e);
+
+    delegate void CloseEventHandler(object sender, EventArgs e);
+
+    [DataContract(Name = "ConnectDirection", Namespace = "http://Library/Net/Covenant/Exchange")]
+    public enum ConnectDirection
+    {
+        [EnumMember(Value = "In")]
+        In = 0,
+
+        [EnumMember(Value = "Out")]
+        Out = 1,
+    }
+
+    class ConnectionManager : ManagerBase, IThisLock
     {
         private enum SerializeId : byte
         {
@@ -34,21 +72,20 @@ namespace Library.Net.Covenant
             Ping = 2,
             Pong = 3,
 
-            Nodes = 4,
+            Uris = 4,
 
-            LocationsRequest = 5,
-            Locations = 6,
+            BlocksRequest = 5,
+            Blocks = 6,
 
-            MetadatasRequest = 7,
-            Metadatas = 8,
+            BlockRequest = 7,
+            Block = 8,
         }
 
-        private ExchangeProtocolVersion _protocolVersion;
-        private ExchangeProtocolVersion _myProtocolVersion;
-        private ExchangeProtocolVersion _otherProtocolVersion;
+        private ProtocolVersion _protocolVersion;
+        private ProtocolVersion _myProtocolVersion;
+        private ProtocolVersion _otherProtocolVersion;
         private Connection _connection;
-        private byte[] _mySessionId;
-        private byte[] _otherSessionId;
+        private Key _sessionKey;
         private Node _baseNode;
         private Node _otherNode;
         private ConnectDirection _direction;
@@ -70,15 +107,15 @@ namespace Library.Net.Covenant
         private volatile bool _disposed;
 
         private const int _maxNodeCount = 1024;
-        private const int _maxLocationRequestCount = 1024;
-        private const int _maxLocationCount = 1024;
-        private const int _maxMetadataRequestCount = 1024;
-        private const int _maxMetadataCount = 1024;
+        private const int _maxBlocksInfoRequestCount = 1024;
+        private const int _maxBlocksInfoCount = 1024;
+        private const int _maxBlockRequestCount = 1024;
+        private const int _maxBlockCount = 1024;
 
-        public event PullNodesEventHandler PullNodesEvent;
+        public event PullUrisEventHandler PullNodesEvent;
 
-        public event PullLocationsRequestEventHandler PullLocationsRequestEvent;
-        public event PullLocationsEventHandler PullLocationsEvent;
+        public event PullBlocksInfoRequestEventHandler PullLocationsRequestEvent;
+        public event PullBlocksInfoEventHandler PullLocationsEvent;
 
         public event PullMetadatasRequestEventHandler PullMetadatasRequestEvent;
         public event PullMetadatasEventHandler PullMetadatasEvent;
@@ -87,9 +124,9 @@ namespace Library.Net.Covenant
 
         public event CloseEventHandler CloseEvent;
 
-        public ExchangeConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
+        public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
-            _myProtocolVersion = ExchangeProtocolVersion.Version1;
+            _myProtocolVersion = ProtocolVersion.Version1;
             _connection = connection;
             _mySessionId = mySessionId;
             _baseNode = baseNode;
@@ -149,7 +186,7 @@ namespace Library.Net.Covenant
             }
         }
 
-        public ExchangeProtocolVersion ProtocolVersion
+        public ProtocolVersion ProtocolVersion
         {
             get
             {
@@ -212,7 +249,7 @@ namespace Library.Net.Covenant
 
                         xml.WriteStartElement("Protocol");
 
-                        if (_myProtocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+                        if (_myProtocolVersion.HasFlag(ProtocolVersion.Version1))
                         {
                             xml.WriteStartElement("Covenant_Exchange");
                             xml.WriteAttributeString("Version", "1");
@@ -242,7 +279,7 @@ namespace Library.Net.Covenant
 
                                     if (version == "1")
                                     {
-                                        _otherProtocolVersion |= ExchangeProtocolVersion.Version1;
+                                        _otherProtocolVersion |= ProtocolVersion.Version1;
                                     }
                                 }
                             }
@@ -251,7 +288,7 @@ namespace Library.Net.Covenant
 
                     _protocolVersion = _myProtocolVersion & _otherProtocolVersion;
 
-                    if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+                    if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
                     {
                         using (Stream stream = new MemoryStream(_mySessionId))
                         {
@@ -345,7 +382,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 try
                 {
@@ -379,7 +416,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 try
                 {
@@ -411,7 +448,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 try
                 {
@@ -454,7 +491,7 @@ namespace Library.Net.Covenant
 
                     sw.Restart();
 
-                    if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+                    if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
                     {
                         using (Stream stream = _connection.Receive(_receiveTimeSpan))
                         {
@@ -627,7 +664,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -664,7 +701,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -701,7 +738,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -738,7 +775,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -775,7 +812,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -812,7 +849,7 @@ namespace Library.Net.Covenant
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ExchangeProtocolVersion.Version1))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version1))
             {
                 try
                 {

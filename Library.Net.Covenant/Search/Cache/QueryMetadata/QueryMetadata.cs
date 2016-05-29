@@ -64,7 +64,7 @@ namespace Library.Net.Covenant
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
-                    if (id == (byte)SerializeId.Signature)
+                    else if (id == (byte)SerializeId.Signature)
                     {
                         this.Signature = ItemUtilities.GetString(rangeStream);
                     }

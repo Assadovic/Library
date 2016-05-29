@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Library.Collections;
 
-namespace Library.Net.Covenant
+namespace Library.Net.Covenant.Search
 {
     delegate IEnumerable<Node> GetLockNodesEventHandler(object sender);
 

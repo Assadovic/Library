@@ -37,10 +37,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Tools", "Library.To
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Net.Outopos", "Library.Net.Outopos\Library.Net.Outopos.csproj", "{AE8FE1EB-0280-48CE-A26A-F58E3FFE6B5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Net.Prophet", "Library.Net.Prophet\Library.Net.Prophet.csproj", "{5FC132BA-75E0-4167-9258-3D2B23DE4E31}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Net.Covenant", "Library.Net.Covenant\Library.Net.Covenant.csproj", "{E7D58A5E-1387-4FAE-9DFC-1D60763E8F7D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,14 +111,6 @@ Global
 		{AE8FE1EB-0280-48CE-A26A-F58E3FFE6B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE8FE1EB-0280-48CE-A26A-F58E3FFE6B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE8FE1EB-0280-48CE-A26A-F58E3FFE6B5D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5FC132BA-75E0-4167-9258-3D2B23DE4E31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5FC132BA-75E0-4167-9258-3D2B23DE4E31}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5FC132BA-75E0-4167-9258-3D2B23DE4E31}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5FC132BA-75E0-4167-9258-3D2B23DE4E31}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7D58A5E-1387-4FAE-9DFC-1D60763E8F7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7D58A5E-1387-4FAE-9DFC-1D60763E8F7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7D58A5E-1387-4FAE-9DFC-1D60763E8F7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7D58A5E-1387-4FAE-9DFC-1D60763E8F7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
