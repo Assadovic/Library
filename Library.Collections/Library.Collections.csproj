@@ -103,10 +103,10 @@
     <BaseAddress>4194304</BaseAddress>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Windows)'=='true'">
+  <PropertyGroup Condition="'$(OS)'=='Windows'">
     <DefineConstants>$(DefineConstants);Windows</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Linux)'=='true'">
+  <PropertyGroup Condition="'$(OS)'=='Linux'">
     <DefineConstants>$(DefineConstants);Linux</DefineConstants>
   </PropertyGroup>
 </Project>

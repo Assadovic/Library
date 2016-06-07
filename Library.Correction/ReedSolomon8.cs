@@ -306,8 +306,8 @@ namespace Library.Correction
                 _gf_log = new int[_gfSize + 1];
                 _inverse = new byte[_gfSize + 1];
 
-                GenerateGF();
-                InitMulTable();
+                this.GenerateGF();
+                this.InitMulTable();
             }
 
             public void GenerateGF()
@@ -472,7 +472,7 @@ namespace Library.Correction
 
                         for (int i = 0; i < k; i++, posA++, posB += m)
                         {
-                            acc ^= Mul(a[aStart + posA], b[bStart + posB]);
+                            acc ^= this.Mul(a[aStart + posA], b[bStart + posB]);
                         }
 
                         c[cStart + (row * m + col)] = acc;
@@ -488,7 +488,7 @@ namespace Library.Correction
                 // ipiv marks elements already used as pivots.
                 int[] ipiv = new int[k];
 
-                byte[] id_row = CreateGFMatrix(1, k);
+                byte[] id_row = Math.CreateGFMatrix(1, k);
                 //byte[] temp_row = CreateGFMatrix(1, k);
 
                 for (int col = 0; col < k; col++)
@@ -541,11 +541,6 @@ namespace Library.Correction
                     {
                         throw new ArgumentException("XXX pivot not found!");
                     }
-
-                    // Ok, we've found a pivot by this point, so we can set the 
-                    // foundPiv variable back to false.  The reason that this is
-                    // so shittily laid out is that the original code had goto's :(
-                    foundPiv = false;
 
                     ipiv[icol] = ipiv[icol] + 1;
 
@@ -601,7 +596,7 @@ namespace Library.Correction
                      */
                     id_row[icol] = (byte)1;
 
-                    if (!CollectionUtilities.Equals(src, pivotRowPos, id_row, 0, k))
+                    if (!Unsafe.Equals(src, pivotRowPos, id_row, 0, k))
                     {
                         for (int p = 0, ix = 0; ix < k; ix++, p += k)
                         {
@@ -609,7 +604,7 @@ namespace Library.Correction
                             {
                                 c = src[p + icol];
                                 src[p + icol] = (byte)0;
-                                AddMul(src, p, src, pivotRowPos, c, k);
+                                this.AddMul(src, p, src, pivotRowPos, c, k);
                             }
                         }
                     }
@@ -655,9 +650,9 @@ namespace Library.Correction
                  * c holds the coefficient of P(x) = Prod (x - p_i), i=0..k-1
                  * b holds the coefficient for the matrix inversion
                  */
-                byte[] c = CreateGFMatrix(1, k);
-                byte[] b = CreateGFMatrix(1, k);
-                byte[] p = CreateGFMatrix(1, k);
+                byte[] c = Math.CreateGFMatrix(1, k);
+                byte[] b = Math.CreateGFMatrix(1, k);
+                byte[] p = Math.CreateGFMatrix(1, k);
 
                 for (int j = 1, i = 0; i < k; i++, j += k)
                 {
@@ -714,7 +709,7 @@ namespace Library.Correction
                     throw new ArgumentException("Invalid parameters n=" + n + ",k=" + k + ",gfSize=" + _gfSize);
                 }
 
-                byte[] encMatrix = CreateGFMatrix(n, k);
+                byte[] encMatrix = Math.CreateGFMatrix(n, k);
 
                 /*
                  * The encoding matrix is computed starting with a Vandermonde matrix,
@@ -723,7 +718,7 @@ namespace Library.Correction
                  * fill the matrix with powers of field elements, starting from 0.
                  * The first row is special, cannot be computed with exp. table.
                  */
-                byte[] tmpMatrix = CreateGFMatrix(n, k);
+                byte[] tmpMatrix = Math.CreateGFMatrix(n, k);
 
                 tmpMatrix[0] = (byte)1;
 
@@ -742,8 +737,8 @@ namespace Library.Correction
                  * by the inverse, and construct the identity matrix at the top.
                  */
                 // much faster than invertMatrix 
-                InvertVandermonde(tmpMatrix, k);
-                MatMul(tmpMatrix, k * k, tmpMatrix, 0, encMatrix, k * k, n - k, k, k);
+                this.InvertVandermonde(tmpMatrix, k);
+                this.MatMul(tmpMatrix, k * k, tmpMatrix, 0, encMatrix, k * k, n - k, k, k);
 
                 /*
                  * the upper matrix is I so do not bother with a slow multiply
@@ -767,7 +762,7 @@ namespace Library.Correction
                     Unsafe.Copy(encMatrix, index[i] * k, matrix, pos, k);
                 }
 
-                InvertMatrix(matrix, k);
+                this.InvertMatrix(matrix, k);
 
                 return matrix;
             }

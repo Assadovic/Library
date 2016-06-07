@@ -3,5 +3,5 @@ cwd=`dirname "${0}"`
 expr "${0}" : "/.*" > /dev/null || cwd=`(cd "${cwd}" && pwd)`
 cd "${cwd}"
 
-export Linux=true
+export OS=Linux
 monodevelop Library.sln

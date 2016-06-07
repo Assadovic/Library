@@ -8,7 +8,7 @@ namespace Library.Net.I2p
 {
     static class I2pConverter
     {
-        public static class Base32
+        private static class Base32
         {
             static readonly char[] lowerTable = "abcdefghijklmnopqrstuvwxyz234567".ToCharArray();
 
@@ -80,7 +80,7 @@ namespace Library.Net.I2p
             }
         }
 
-        public static class Base64
+        private static class Base64
         {
             public static byte[] FromString(string s)
             {
