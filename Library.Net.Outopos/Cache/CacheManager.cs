@@ -573,8 +573,8 @@ namespace Library.Net.Outopos
 
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClusterIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
                     new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 32 },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClusterIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
                 })
             {
                 _thisLock = lockObject;
@@ -596,17 +596,6 @@ namespace Library.Net.Outopos
                 }
             }
 
-            public LockedHashDictionary<Key, ClusterInfo> ClusterIndex
-            {
-                get
-                {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashDictionary<Key, ClusterInfo>)this["ClusterIndex"];
-                    }
-                }
-            }
-
             public long Size
             {
                 get
@@ -621,6 +610,17 @@ namespace Library.Net.Outopos
                     lock (_thisLock)
                     {
                         this["Size"] = value;
+                    }
+                }
+            }
+
+            public LockedHashDictionary<Key, ClusterInfo> ClusterIndex
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedHashDictionary<Key, ClusterInfo>)this["ClusterIndex"];
                     }
                 }
             }

@@ -728,8 +728,7 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                if (_cacheManager.ShareInformation
-                    .Any(n => ((string)n["Path"]) == filePath)) return;
+                if (_cacheManager.Contains(filePath)) return;
 
                 if (_settings.UploadItems
                     .Where(n => n.Type == UploadType.Share)

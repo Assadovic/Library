@@ -49,21 +49,11 @@ namespace Library.Net.Outopos
             for (;;)
             {
                 byte id;
-                {
-                    byte[] idBuffer = new byte[1];
-                    if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                    id = idBuffer[0];
-                }
 
-                int length;
+                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
                 {
-                    byte[] lengthBuffer = new byte[4];
-                    if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                    length = NetworkConverter.ToInt32(lengthBuffer);
-                }
+                    if (rangeStream == null) return;
 
-                using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                {
                     if (id == (byte)SerializeId.Tag)
                     {
                         this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);

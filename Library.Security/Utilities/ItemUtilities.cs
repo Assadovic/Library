@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Library.Io;
 using Library.Security;
 
 namespace Library.Security
@@ -115,6 +116,26 @@ namespace Library.Security
             stream.WriteByte(type);
             stream.Write(NetworkConverter.GetBytes((int)8), 0, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 8);
+        }
+
+        public static Stream GetStream(out byte id, Stream stream)
+        {
+            id = 0;
+
+            {
+                byte[] idBuffer = new byte[1];
+                if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return null;
+                id = idBuffer[0];
+            }
+
+            int length;
+            {
+                byte[] lengthBuffer = new byte[4];
+                if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return null;
+                length = NetworkConverter.ToInt32(lengthBuffer);
+            }
+
+            return new RangeStream(stream, stream.Position, length, true);
         }
 
         public static byte[] GetByteArray(Stream stream)
