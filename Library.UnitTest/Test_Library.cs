@@ -196,66 +196,62 @@ namespace Library.UnitTest
         }
 
         [Test]
-        public void Test_Xor()
+        public void Test_And()
         {
+            for (int i = 0; i < 32; i++)
             {
-                byte[] value1 = new byte[1024];
-                byte[] value2 = new byte[1024];
+                var length = _random.Next(1024, 8192);
 
-                byte[] result1 = new byte[1024];
-                byte[] result2 = new byte[1024];
+                var x = new byte[length];
+                var y = new byte[length];
+                var z = new byte[length];
 
-                for (int i = 0; i < 1024; i++)
+                Unsafe.And(x, y, z);
+
+                for (int j = 0; j < length; j++)
                 {
-                    _random.NextBytes(value1);
-                    _random.NextBytes(value2);
-
-                    Unsafe.Xor(value1, value2, result1);
-                    Unsafe.Xor(value1, 0, value2, 0, result2, 0, result2.Length);
-
-                    Assert.IsTrue(Unsafe.Equals(result1, result2));
+                    Assert.IsTrue(z[j] == (x[j] & y[j]));
                 }
             }
+        }
 
+        [Test]
+        public void Test_Or()
+        {
+            for (int i = 0; i < 32; i++)
             {
-                byte[] value1 = new byte[] { 0x00, 0x01, 0x02, };
-                byte[] value2 = new byte[] { 0x00 };
+                var length = _random.Next(1024, 8192);
 
-                byte[] result1 = new byte[1024];
-                _random.NextBytes(result1);
-                byte[] result2 = new byte[1024];
+                var x = new byte[length];
+                var y = new byte[length];
+                var z = new byte[length];
 
-                Unsafe.Xor(value1, value2, result1);
-                Unsafe.Copy(value1, 0, result2, 0, value1.Length);
+                Unsafe.Or(x, y, z);
 
-                Assert.IsTrue(Unsafe.Equals(result1, result2));
+                for (int j = 0; j < length; j++)
+                {
+                    Assert.IsTrue(z[j] == (x[j] | y[j]));
+                }
             }
+        }
 
+        [Test]
+        public void Test_Xor()
+        {
+            for (int i = 0; i < 32; i++)
             {
-                byte[] value1 = new byte[] { 0x00 };
-                byte[] value2 = new byte[] { 0x00, 0x01, 0x02, };
+                var length = _random.Next(1024, 8192);
 
-                byte[] result1 = new byte[1024];
-                _random.NextBytes(result1);
-                byte[] result2 = new byte[1024];
+                var x = new byte[length];
+                var y = new byte[length];
+                var z = new byte[length];
 
-                Unsafe.Xor(value1, value2, result1);
-                Unsafe.Copy(value2, 0, result2, 0, value2.Length);
+                Unsafe.Xor(x, y, z);
 
-                Assert.IsTrue(Unsafe.Equals(result1, result2));
-            }
-
-            {
-                byte[] value1 = new byte[] { 0x00, 0x01, 0x00, 0x03 };
-                byte[] value2 = new byte[] { 0x00, 0x00, 0x02, 0x00, 0x04 };
-
-                byte[] result1 = new byte[3];
-                _random.NextBytes(result1);
-                byte[] result2 = new byte[] { 0x00, 0x01, 0x02 };
-
-                Unsafe.Xor(value1, value2, result1);
-
-                Assert.IsTrue(Unsafe.Equals(result1, result2));
+                for (int j = 0; j < length; j++)
+                {
+                    Assert.IsTrue(z[j] == (x[j] ^ y[j]));
+                }
             }
         }
 

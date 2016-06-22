@@ -12,14 +12,14 @@ namespace Library
         private static NativeLibraryManager _nativeLibraryManager;
 
         [SuppressUnmanagedCodeSecurity]
-        private delegate void CopyDelegate(byte* source, byte* destination, int len);
+        private delegate void CopyDelegate(byte* source, byte* destination, int length);
         [SuppressUnmanagedCodeSecurity]
         [return: MarshalAs(UnmanagedType.U1)]
-        private delegate bool EqualsDelegate(byte* source1, byte* source2, int len);
+        private delegate bool EqualsDelegate(byte* source1, byte* source2, int length);
         [SuppressUnmanagedCodeSecurity]
-        private delegate int CompareDelegate(byte* source1, byte* source2, int len);
+        private delegate int CompareDelegate(byte* source1, byte* source2, int length);
         [SuppressUnmanagedCodeSecurity]
-        private delegate void BitwiseOperationDelegate(byte* source1, byte* source2, byte* result, int len);
+        private delegate void BitwiseOperationDelegate(byte* source1, byte* source2, byte* result, int length);
 
         private static CopyDelegate _copy;
         private static EqualsDelegate _equals;
@@ -266,7 +266,7 @@ namespace Library
             Unsafe.BitwiseOperation(_xor, source1, source1Index, source2, source2Index, destination, destinationIndex, length);
         }
 
-        private static void BitwiseOperation(BitwiseOperationDelegate operation, byte[] source1, byte[] source2, byte[] destination)
+        private static void BitwiseOperation(BitwiseOperationDelegate bitwiseOperation, byte[] source1, byte[] source2, byte[] destination)
         {
             if (source1 == null) throw new ArgumentNullException(nameof(source1));
             if (source2 == null) throw new ArgumentNullException(nameof(source2));
@@ -297,12 +297,12 @@ namespace Library
             {
                 fixed (byte* p_buffer = destination)
                 {
-                    operation(p_x, p_y, p_buffer, length);
+                    bitwiseOperation(p_x, p_y, p_buffer, length);
                 }
             }
         }
 
-        private static void BitwiseOperation(BitwiseOperationDelegate operation, byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
+        private static void BitwiseOperation(BitwiseOperationDelegate bitwiseOperation, byte[] source1, int source1Index, byte[] source2, int source2Index, byte[] destination, int destinationIndex, int length)
         {
             if (source1 == null) throw new ArgumentNullException(nameof(source1));
             if (source2 == null) throw new ArgumentNullException(nameof(source2));
@@ -323,7 +323,7 @@ namespace Library
                 {
                     byte* t_buffer = p_buffer + destinationIndex;
 
-                    operation(t_x, t_y, t_buffer, length);
+                    bitwiseOperation(t_x, t_y, t_buffer, length);
                 }
             }
         }

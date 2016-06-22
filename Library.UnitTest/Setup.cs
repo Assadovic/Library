@@ -14,7 +14,9 @@ namespace Library.UnitTest
         [SetUp]
         public void Init()
         {
+#if Linux
             Directory.SetCurrentDirectory(TestContext.CurrentContext.TestDirectory);
+#endif
         }
     }
 }

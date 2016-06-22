@@ -4,10 +4,10 @@ using System.Runtime.Serialization;
 namespace Library.Security
 {
     [DataContract(Name = "CashItemBase", Namespace = "http://Library/Security")]
-    public abstract class ImmutableCashItemBase<T> : ItemBase<T>, ICash
+    public abstract class ImmutableCashItemBase<T> : ImmutableCertificateItemBase<T>, ICash
         where T : ImmutableCashItemBase<T>
     {
-        protected virtual void CreateCash(Miner miner)
+        protected virtual void CreateCash(Miner miner, string signature)
         {
             if (miner == null)
             {
@@ -15,14 +15,14 @@ namespace Library.Security
             }
             else
             {
-                using (var stream = this.GetCashStream())
+                using (var stream = this.GetCashStream(signature))
                 {
                     this.Cash = miner.Create(stream);
                 }
             }
         }
 
-        protected virtual int VerifyCash()
+        protected virtual int VerifyCash(string signature)
         {
             if (this.Cash == null)
             {
@@ -30,14 +30,14 @@ namespace Library.Security
             }
             else
             {
-                using (var stream = this.GetCashStream())
+                using (var stream = this.GetCashStream(signature))
                 {
                     return Miner.Verify(this.Cash, stream);
                 }
             }
         }
 
-        protected abstract Stream GetCashStream();
+        protected abstract Stream GetCashStream(string signature);
 
         [DataMember(Name = "Cash")]
         protected abstract Cash Cash { get; set; }
@@ -49,7 +49,10 @@ namespace Library.Security
             get
             {
                 if (_cost == -1)
-                    _cost = this.VerifyCash();
+                {
+                    if (this.Certificate == null) _cost = this.VerifyCash(null);
+                    else _cost = this.VerifyCash(this.Certificate.ToString());
+                }
 
                 return _cost;
             }

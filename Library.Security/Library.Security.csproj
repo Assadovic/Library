@@ -61,10 +61,8 @@
     <Compile Include="Mining\CashAlgorithm.cs" />
     <Compile Include="Hash\HmacSha256.cs" />
     <Compile Include="Mining\ICash.cs" />
-    <Compile Include="Mining\ImmutableWarrantItemBase.cs" />
     <Compile Include="Mining\ImmutableCashItemBase.cs" />
     <Compile Include="Mining\Miner.cs" />
-    <Compile Include="Mining\MutableWarrantItemBase.cs" />
     <Compile Include="Mining\MutableCashItemBase.cs" />
     <Compile Include="Utilities\EqualityComparer.cs" />
     <Compile Include="Exchange\ExchangePrivateKey.cs" />

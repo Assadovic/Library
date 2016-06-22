@@ -32,129 +32,93 @@ namespace Library.Correction
             _encMatrix = _fecMath.CreateEncodeMatrix(k, n);
         }
 
-        public void Encode(ArraySegment<byte>[] src, ArraySegment<byte>[] repair, int[] index, int size)
+        public void Encode(ArraySegment<byte>[] sources, ArraySegment<byte>[] repairs, int[] index, int packetLength)
         {
             _cancel = false;
 
             lock (this.ThisLock)
             {
-                byte[][] srcBufs = new byte[src.Length][];
-                int[] srcOffs = new int[src.Length];
-                byte[][] repairBufs = new byte[repair.Length][];
-                int[] repairOffs = new int[repair.Length];
-
-                for (int i = 0; i < srcBufs.Length; i++)
+                Parallel.For(0, repairs.Length, new ParallelOptions() { MaxDegreeOfParallelism = _threadCount }, row =>
                 {
-                    srcBufs[i] = src[i].Array;
-                    srcOffs[i] = src[i].Offset;
-                }
+                    if (_cancel) return;
 
-                for (int i = 0; i < repairBufs.Length; i++)
-                {
-                    repairBufs[i] = repair[i].Array;
-                    repairOffs[i] = repair[i].Offset;
-                }
+                    Thread.CurrentThread.IsBackground = true;
+                    Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
-                this.Encode(srcBufs, srcOffs, repairBufs, repairOffs, index, size);
+                    // *remember* indices start at 0, k starts at 1.
+                    if (index[row] < _k)
+                    {
+                        // < k, systematic so direct copy.
+                        Unsafe.Copy(sources[index[row]].Array, sources[index[row]].Offset, repairs[row].Array, repairs[row].Offset, packetLength);
+                    }
+                    else
+                    {
+                        // index[row] >= k && index[row] < n
+                        int pos = index[row] * _k;
+                        Unsafe.Zero(repairs[row].Array, repairs[row].Offset, packetLength);
+
+                        for (int col = 0; col < _k; col++)
+                        {
+                            if (_cancel) return;
+
+                            _fecMath.AddMul(repairs[row].Array, repairs[row].Offset, sources[col].Array, sources[col].Offset, _encMatrix[pos + col], packetLength);
+                        }
+                    }
+                });
             }
         }
 
-        private void Encode(byte[][] src, int[] srcOff, byte[][] repair, int[] repairOff, int[] index, int packetLength)
-        {
-            Parallel.For(0, repair.Length, new ParallelOptions() { MaxDegreeOfParallelism = _threadCount }, row =>
-            {
-                if (_cancel) return;
-
-                Thread.CurrentThread.IsBackground = true;
-                Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-
-                // *remember* indices start at 0, k starts at 1.
-                if (index[row] < _k)
-                {
-                    // < k, systematic so direct copy.
-                    Unsafe.Copy(src[index[row]], srcOff[index[row]], repair[row], repairOff[row], packetLength);
-                }
-                else
-                {
-                    // index[row] >= k && index[row] < n
-                    int pos = index[row] * _k;
-                    Unsafe.Zero(repair[row], repairOff[row], packetLength);
-
-                    for (int col = 0; col < _k; col++)
-                    {
-                        if (_cancel) return;
-
-                        _fecMath.AddMul(repair[row], repairOff[row], src[col], srcOff[col], _encMatrix[pos + col], packetLength);
-                    }
-                }
-            });
-        }
-
-        public void Decode(ArraySegment<byte>[] pkts, int[] index, int size)
+        public void Decode(ArraySegment<byte>[] packets, int[] index, int packetLength)
         {
             _cancel = false;
 
             lock (this.ThisLock)
             {
-                ReedSolomon8.Shuffle(pkts, index, _k);
+                ReedSolomon8.Shuffle(packets, index, _k);
 
-                byte[][] bufs = new byte[pkts.Length][];
-                int[] offs = new int[pkts.Length];
+                byte[] decMatrix = _fecMath.CreateDecodeMatrix(_encMatrix, index, _k, _n);
 
-                for (int i = 0; i < bufs.Length; i++)
+                // do the actual decoding..
+                byte[][] tempPackets = new byte[_k][];
+
+                Parallel.For(0, _k, new ParallelOptions() { MaxDegreeOfParallelism = _threadCount }, row =>
                 {
-                    bufs[i] = pkts[i].Array;
-                    offs[i] = pkts[i].Offset;
-                }
+                    if (_cancel) return;
 
-                this.Decode(bufs, offs, index, size);
-            }
-        }
+                    Thread.CurrentThread.IsBackground = true;
+                    Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
-        private void Decode(byte[][] pkts, int[] pktsOff, int[] index, int packetLength)
-        {
-            byte[] decMatrix = _fecMath.CreateDecodeMatrix(_encMatrix, index, _k, _n);
+                    if (index[row] >= _k)
+                    {
+                        tempPackets[row] = _bufferManager.TakeBuffer(packetLength);
+                        Unsafe.Zero(tempPackets[row], 0, packetLength);
 
-            // do the actual decoding..
-            byte[][] tmpPkts = new byte[_k][];
+                        for (int col = 0; col < _k; col++)
+                        {
+                            if (_cancel) return;
 
-            Parallel.For(0, _k, new ParallelOptions() { MaxDegreeOfParallelism = _threadCount }, row =>
-            {
+                            _fecMath.AddMul(tempPackets[row], 0, packets[col].Array, packets[col].Offset, decMatrix[row * _k + col], packetLength);
+                        }
+                    }
+                });
+
                 if (_cancel) return;
 
-                Thread.CurrentThread.IsBackground = true;
-                Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-
-                if (index[row] >= _k)
+                // move pkts to their final destination
+                for (int row = 0; row < _k; row++)
                 {
-                    tmpPkts[row] = _bufferManager.TakeBuffer(packetLength);
-                    Unsafe.Zero(tmpPkts[row], 0, packetLength);
-
-                    for (int col = 0; col < _k; col++)
+                    if (index[row] >= _k)
                     {
-                        if (_cancel) return;
-
-                        _fecMath.AddMul(tmpPkts[row], 0, pkts[col], pktsOff[col], decMatrix[row * _k + col], packetLength);
+                        // only copy those actually decoded.
+                        Unsafe.Copy(tempPackets[row], 0, packets[row].Array, packets[row].Offset, packetLength);
+                        index[row] = row;
+                        _bufferManager.ReturnBuffer(tempPackets[row]);
                     }
-                }
-            });
-
-            if (_cancel) return;
-
-            // move pkts to their final destination
-            for (int row = 0; row < _k; row++)
-            {
-                if (index[row] >= _k)
-                {
-                    // only copy those actually decoded.
-                    Unsafe.Copy(tmpPkts[row], 0, pkts[row], pktsOff[row], packetLength);
-                    index[row] = row;
-                    _bufferManager.ReturnBuffer(tmpPkts[row]);
                 }
             }
         }
 
-        private static void Shuffle(ArraySegment<byte>[] pkts, int[] index, int k)
+        private static void Shuffle(ArraySegment<byte>[] packets, int[] index, int k)
         {
             for (int i = 0; i < k;)
             {
@@ -178,9 +142,9 @@ namespace Library.Correction
                     index[c] = tmp;
 
                     // swap(pkts[c],pkts[i])
-                    ArraySegment<byte> tmp2 = pkts[i];
-                    pkts[i] = pkts[c];
-                    pkts[c] = tmp2;
+                    ArraySegment<byte> tmp2 = packets[i];
+                    packets[i] = packets[c];
+                    packets[c] = tmp2;
                 }
             }
         }
