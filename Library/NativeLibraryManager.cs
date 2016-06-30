@@ -27,7 +27,7 @@ namespace Library
         }
 #endif
 
-#if Linux
+#if Unix
         static class NativeMethods
         {
             const int RTLD_NOW = 2;

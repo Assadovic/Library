@@ -24,7 +24,7 @@ namespace Library.Compression
             }
 #endif
 
-#if Linux
+#if Unix
             _path = "xz";
 #endif           
         }

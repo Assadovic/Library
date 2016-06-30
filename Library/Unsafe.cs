@@ -43,7 +43,7 @@ namespace Library
                 }
 #endif
 
-#if Linux
+#if Unix
                 if (System.Environment.Is64BitProcess)
                 {
                     _nativeLibraryManager = new NativeLibraryManager("Assemblies/Library_x64.so");

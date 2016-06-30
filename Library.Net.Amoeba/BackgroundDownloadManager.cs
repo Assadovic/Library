@@ -347,6 +347,8 @@ namespace Library.Net.Amoeba
                     Log.Error(e);
 
                     this.Remove(item);
+
+                    Log.Error(string.Format("{0}: {1}", item.Type, item.Seed.Certificate.ToString()));
                 }
             }
         }
@@ -796,6 +798,8 @@ namespace Library.Net.Amoeba
                     item.State = BackgroundDownloadState.Error;
 
                     Log.Error(e);
+
+                    Log.Error(string.Format("{0}: {1}", item.Type, item.Seed.Certificate.ToString()));
                 }
             }
         }

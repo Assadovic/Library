@@ -257,7 +257,7 @@ namespace Library.Configuration
                     }
 #endif
 
-#if Linux
+#if Unix
                     using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
                     using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
                     {

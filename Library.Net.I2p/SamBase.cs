@@ -186,7 +186,7 @@ namespace Library.Net.I2p
                     samCommand.Commands.Add("HELLO");
                     samCommand.Commands.Add("VERSION");
                     samCommand.Parameters.Add("MIN", "3.0");
-                    samCommand.Parameters.Add("MAN", "3.0");
+                    samCommand.Parameters.Add("MAX", "3.0");
 
                     this.Send(samCommand);
                 }
@@ -339,13 +339,7 @@ namespace Library.Net.I2p
                     }
                 }
 
-                string result;
-
-                {
-                    result = _reader.ReadLine().Split(' ')[0];
-                }
-
-                return result;
+                return _reader.ReadLine().Split(' ')[0];
             }
             catch (SamException e)
             {

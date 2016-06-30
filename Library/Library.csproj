@@ -95,10 +95,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Assemblies\Library_x64.so">
-      <CopyToOutputDirectory Condition="'$(OS)'=='Linux'">Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(OS)'=='Unix'">Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Assemblies\Library_x86.so">
-      <CopyToOutputDirectory Condition="'$(OS)'=='Linux'">Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(OS)'=='Unix'">Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -118,7 +118,7 @@
   <PropertyGroup Condition="'$(OS)'=='Windows'">
     <DefineConstants>$(DefineConstants);Windows</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(OS)'=='Linux'">
-    <DefineConstants>$(DefineConstants);Linux</DefineConstants>
+  <PropertyGroup Condition="'$(OS)'=='Unix'">
+    <DefineConstants>$(DefineConstants);Unix</DefineConstants>
   </PropertyGroup>
 </Project>

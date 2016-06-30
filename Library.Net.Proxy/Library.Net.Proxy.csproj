@@ -87,7 +87,7 @@
   <PropertyGroup Condition="'$(OS)'=='Windows'">
     <DefineConstants>$(DefineConstants);Windows</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(OS)'=='Linux'">
-    <DefineConstants>$(DefineConstants);Linux</DefineConstants>
+  <PropertyGroup Condition="'$(OS)'=='Unix'">
+    <DefineConstants>$(DefineConstants);Unix</DefineConstants>
   </PropertyGroup>
 </Project>

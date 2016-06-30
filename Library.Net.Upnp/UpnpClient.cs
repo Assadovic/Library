@@ -50,7 +50,7 @@ namespace Library.Net.Upnp
                     }
 #endif
 
-#if Linux
+#if Unix
                     foreach (var machineIp in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
                     {
                         if (machineIp.AddressFamily != AddressFamily.InterNetwork) continue;
@@ -533,7 +533,7 @@ namespace Library.Net.Upnp
             }
 #endif
 
-#if Linux
+#if Unix
             string hostname = Dns.GetHostName();
 
             foreach (var ipAddress in Dns.GetHostAddresses(hostname))
