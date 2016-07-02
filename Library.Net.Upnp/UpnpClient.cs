@@ -211,14 +211,7 @@ namespace Library.Net.Upnp
                     " </s:Body>" +
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
-
-                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
-
-                if (!uri.IsAbsoluteUri)
-                {
-                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
-                    uri = new Uri(baseUri, uri);
-                }
+                var uri = new Uri(new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString()), controlUrl);
 
                 System.Net.WebRequest wr = System.Net.WebRequest.Create(uri);
 
@@ -292,14 +285,7 @@ namespace Library.Net.Upnp
                     " </s:Body>" +
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
-
-                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
-
-                if (!uri.IsAbsoluteUri)
-                {
-                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
-                    uri = new Uri(baseUri, uri);
-                }
+                var uri = new Uri(new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString()), controlUrl);
 
                 System.Net.WebRequest wr = System.Net.WebRequest.Create(uri);
 
@@ -361,14 +347,7 @@ namespace Library.Net.Upnp
                     " </s:Body>" +
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
-
-                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
-
-                if (!uri.IsAbsoluteUri)
-                {
-                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
-                    uri = new Uri(baseUri, uri);
-                }
+                var uri = new Uri(new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString()), controlUrl);
 
                 System.Net.WebRequest wr = System.Net.WebRequest.Create(uri);
 
@@ -417,14 +396,7 @@ namespace Library.Net.Upnp
                     " </s:Body>" +
                     "</s:Envelope>";
                 byte[] body = Encoding.ASCII.GetBytes(soapBody);
-
-                var uri = new Uri(controlUrl, UriKind.RelativeOrAbsolute);
-
-                if (!uri.IsAbsoluteUri)
-                {
-                    var baseUri = new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString());
-                    uri = new Uri(baseUri, uri);
-                }
+                var uri = new Uri(new Uri("http://" + gatewayIp + ":" + gatewayPort.ToString()), controlUrl);
 
                 System.Net.WebRequest wr = System.Net.WebRequest.Create(uri);
 
