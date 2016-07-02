@@ -221,7 +221,7 @@ namespace Library.UnitTest
         [Test]
         public void Test_SecureConnection()
         {
-            for (int i = 0; i < 32; i++)
+            for (int i = 0; i < 8; i++)
             {
                 TcpListener listener = new TcpListener(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 60000));
                 listener.Start();
