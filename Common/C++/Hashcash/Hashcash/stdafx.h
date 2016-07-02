@@ -17,7 +17,7 @@
 #include <windows.h>
 #endif
 
-#ifdef LINUX
+#ifdef UNIX
 typedef unsigned char byte;
 #endif
 

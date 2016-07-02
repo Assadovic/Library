@@ -71,8 +71,8 @@ namespace Library.UnitTest
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("Native Equals: " + sw1.Elapsed.ToString());
-            sb.AppendLine("Unsafe Equals: " + sw2.Elapsed.ToString());
+            sb.AppendLine("Unsafe Equals: " + sw1.Elapsed.ToString());
+            sb.AppendLine("Managed Equals: " + sw2.Elapsed.ToString());
 
             Console.WriteLine(sb.ToString());
         }

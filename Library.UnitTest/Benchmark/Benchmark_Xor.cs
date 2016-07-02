@@ -65,8 +65,8 @@ namespace Library.UnitTest
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("Native Xor: " + sw1.Elapsed.ToString());
-            sb.AppendLine("Unsafe Xor: " + sw2.Elapsed.ToString());
+            sb.AppendLine("Unsafe Xor: " + sw1.Elapsed.ToString());
+            sb.AppendLine("Managed Xor: " + sw2.Elapsed.ToString());
 
             Console.WriteLine(sb.ToString());
         }

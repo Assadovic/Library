@@ -154,32 +154,6 @@ namespace Library
 
             if (source1.Length == 0) return 0;
 
-            // ネイティブ呼び出しの前に、最低限の比較を行う。
-            {
-                int c;
-                if ((c = source1[0] - source2[0]) != 0) return c;
-            }
-
-            var length = source1.Length - 1;
-            if (length == 0) return 0;
-
-            fixed (byte* p_x = source1, p_y = source2)
-            {
-                byte* t_x = p_x + 1, t_y = p_y + 1;
-
-                return _compare(t_x, t_y, length);
-            }
-        }
-
-        internal static int Compare2(byte[] source1, byte[] source2)
-        {
-            if (source1 == null) throw new ArgumentNullException(nameof(source1));
-            if (source2 == null) throw new ArgumentNullException(nameof(source2));
-
-            if (source1.Length != source2.Length) return (source1.Length > source2.Length) ? 1 : -1;
-
-            if (source1.Length == 0) return 0;
-
             fixed (byte* p_x = source1, p_y = source2)
             {
                 return _compare(p_x, p_y, source1.Length);
@@ -187,36 +161,6 @@ namespace Library
         }
 
         public static int Compare(byte[] source1, int source1Index, byte[] source2, int source2Index, int length)
-        {
-            if (source1 == null) throw new ArgumentNullException(nameof(source1));
-            if (source2 == null) throw new ArgumentNullException(nameof(source2));
-
-            if (0 > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(source1Index));
-            if (0 > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(source2Index));
-            if (length > (source1.Length - source1Index)) throw new ArgumentOutOfRangeException(nameof(length));
-            if (length > (source2.Length - source2Index)) throw new ArgumentOutOfRangeException(nameof(length));
-
-            if (length == 0) return 0;
-
-            // ネイティブ呼び出しの前に、最低限の比較を行う。
-            {
-                int c;
-                if ((c = source1[source1Index] - source2[source2Index]) != 0) return c;
-            }
-
-            length--;
-
-            if (length == 0) return 0;
-
-            fixed (byte* p_x = source1, p_y = source2)
-            {
-                byte* t_x = p_x + source1Index + 1, t_y = p_y + source2Index + 1;
-
-                return _compare(t_x, t_y, length);
-            }
-        }
-
-        internal static int Compare2(byte[] source1, int source1Index, byte[] source2, int source2Index, int length)
         {
             if (source1 == null) throw new ArgumentNullException(nameof(source1));
             if (source2 == null) throw new ArgumentNullException(nameof(source2));

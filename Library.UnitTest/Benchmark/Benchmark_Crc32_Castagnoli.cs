@@ -51,7 +51,7 @@ namespace Library.UnitTest
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("Native Crc32_Castagnoli: " + sw1.Elapsed.ToString());
+            sb.AppendLine("Unsafe Crc32_Castagnoli: " + sw1.Elapsed.ToString());
             sb.AppendLine("Managed Crc32_Castagnoli: " + sw2.Elapsed.ToString());
 
             Console.WriteLine(sb.ToString());

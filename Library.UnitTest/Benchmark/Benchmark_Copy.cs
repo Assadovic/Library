@@ -55,8 +55,8 @@ namespace Library.UnitTest
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("Native Copy: " + sw1.Elapsed.ToString());
-            sb.AppendLine("Array Copy: " + sw2.Elapsed.ToString());
+            sb.AppendLine("Unsafe.Copy: " + sw1.Elapsed.ToString());
+            sb.AppendLine("Array.Copy: " + sw2.Elapsed.ToString());
 
             Console.WriteLine(sb.ToString());
         }
