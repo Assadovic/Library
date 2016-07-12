@@ -107,8 +107,6 @@ namespace Library.Io
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (offset < 0 || buffer.Length < offset) throw new ArgumentOutOfRangeException(nameof(offset));
             if (count < 0 || (buffer.Length - offset) < count) throw new ArgumentOutOfRangeException(nameof(count));
-
-            count = (int)Math.Min(count, this.Length - this.Position);
             if (count == 0) return 0;
 
             int readLength = _stream.Read(buffer, offset, count);

@@ -285,7 +285,7 @@ namespace Library.Net.Amoeba
 
                 lock (_thisLock)
                 {
-                    return _settings.BandwidthLimit;
+                    return (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
                 }
             }
             set
@@ -294,7 +294,6 @@ namespace Library.Net.Amoeba
 
                 lock (_thisLock)
                 {
-                    _settings.BandwidthLimit = value;
                     _bandwidthLimit.In = value;
                     _bandwidthLimit.Out = value;
                 }
@@ -2325,6 +2324,8 @@ namespace Library.Net.Amoeba
 
             lock (_thisLock)
             {
+                _settings.BaseNode = _routeTable.BaseNode;
+
                 {
                     var otherNodes = _routeTable.ToArray();
 
@@ -2334,6 +2335,8 @@ namespace Library.Net.Amoeba
                         _settings.OtherNodes.AddRange(otherNodes);
                     }
                 }
+
+                _settings.BandwidthLimit = (_bandwidthLimit.In + _bandwidthLimit.Out) / 2;
 
                 _settings.Save(directoryPath);
             }

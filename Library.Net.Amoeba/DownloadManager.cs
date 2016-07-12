@@ -949,13 +949,57 @@ namespace Library.Net.Amoeba
                 }
                 catch (Exception e)
                 {
-                    if (_cacheManager.Contains(item.Seed.Key))
+                    this.Check(item);
+
+                    item.State = DownloadState.Error;
+
+                    Log.Error(e);
+                }
+                finally
+                {
+                    _workingSeeds.Remove(item.Seed);
+                }
+            }
+        }
+
+        public void Check(DownloadItem item)
+        {
+            if (_cacheManager.Contains(item.Seed.Key))
+            {
+                var buffer = new ArraySegment<byte>();
+
+                try
+                {
+                    buffer = _cacheManager[item.Seed.Key];
+                }
+                catch (Exception)
+                {
+
+                }
+                finally
+                {
+                    if (buffer.Array != null)
                     {
+                        _bufferManager.ReturnBuffer(buffer.Array);
+                    }
+                }
+            }
+
+            foreach (var index in item.Indexes)
+            {
+                foreach (var group in index.Groups)
+                {
+                    foreach (var key in group.Keys)
+                    {
+                        if (this.DecodeState == ManagerState.Stop) return;
+
+                        if (!_cacheManager.Contains(key)) continue;
+
                         var buffer = new ArraySegment<byte>();
 
                         try
                         {
-                            buffer = _cacheManager[item.Seed.Key];
+                            buffer = _cacheManager[key];
                         }
                         catch (Exception)
                         {
@@ -969,45 +1013,6 @@ namespace Library.Net.Amoeba
                             }
                         }
                     }
-
-                    foreach (var index in item.Indexes)
-                    {
-                        foreach (var group in index.Groups)
-                        {
-                            foreach (var key in group.Keys)
-                            {
-                                if (this.DecodeState == ManagerState.Stop) return;
-
-                                if (!_cacheManager.Contains(key)) continue;
-
-                                var buffer = new ArraySegment<byte>();
-
-                                try
-                                {
-                                    buffer = _cacheManager[key];
-                                }
-                                catch (Exception)
-                                {
-
-                                }
-                                finally
-                                {
-                                    if (buffer.Array != null)
-                                    {
-                                        _bufferManager.ReturnBuffer(buffer.Array);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    item.State = DownloadState.Error;
-
-                    Log.Error(e);
-                }
-                finally
-                {
-                    _workingSeeds.Remove(item.Seed);
                 }
             }
         }

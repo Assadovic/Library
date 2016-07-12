@@ -162,10 +162,10 @@ int32_t hashcash1_Verify(byte* key, byte* value)
         for (int32_t j = 0; j < 8; j++)
         {
             if(((currentResult[i] << j) & 0x80) == 0) count++;
-            else goto End;
+            else goto END;
         }
     }
-End:
+END:
 
     return count;
 }

@@ -103,14 +103,6 @@ int main(int argc, char* argv[])
 {
     try
     {
-        //{
-        //    string s = "010203041245789865124578";
-        //    size_t valueSize;
-        //    byte* value = fromHexString(s, valueSize);
-        //
-        //    string key = toHexString(value, valueSize);
-        //}
-
         if ((string)argv[1] == "hashcash1")
         {
             if((string)argv[2] == "create")
