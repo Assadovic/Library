@@ -728,11 +728,11 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                if (_cacheManager.Contains(filePath)) return;
-
                 if (_settings.UploadItems
                     .Where(n => n.Type == UploadType.Share)
                     .Any(n => n.FilePath == filePath)) return;
+
+                if (_cacheManager.Contains(filePath)) return;
 
                 var item = new UploadItem();
 

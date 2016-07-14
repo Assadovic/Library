@@ -848,6 +848,8 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
+                if (_settings.ShareIndex.ContainsKey(path)) throw new ShareException();
+
                 _settings.ShareIndex[path] = shareInfo;
 
                 _shareIndexLink_Add(path, shareInfo);
@@ -1987,5 +1989,13 @@ namespace Library.Net.Amoeba
         public BadBlockException() : base() { }
         public BadBlockException(string message) : base(message) { }
         public BadBlockException(string message, Exception innerException) : base(message, innerException) { }
+    }
+
+    [Serializable]
+    class ShareException : CacheManagerException
+    {
+        public ShareException() : base() { }
+        public ShareException(string message) : base(message) { }
+        public ShareException(string message, Exception innerException) : base(message, innerException) { }
     }
 }
