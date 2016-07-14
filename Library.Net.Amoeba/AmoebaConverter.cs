@@ -79,16 +79,6 @@ namespace Library.Net.Amoeba
                     return x.Key.CompareTo(y.Key);
                 });
 
-#if DEBUG
-                if (list[0].Value.Length != stream.Length)
-                {
-                    Debug.WriteLine("AmoebaConverter ToStream : {0}→{1} {2}",
-                        NetworkConverter.ToSizeString(stream.Length),
-                        NetworkConverter.ToSizeString(list[0].Value.Length),
-                        NetworkConverter.ToSizeString(list[0].Value.Length - stream.Length));
-                }
-#endif
-
                 for (int i = 1; i < list.Count; i++)
                 {
                     list[i].Value.Dispose();
@@ -159,13 +149,6 @@ namespace Library.Net.Amoeba
                                         deflateBufferStream.Write(safeBuffer.Value, 0, length);
                                     }
                                 }
-
-#if DEBUG
-                                Debug.WriteLine("AmoebaConverter FromStream : {0}→{1} {2}",
-                                    NetworkConverter.ToSizeString(dataStream.Length),
-                                    NetworkConverter.ToSizeString(deflateBufferStream.Length),
-                                    NetworkConverter.ToSizeString(dataStream.Length - deflateBufferStream.Length));
-#endif
 
                                 deflateBufferStream.Seek(0, SeekOrigin.Begin);
 
