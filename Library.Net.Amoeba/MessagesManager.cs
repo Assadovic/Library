@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Library.Collections;
-using Utilities;
+using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {

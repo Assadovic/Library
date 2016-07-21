@@ -11,7 +11,7 @@ using Library.Collections;
 using Library.Compression;
 using Library.Correction;
 using Library.Security;
-using Utilities;
+using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {

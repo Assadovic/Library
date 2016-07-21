@@ -2,7 +2,7 @@
 using System.Threading;
 using Library;
 
-namespace Utilities
+namespace Library.Utilities
 {
     class WatchTimer : ManagerBase
     {

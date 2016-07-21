@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Library;
 
-namespace Utilities
+namespace Library.Utilities
 {
     class ByteArrayEqualityComparer : IEqualityComparer<byte[]>
     {

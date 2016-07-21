@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using Library.Io;
-using Utilities;
+using Library.Utilities;
 
 namespace Library.Net.Outopos
 {

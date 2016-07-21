@@ -7,7 +7,7 @@ using Library;
 using Library.Io;
 using Library.Security;
 
-namespace Utilities
+namespace Library.Utilities
 {
     static class ItemUtilities
     {
