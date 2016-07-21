@@ -397,77 +397,77 @@ namespace Library.Tools
 
                     Program.LanguageSetting(languageXmlPath);
                 }
-                else if (args.Length >= 3 && args[0] == "CodeClone")
+                else if (args.Length >= 2 && args[0] == "Sync")
                 {
-                    string pathListPath = args[1];
-                    string wordListPath = args[2];
+                    string configPath = args[1];
 
-                    var pathDic = new Dictionary<string, string>();
+                    var headerSettings = new Dictionary<string, List<string>>();
 
-                    using (FileStream inStream = new FileStream(pathListPath, FileMode.Open))
-                    using (StreamReader reader = new StreamReader(inStream))
+                    int wordCount = -1;
+
+                    using (FileStream configStream = new FileStream(configPath, FileMode.Open))
+                    using (StreamReader configReader = new StreamReader(configStream))
                     {
-                        var tempList = new List<string>();
+                        for (;;)
+                        {
+                            string line = configReader.ReadLine();
+                            if (string.IsNullOrEmpty(line)) break;
+
+                            var list = Program.Decode(line).ToList();
+                            headerSettings[list[0]] = list.Skip(1).ToList();
+
+                            // Check
+                            if (wordCount == -1) wordCount = list.Count - 1;
+                            else if (wordCount != list.Count - 1) throw new Exception("WordCount");
+                        }
 
                         for (;;)
                         {
-                            string line = reader.ReadLine();
-                            if (line == null) break;
+                            var pathSettings = new Dictionary<string, string>();
 
-                            tempList.Add(line);
-
-                            if (tempList.Count == 2)
+                            for (;;)
                             {
-                                pathDic[tempList[0]] = tempList[1];
+                                string line = configReader.ReadLine();
+                                if (string.IsNullOrEmpty(line)) break;
 
-                                reader.ReadLine(); //空白読み捨て
-                                tempList.Clear();
-                            }
-                        }
-                    }
-
-                    var wordDic = new Dictionary<string, string>();
-
-                    using (FileStream inStream = new FileStream(wordListPath, FileMode.Open))
-                    using (StreamReader reader = new StreamReader(inStream))
-                    {
-                        var tempList = new List<string>();
-
-                        for (;;)
-                        {
-                            string line = reader.ReadLine();
-                            if (line == null) break;
-
-                            tempList.Add(line);
-
-                            if (tempList.Count == 2)
-                            {
-                                wordDic[tempList[0]] = tempList[1];
-
-                                reader.ReadLine(); //空白読み捨て
-                                tempList.Clear();
-                            }
-                        }
-                    }
-
-                    foreach (var item in pathDic)
-                    {
-                        var sourcePath = item.Key;
-                        var targetPath = item.Value;
-
-                        using (FileStream inStream = new FileStream(sourcePath, FileMode.Open))
-                        using (StreamReader reader = new StreamReader(inStream))
-                        using (FileStream outStream = new FileStream(targetPath, FileMode.Create))
-                        using (StreamWriter writer = new StreamWriter(outStream, Encoding.UTF8))
-                        {
-                            var sb = new StringBuilder(reader.ReadToEnd());
-
-                            foreach (var word in wordDic)
-                            {
-                                sb.Replace(word.Key, word.Value);
+                                var list = Program.Decode(line).ToList();
+                                pathSettings[list[0]] = list[1];
                             }
 
-                            writer.Write(sb.ToString());
+                            var sortedPathSettings = pathSettings.ToList();
+                            sortedPathSettings.Sort((x, y) =>
+                            {
+                                return new FileInfo(y.Value).LastWriteTimeUtc.CompareTo(new FileInfo(x.Value).LastWriteTimeUtc);
+                            });
+
+                            var sourceSettings = sortedPathSettings[0];
+
+                            foreach (var targetSettings in sortedPathSettings.Skip(1))
+                            {
+                                if (new FileInfo(targetSettings.Value).LastWriteTimeUtc == new FileInfo(sourceSettings.Value).LastWriteTimeUtc) continue;
+
+                                using (FileStream sourceStream = new FileStream(sourceSettings.Value, FileMode.Open))
+                                using (StreamReader sourceReader = new StreamReader(sourceStream))
+                                using (FileStream targetStream = new FileStream(targetSettings.Value, FileMode.Create))
+                                using (StreamWriter targetWriter = new StreamWriter(targetStream, Encoding.UTF8))
+                                {
+                                    var sb = new StringBuilder(sourceReader.ReadToEnd());
+
+                                    var sourceWords = headerSettings[sourceSettings.Key];
+                                    var targetWords = headerSettings[targetSettings.Key];
+
+                                    for (int i = 0; i < wordCount; i++)
+                                    {
+                                        sb.Replace(sourceWords[i], targetWords[i]);
+                                    }
+
+                                    targetWriter.Write(sb.ToString());
+                                }
+
+                                new FileInfo(targetSettings.Value).LastWriteTimeUtc = new FileInfo(sourceSettings.Value).LastWriteTimeUtc;
+                            }
+
+                            if (configReader.EndOfStream) break;
                         }
                     }
                 }

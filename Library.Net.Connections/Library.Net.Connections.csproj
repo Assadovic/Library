@@ -68,7 +68,6 @@
     <Compile Include="SecureVersion3\KeyExchangeAlgorithm.cs" />
     <Compile Include="SecureVersion3\ProtocolInformation.cs" />
     <Compile Include="Utilities\EnumEx.cs" />
-    <Compile Include="Utilities\ItemUtilities.cs" />
     <Compile Include="SecureConnectionType.cs" />
     <Compile Include="Utilities\Rsa2048.cs" />
     <Compile Include="CompressConnection.cs" />
@@ -110,6 +109,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <Import Project="..\Utilities\Utilities.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

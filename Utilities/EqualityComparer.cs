@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Library;
 
-namespace Library.Net.Amoeba
+namespace Utilities
 {
     class ByteArrayEqualityComparer : IEqualityComparer<byte[]>
     {

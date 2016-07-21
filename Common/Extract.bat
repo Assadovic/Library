@@ -1,9 +1,6 @@
 set BATDIR=%~dp0
 cd %BATDIR%\..\
 
-set TOOL="Library.Tools\bin\Debug\Library.Tools.exe"
-IF EXIST %TOOL% call %TOOL% "Template" "Common\Template\Settings.txt"
-
 copy /Y /B "Common\C++\Library\Release\Library.dll" "Library\Assemblies\Library_x86.dll"
 copy /Y /B "Common\C++\Library\x64\Release\Library.dll" "Library\Assemblies\Library_x64.dll"
 

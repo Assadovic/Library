@@ -64,7 +64,6 @@
     <Compile Include="Mining\ImmutableCashItemBase.cs" />
     <Compile Include="Mining\Miner.cs" />
     <Compile Include="Mining\MutableCashItemBase.cs" />
-    <Compile Include="Utilities\EqualityComparer.cs" />
     <Compile Include="Exchange\ExchangePrivateKey.cs" />
     <Compile Include="Exchange\ExchangePublicKey.cs" />
     <Compile Include="Exchange\Exchange.cs" />
@@ -76,7 +75,6 @@
     <Compile Include="Signature\MutableCertificateItemBase.cs" />
     <Compile Include="Signature\DigitalSignatureConverter.cs" />
     <Compile Include="Signature\Signature.cs" />
-    <Compile Include="Utilities\ItemUtilities.cs" />
     <Compile Include="Utilities\Rsa2048.cs" />
     <Compile Include="Utilities\Converter.cs" />
     <Compile Include="Hash\Crc32_Castagnoli.cs" />
@@ -130,6 +128,10 @@
       <CopyToOutputDirectory Condition="'$(OS)'=='Unix'">Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <Import Project="..\Utilities\Utilities.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

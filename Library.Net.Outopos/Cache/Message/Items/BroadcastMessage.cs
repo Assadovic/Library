@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
 using Library.Security;
+using Utilities;
 
 namespace Library.Net.Outopos
 {

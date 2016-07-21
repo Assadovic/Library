@@ -87,8 +87,6 @@
     <Compile Include="Utilities\ExistManager.cs" />
     <Compile Include="DownloadItem.cs" />
     <Compile Include="DownloadManager.cs" />
-    <Compile Include="Utilities\EqualityComparer.cs" />
-    <Compile Include="Utilities\ItemUtilities.cs" />
     <Compile Include="MessagesManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerManager.cs" />
@@ -117,7 +115,6 @@
     <Compile Include="UploadItem.cs" />
     <Compile Include="UploadManager.cs" />
     <Compile Include="UriCollection.cs" />
-    <Compile Include="Utilities\WatchTimer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library.Net.Connections\Library.Net.Connections.csproj">
@@ -169,6 +166,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <Import Project="..\Utilities\Utilities.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

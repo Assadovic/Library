@@ -3,10 +3,11 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Library;
 using Library.Io;
 using Library.Security;
 
-namespace Library.Net.Outopos
+namespace Utilities
 {
     static class ItemUtilities
     {

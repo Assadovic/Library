@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
+using Utilities;
 
 namespace Library.Net.Amoeba
 {

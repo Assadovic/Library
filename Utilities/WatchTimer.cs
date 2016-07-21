@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading;
+using Library;
 
-namespace Library.Net.Outopos
+namespace Utilities
 {
     class WatchTimer : ManagerBase
     {

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using Library.Io;
 using Library.Security;
+using Utilities;
 
 namespace Library.Net.Connections.SecureVersion3
 {
