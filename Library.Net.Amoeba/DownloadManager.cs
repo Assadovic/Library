@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Library;
 using Library.Collections;
 using Library.Io;
 
@@ -23,8 +24,8 @@ namespace Library.Net.Amoeba
 
         private string _workDirectory = Path.GetTempPath();
         private ExistManager _existManager = new ExistManager();
-        private Dictionary<int, DownloadItem> _ids = new Dictionary<int, DownloadItem>();
-        private int _id;
+
+        private ObjectIdManager<DownloadItem> _idManager = new ObjectIdManager<DownloadItem>();
 
         private volatile ManagerState _state = ManagerState.Stop;
         private volatile ManagerState _decodeState = ManagerState.Stop;
@@ -137,7 +138,7 @@ namespace Library.Net.Amoeba
                 {
                     var list = new List<Information>();
 
-                    foreach (var item in _ids)
+                    foreach (var item in _idManager)
                     {
                         var contexts = new List<InformationContext>();
 
@@ -1053,7 +1054,7 @@ namespace Library.Net.Amoeba
                     }
 
                     _settings.DownloadItems.Add(item);
-                    _ids.Add(_id++, item);
+                    _idManager.Add(item);
                 }
             }
         }
@@ -1062,7 +1063,7 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                var item = _ids[id];
+                var item = _idManager.GetItem(id);
 
                 if (item.State != DownloadState.Completed)
                 {
@@ -1086,7 +1087,7 @@ namespace Library.Net.Amoeba
                 this.UncheckState(item.Index);
 
                 _settings.DownloadItems.Remove(item);
-                _ids.Remove(id);
+                _idManager.Remove(id);
             }
         }
 
@@ -1094,7 +1095,7 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                var item = _ids[id];
+                var item = _idManager.GetItem(id);
 
                 this.Remove(id);
                 this.Download(item.Seed, item.Path, item.Priority);
@@ -1105,7 +1106,9 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                _ids[id].Priority = priority;
+                var item = _idManager.GetItem(id);
+
+                item.Priority = priority;
             }
         }
 
@@ -1246,12 +1249,11 @@ namespace Library.Net.Amoeba
                     }
                 }
 
-                _id = 0;
-                _ids.Clear();
+                _idManager.Clear();
 
                 foreach (var item in _settings.DownloadItems)
                 {
-                    _ids.Add(_id++, item);
+                    _idManager.Add(item);
                 }
             }
         }
