@@ -115,6 +115,41 @@ namespace Library.Configuration
 
             var successNames = new LockedHashSet<string>();
 
+            // DataContractSerializerのTextバージョン
+            foreach (var extension in new string[] { ".gz", ".gz.bak" })
+            {
+                foreach (var configPath in Directory.GetFiles(directoryPath))
+                {
+                    if (!configPath.EndsWith(extension)) continue;
+
+                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
+                    if (successNames.Contains(name)) continue;
+
+                    Content content = null;
+                    if (!_dic.TryGetValue(name, out content)) continue;
+
+                    try
+                    {
+                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
+                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
+                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
+                        {
+                            using (var xml = XmlReader.Create(decompressStream))
+                            {
+                                var deserializer = new DataContractSerializer(content.Type);
+                                content.Value = deserializer.ReadObject(xml);
+                            }
+                        }
+
+                        successNames.Add(name);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e);
+                    }
+                }
+            }
+
             // DataContractSerializerのBinaryバージョン
             foreach (var extension in new string[] { ".v2", ".v2.bak" })
             {
@@ -134,8 +169,7 @@ namespace Library.Configuration
                         using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
                         using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
                         {
-                            //using (XmlDictionaryReader xml = XmlDictionaryReader.CreateTextReader(decompressStream, XmlDictionaryReaderQuotas.Max))
-                            using (XmlDictionaryReader xml = XmlDictionaryReader.CreateBinaryReader(decompressStream, XmlDictionaryReaderQuotas.Max))
+                            using (var xml = XmlDictionaryReader.CreateBinaryReader(decompressStream, XmlDictionaryReaderQuotas.Max))
                             {
                                 var deserializer = new DataContractSerializer(content.Type);
                                 content.Value = deserializer.ReadObject(xml);
@@ -149,42 +183,6 @@ namespace Library.Configuration
                         Log.Warning(e);
                     }
                 });
-            }
-
-            // DataContractSerializerのTextバージョン
-            // 互換性は高いが処理速度が遅い。
-            foreach (var extension in new string[] { ".gz", ".gz.bak" })
-            {
-                foreach (var configPath in Directory.GetFiles(directoryPath))
-                {
-                    if (!configPath.EndsWith(extension)) continue;
-
-                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
-                    if (successNames.Contains(name)) continue;
-
-                    Content content = null;
-                    if (!_dic.TryGetValue(name, out content)) continue;
-
-                    try
-                    {
-                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
-                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
-                        {
-                            using (XmlDictionaryReader xml = XmlDictionaryReader.CreateTextReader(decompressStream, XmlDictionaryReaderQuotas.Max))
-                            {
-                                var deserializer = new DataContractSerializer(content.Type);
-                                content.Value = deserializer.ReadObject(xml);
-                            }
-                        }
-
-                        successNames.Add(name);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e);
-                    }
-                }
             }
 
             sw.Stop();
@@ -208,70 +206,20 @@ namespace Library.Configuration
 
                     string uniquePath = null;
 
-#if Windows
                     using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
                     using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
                     {
                         uniquePath = stream.Name;
 
+                        var xmlWriterSettings = new XmlWriterSettings();
+                        xmlWriterSettings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
+
                         using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
-                        //using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateTextWriter(compressStream))
-                        using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateBinaryWriter(compressStream))
+                        using (var xml = XmlWriter.Create(compressStream, xmlWriterSettings))
                         {
                             var serializer = new DataContractSerializer(type);
 
                             serializer.WriteStartObject(xml, value);
-                            xml.WriteAttributeString("xmlns", "xa", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/");
-                            xml.WriteAttributeString("xmlns", "xc", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/Arrays");
-                            xml.WriteAttributeString("xmlns", "xb", "http://www.w3.org/2000/xmlns/", "http://www.w3.org/2001/XMLSchema");
-                            serializer.WriteObjectContent(xml, value);
-                            serializer.WriteEndObject(xml);
-                        }
-                    }
-
-                    string newPath = Path.Combine(directoryPath, name + ".v2");
-                    string bakPath = Path.Combine(directoryPath, name + ".v2.bak");
-
-                    if (File.Exists(newPath))
-                    {
-                        if (File.Exists(bakPath))
-                        {
-                            File.Delete(bakPath);
-                        }
-
-                        File.Move(newPath, bakPath);
-                    }
-
-                    File.Move(uniquePath, newPath);
-
-                    {
-                        foreach (var extension in new string[] { ".gz", ".gz.bak" })
-                        {
-                            string deleteFilePath = Path.Combine(directoryPath, name + extension);
-
-                            if (File.Exists(deleteFilePath))
-                            {
-                                File.Delete(deleteFilePath);
-                            }
-                        }
-                    }
-#endif
-
-#if Unix
-                    using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
-                    using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                    {
-                        uniquePath = stream.Name;
-
-                        using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
-                        using (XmlDictionaryWriter xml = XmlDictionaryWriter.CreateTextWriter(compressStream))
-                        {
-                            var serializer = new DataContractSerializer(type);
-
-                            serializer.WriteStartObject(xml, value);
-                            xml.WriteAttributeString("xmlns", "xa", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/");
-                            xml.WriteAttributeString("xmlns", "xc", "http://www.w3.org/2000/xmlns/", "http://schemas.microsoft.com/2003/10/Serialization/Arrays");
-                            xml.WriteAttributeString("xmlns", "xb", "http://www.w3.org/2000/xmlns/", "http://www.w3.org/2001/XMLSchema");
                             serializer.WriteObjectContent(xml, value);
                             serializer.WriteEndObject(xml);
                         }
@@ -291,7 +239,18 @@ namespace Library.Configuration
                     }
 
                     File.Move(uniquePath, newPath);
-#endif
+
+                    {
+                        foreach (var extension in new string[] { ".v2", ".v2.bak" })
+                        {
+                            string deleteFilePath = Path.Combine(directoryPath, name + extension);
+
+                            if (File.Exists(deleteFilePath))
+                            {
+                                File.Delete(deleteFilePath);
+                            }
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
