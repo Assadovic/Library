@@ -118,15 +118,15 @@ namespace Library.Configuration
             // DataContractSerializerのTextバージョン
             foreach (var extension in new string[] { ".gz", ".gz.bak" })
             {
-                foreach (var configPath in Directory.GetFiles(directoryPath))
+                Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
                 {
-                    if (!configPath.EndsWith(extension)) continue;
+                    if (!configPath.EndsWith(extension)) return;
 
                     var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
-                    if (successNames.Contains(name)) continue;
+                    if (successNames.Contains(name)) return;
 
                     Content content = null;
-                    if (!_dic.TryGetValue(name, out content)) continue;
+                    if (!_dic.TryGetValue(name, out content)) return;
 
                     try
                     {
@@ -147,7 +147,7 @@ namespace Library.Configuration
                     {
                         Log.Warning(e);
                     }
-                }
+                });
             }
 
             // DataContractSerializerのBinaryバージョン
