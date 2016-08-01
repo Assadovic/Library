@@ -57,7 +57,7 @@ namespace Library.Utilities
         public static void Write(Stream stream, int type, Stream exportStream)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
+            IntegerUtilities.WriteLong(stream, exportStream.Length);
 
             using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
             {
@@ -79,7 +79,7 @@ namespace Library.Utilities
                 var length = encoding.GetBytes(value, 0, value.Length, safeBuffer.Value, 0);
 
                 IntegerUtilities.WriteInt(stream, type);
-                stream.Write(NetworkConverter.GetBytes(length), 0, 4);
+                IntegerUtilities.WriteLong(stream, length);
                 stream.Write(safeBuffer.Value, 0, length);
             }
         }
@@ -87,44 +87,44 @@ namespace Library.Utilities
         public static void Write(Stream stream, int type, byte[] value)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)value.Length), 0, 4);
+            IntegerUtilities.WriteLong(stream, value.Length);
             stream.Write(value, 0, value.Length);
         }
 
         public static void Write(Stream stream, int type, byte value)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)1), 0, 4);
+            IntegerUtilities.WriteLong(stream, 1);
             stream.WriteByte(value);
         }
 
         public static void Write(Stream stream, int type, short value)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)2), 0, 4);
+            IntegerUtilities.WriteLong(stream, 2);
             stream.Write(NetworkConverter.GetBytes(value), 0, 2);
         }
 
         public static void Write(Stream stream, int type, int value)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)4), 0, 4);
+            IntegerUtilities.WriteLong(stream, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 4);
         }
 
         public static void Write(Stream stream, int type, long value)
         {
             IntegerUtilities.WriteInt(stream, type);
-            stream.Write(NetworkConverter.GetBytes((int)8), 0, 4);
+            IntegerUtilities.WriteLong(stream, 8);
             stream.Write(NetworkConverter.GetBytes(value), 0, 8);
         }
 
         public static Stream GetStream(out int type, Stream stream)
         {
             type = IntegerUtilities.GetInt(stream);
-            if (type == -1) return null;
+            if (type < 0) return null;
             long length = IntegerUtilities.GetLong(stream);
-            if (length == -1) return null;
+            if (length < 0) return null;
 
             return new RangeStream(stream, stream.Position, length, true);
         }
