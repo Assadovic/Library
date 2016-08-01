@@ -67,12 +67,12 @@ namespace Library.Security
             // CashAlgorithm
             if (this.CashAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CashAlgorithm, this.CashAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.CashAlgorithm, this.CashAlgorithm.ToString());
             }
             // Key
             if (this.Key != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, this.Key);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Key, this.Key);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

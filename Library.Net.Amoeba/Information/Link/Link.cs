@@ -68,12 +68,12 @@ namespace Library.Net.Amoeba
                 // TrustSignatures
                 foreach (var value in this.TrustSignatures)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.TrustSignature, value);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.TrustSignature, value);
                 }
                 // DeleteSignatures
                 foreach (var value in this.DeleteSignatures)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.DeleteSignature, value);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);

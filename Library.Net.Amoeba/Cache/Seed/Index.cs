@@ -87,25 +87,25 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Group, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Group, stream);
                     }
                 }
 
                 // CompressionAlgorithm
                 if (this.CompressionAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
                 }
 
                 // CryptoAlgorithm
                 if (this.CryptoAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
                 }
                 // CryptoKey
                 if (this.CryptoKey != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CryptoKey, this.CryptoKey);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoKey, this.CryptoKey);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);

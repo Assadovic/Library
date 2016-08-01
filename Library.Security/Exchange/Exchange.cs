@@ -88,22 +88,22 @@ namespace Library.Security
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
             // ExchangeAlgorithm
             if (this.ExchangeAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm.ToString());
             }
             // PublicKey
             if (this.PublicKey != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.PublicKey, this.PublicKey);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
             }
             // PrivateKey
             if (this.PrivateKey != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.PrivateKey, this.PrivateKey);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.PrivateKey, this.PrivateKey);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

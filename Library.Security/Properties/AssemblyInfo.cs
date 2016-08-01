@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("c11a4dc2-bbf1-4d08-863f-ea93a7027dbd")]
-[assembly: AssemblyVersion("0.0.0.441")] // Y4hRvXkBIW-fAVnHGbndGKa7WDPdXAp0SZrYKGU39VY
+[assembly: AssemblyVersion("0.0.0.442")] // vJd6_SAES-WWVq9CpzozgPXRGUdk-MDgDpCqYtTr3nU
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Library.UnitTest")]

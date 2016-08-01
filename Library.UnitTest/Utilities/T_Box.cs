@@ -108,24 +108,24 @@ namespace Library.UnitTest
                 // Name
                 if (this.Name != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Name, this.Name);
                 }
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // Comment
                 if (this.Comment != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
                 }
                 // Seeds
                 foreach (var value in this.Seeds)
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Seed, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Seed, stream);
                     }
                 }
                 // Boxes
@@ -133,7 +133,7 @@ namespace Library.UnitTest
                 {
                     using (var stream = value.Export(bufferManager, count + 1))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.T_Box, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.T_Box, stream);
                     }
                 }
 
@@ -142,7 +142,7 @@ namespace Library.UnitTest
                 {
                     using (var stream = this.Certificate.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 

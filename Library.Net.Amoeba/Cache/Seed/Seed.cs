@@ -141,58 +141,58 @@ namespace Library.Net.Amoeba
                 // Name
                 if (this.Name != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Name, this.Name);
                 }
                 // Length
                 if (this.Length != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Length, this.Length);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Length, this.Length);
                 }
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // Comment
                 if (this.Comment != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
                 }
                 // Rank
                 if (this.Rank != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Rank, this.Rank);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Rank, this.Rank);
                 }
                 // Key
                 if (this.Key != null)
                 {
                     using (var stream = this.Key.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
                 // Keywords
                 foreach (var value in this.Keywords)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Keyword, value);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Keyword, value);
                 }
 
                 // CompressionAlgorithm
                 if (this.CompressionAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
                 }
 
                 // CryptoAlgorithm
                 if (this.CryptoAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
                 }
                 // CryptoKey
                 if (this.CryptoKey != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CryptoKey, this.CryptoKey);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoKey, this.CryptoKey);
                 }
 
                 // Certificate
@@ -200,7 +200,7 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = this.Certificate.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 

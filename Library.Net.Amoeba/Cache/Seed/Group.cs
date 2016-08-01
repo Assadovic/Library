@@ -88,29 +88,29 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
                 // CorrectionAlgorithm
                 if (this.CorrectionAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CorrectionAlgorithm, this.CorrectionAlgorithm.ToString());
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CorrectionAlgorithm, this.CorrectionAlgorithm.ToString());
                 }
                 // InformationLength
                 if (this.InformationLength != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.InformationLength, this.InformationLength);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.InformationLength, this.InformationLength);
                 }
                 // BlockLength
                 if (this.BlockLength != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.BlockLength, this.BlockLength);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.BlockLength, this.BlockLength);
                 }
                 // Length
                 if (this.Length != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Length, this.Length);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Length, this.Length);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);

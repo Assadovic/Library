@@ -105,22 +105,22 @@ namespace Library.Security
             // Nickname
             if (this.Nickname != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Nickname, this.Nickname);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Nickname, this.Nickname);
             }
             // DigitalSignatureAlgorithm
             if (this.DigitalSignatureAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm.ToString());
             }
             // PublicKey
             if (this.PublicKey != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.PublicKey, this.PublicKey);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
             }
             // PrivateKey
             if (this.PrivateKey != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.PrivateKey, this.PrivateKey);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.PrivateKey, this.PrivateKey);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

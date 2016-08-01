@@ -87,27 +87,27 @@ namespace Library.Net.Connections.SecureVersion3
             // KeyExchangeAlgorithm
             if (this.KeyExchangeAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm.ToString());
             }
             // KeyDerivationAlgorithm
             if (this.KeyDerivationAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm.ToString());
             }
             // CryptoAlgorithm
             if (this.CryptoAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
             }
             // HashAlgorithm
             if (this.HashAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
+                ItemUtilities.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
             }
             // SessionId
             if (this.SessionId != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.SessionId, this.SessionId);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.SessionId, this.SessionId);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

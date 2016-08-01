@@ -66,12 +66,12 @@ namespace Library.Net.Outopos
             // Name
             if (this.Name != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Name, this.Name);
             }
             // Id
             if (this.Id != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Id, this.Id);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Id, this.Id);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

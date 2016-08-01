@@ -81,12 +81,12 @@ namespace Library.Net.Outopos
             // Signature
             if (this.Signature != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, this.Signature);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, this.Signature);
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
             // Key
@@ -94,7 +94,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Key.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                 }
             }
 
@@ -103,7 +103,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Certificate.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
                 }
             }
 

@@ -62,7 +62,7 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Box, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Box, stream);
                     }
                 }
 

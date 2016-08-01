@@ -69,13 +69,13 @@ namespace Library.Net.Outopos
             // Id
             if (this.Id != null)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Id, this.Id);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Id, this.Id);
             }
 
             // Uris
             foreach (var value in this.Uris)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Uri, value);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Uri, value);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

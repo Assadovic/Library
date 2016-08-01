@@ -85,17 +85,17 @@ namespace Library.Net.Connections.SecureVersion3
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // ExchangeKey
                 if (this.ExchangeKey != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.ExchangeKey, this.ExchangeKey);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangeKey, this.ExchangeKey);
                 }
                 // ProtocolHash
                 if (this.ProtocolHash != null)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.ProtocolHash, this.ProtocolHash);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.ProtocolHash, this.ProtocolHash);
                 }
 
                 // Certificate
@@ -103,7 +103,7 @@ namespace Library.Net.Connections.SecureVersion3
                 {
                     using (var stream = this.Certificate.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 

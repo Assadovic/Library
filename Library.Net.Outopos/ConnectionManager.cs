@@ -1210,7 +1210,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Node, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Node, stream);
                     }
                 }
 
@@ -1289,7 +1289,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
@@ -1368,7 +1368,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
@@ -1478,7 +1478,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = this.Key.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Key, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
                 // Value
@@ -1568,7 +1568,7 @@ namespace Library.Net.Outopos
                 // Signatures
                 foreach (var value in this.Signatures)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, value);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -1646,7 +1646,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.BroadcastMetadata, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.BroadcastMetadata, stream);
                     }
                 }
 
@@ -1723,7 +1723,7 @@ namespace Library.Net.Outopos
                 // Signatures
                 foreach (var value in this.Signatures)
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Signature, value);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -1801,7 +1801,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.UnicastMetadata, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.UnicastMetadata, stream);
                     }
                 }
 
@@ -1880,7 +1880,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.Tag, stream);
                     }
                 }
 
@@ -1960,7 +1960,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (byte)SerializeId.MulticastMetadata, stream);
+                        ItemUtilities.Write(bufferStream, (int)SerializeId.MulticastMetadata, stream);
                     }
                 }
 

@@ -108,38 +108,38 @@ namespace Library.Net.Outopos
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
             // Cost
             if (this.Cost != 0)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.Cost, this.Cost);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.Cost, this.Cost);
             }
             // ExchangePublicKey
             if (this.ExchangePublicKey != null)
             {
                 using (var stream = this.ExchangePublicKey.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.ExchangePublicKey, stream);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangePublicKey, stream);
                 }
             }
             // TrustSignatures
             foreach (var value in this.TrustSignatures)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.TrustSignature, value);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.TrustSignature, value);
             }
             // DeleteSignatures
             foreach (var value in this.DeleteSignatures)
             {
-                ItemUtilities.Write(bufferStream, (byte)SerializeId.DeleteSignature, value);
+                ItemUtilities.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
             }
             // Tags
             foreach (var value in this.Tags)
             {
                 using (var stream = value.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Tag, stream);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Tag, stream);
                 }
             }
 
@@ -148,7 +148,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Certificate.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                    ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
                 }
             }
 
