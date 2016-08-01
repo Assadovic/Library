@@ -9,7 +9,6 @@ namespace Library.Utilities
     static class IntegerUtilities
     {
         private static readonly ThreadLocal<byte[]> _threadLocalBuffer = new ThreadLocal<byte[]>(() => new byte[16]);
-        private static readonly ThreadLocal<uint[]> _threadLocal_IntBuffer = new ThreadLocal<uint[]>(() => new uint[4]);
 
         public static void WriteInt(Stream stream, int value)
         {
