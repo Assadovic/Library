@@ -1484,8 +1484,8 @@ namespace Library.Net.Outopos
                 // Value
                 if (this.Value.Array != null)
                 {
-                    bufferStream.WriteByte((byte)SerializeId.Value);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)this.Value.Count), 0, 4);
+                    VintUtilities.WriteVint1(bufferStream, (int)SerializeId.Value);
+                    VintUtilities.WriteVint4(bufferStream, this.Value.Count);
                     bufferStream.Write(this.Value.Array, this.Value.Offset, this.Value.Count);
                 }
 

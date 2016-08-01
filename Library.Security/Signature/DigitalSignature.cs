@@ -195,8 +195,8 @@ namespace Library.Security
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                IntegerUtilities.WriteInt(bufferStream, (int)FileSerializeId.Stream);
-                IntegerUtilities.WriteLong(bufferStream, exportStream.Length);
+                VintUtilities.WriteVint1(bufferStream, (int)FileSerializeId.Stream);
+                VintUtilities.WriteVint4(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }
@@ -229,8 +229,8 @@ namespace Library.Security
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                IntegerUtilities.WriteInt(bufferStream, (int)FileSerializeId.Stream);
-                IntegerUtilities.WriteLong(bufferStream, exportStream.Length);
+                VintUtilities.WriteVint1(bufferStream, (int)FileSerializeId.Stream);
+                VintUtilities.WriteVint4(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }

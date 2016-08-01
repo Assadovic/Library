@@ -6,11 +6,11 @@ using System.Threading;
 
 namespace Library.Utilities
 {
-    static class IntegerUtilities
+    static class VintUtilities
     {
         private static readonly ThreadLocal<byte[]> _threadLocalBuffer = new ThreadLocal<byte[]>(() => new byte[16]);
 
-        public static void WriteInt(Stream stream, int value)
+        public static void WriteVint1(Stream stream, int value)
         {
             if (value <= 0)
             {
@@ -72,7 +72,7 @@ namespace Library.Utilities
             }
         }
 
-        public static void WriteLong(Stream stream, long value)
+        public static void WriteVint4(Stream stream, long value)
         {
             if (value <= 0)
             {
@@ -134,7 +134,7 @@ namespace Library.Utilities
             }
         }
 
-        public static int GetInt(Stream stream)
+        public static int GetVint1(Stream stream)
         {
             int result = 0;
 
@@ -152,7 +152,7 @@ namespace Library.Utilities
             return result;
         }
 
-        public static long GetLong(Stream stream)
+        public static long GetVint4(Stream stream)
         {
             long result = 0;
 

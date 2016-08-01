@@ -21,10 +21,10 @@ namespace Library.UnitTest
                 for (int i = 0; i < 1024 * 1024; i++)
                 {
                     var v = _random.Next();
-                    IntegerUtilities.WriteInt(stream, v);
+                    VintUtilities.WriteVint1(stream, v);
                     stream.Seek(0, SeekOrigin.Begin);
 
-                    Assert.AreEqual(v, IntegerUtilities.GetInt(stream), "IntegerUtilities #Int");
+                    Assert.AreEqual(v, VintUtilities.GetVint1(stream), "VintUtilities #Int");
 
                     stream.Seek(0, SeekOrigin.Begin);
                 }
@@ -35,10 +35,10 @@ namespace Library.UnitTest
                 for (int i = 0; i < 1024 * 1024; i++)
                 {
                     var v = (long)_random.Next() << 32 | (uint)_random.Next();
-                    IntegerUtilities.WriteLong(stream, v);
+                    VintUtilities.WriteVint4(stream, v);
                     stream.Seek(0, SeekOrigin.Begin);
 
-                    Assert.AreEqual(v, IntegerUtilities.GetLong(stream), "IntegerUtilities #Long");
+                    Assert.AreEqual(v, VintUtilities.GetVint4(stream), "VintUtilities #Long");
 
                     stream.Seek(0, SeekOrigin.Begin);
                 }
@@ -46,10 +46,10 @@ namespace Library.UnitTest
                 for (int i = 0; i < 1024; i++)
                 {
                     var v = (long)_random.Next();
-                    IntegerUtilities.WriteLong(stream, v);
+                    VintUtilities.WriteVint4(stream, v);
                     stream.Seek(0, SeekOrigin.Begin);
 
-                    Assert.AreEqual(v, IntegerUtilities.GetLong(stream), "IntegerUtilities #Long");
+                    Assert.AreEqual(v, VintUtilities.GetVint4(stream), "VintUtilities #Long");
 
                     stream.Seek(0, SeekOrigin.Begin);
                 }
