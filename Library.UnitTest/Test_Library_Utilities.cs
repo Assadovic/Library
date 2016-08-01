@@ -42,6 +42,17 @@ namespace Library.UnitTest
 
                     stream.Seek(0, SeekOrigin.Begin);
                 }
+
+                for (int i = 0; i < 1024; i++)
+                {
+                    var v = (long)_random.Next();
+                    IntegerUtilities.WriteLong(stream, v);
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    Assert.AreEqual(v, IntegerUtilities.GetLong(stream), "IntegerUtilities #Long");
+
+                    stream.Seek(0, SeekOrigin.Begin);
+                }
             }
         }
     }

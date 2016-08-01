@@ -80,7 +80,16 @@ namespace Library.Utilities
             }
             else if (value < 0x7FFFFFFF)
             {
-                stream.Write(NetworkConverter.GetBytes((int)value), 0, 4);
+                var buffer = _threadLocalBuffer.Value;
+
+                {
+                    buffer[0] = (byte)((value >> 8 * 3 - 0));
+                    buffer[1] = (byte)((value >> 8 * 2 - 0));
+                    buffer[2] = (byte)((value >> 8 * 1 - 0));
+                    buffer[3] = (byte)((value >> 8 * 0 - 0));
+                }
+
+                stream.Write(buffer, 0, 4);
             }
             else if (value < 0x3FFFFFFFFFFFFFFF)
             {
