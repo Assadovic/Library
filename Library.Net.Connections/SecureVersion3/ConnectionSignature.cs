@@ -12,7 +12,7 @@ namespace Library.Net.Connections.SecureVersion3
     [DataContract(Name = "ConnectionSignature", Namespace = "http://Library/Net/Connection/SecureVersion3")]
     sealed class ConnectionSignature : MutableCertificateItemBase<ConnectionSignature>, ICloneable<ConnectionSignature>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             CreationTime = 0,
             ExchangeKey = 1,
@@ -48,26 +48,26 @@ namespace Library.Net.Connections.SecureVersion3
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.CreationTime)
+                        if (type == (int)SerializeId.CreationTime)
                         {
                             this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
-                        if (id == (byte)SerializeId.ExchangeKey)
+                        if (type == (int)SerializeId.ExchangeKey)
                         {
                             this.ExchangeKey = ItemUtilities.GetByteArray(rangeStream);
                         }
-                        if (id == (byte)SerializeId.ProtocolHash)
+                        if (type == (int)SerializeId.ProtocolHash)
                         {
                             this.ProtocolHash = ItemUtilities.GetByteArray(rangeStream);
                         }
 
-                        else if (id == (byte)SerializeId.Certificate)
+                        else if (type == (int)SerializeId.Certificate)
                         {
                             this.Certificate = Certificate.Import(rangeStream, bufferManager);
                         }

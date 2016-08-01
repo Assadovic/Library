@@ -13,7 +13,7 @@ namespace Library.Net.Connections.SecureVersion3
     [DataContract(Name = "ProtocolInformation", Namespace = "http://Library/Net/Connection/SecureVersion3")]
     class ProtocolInformation : ItemBase<ProtocolInformation>
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             KeyExchangeAlgorithm = 0,
             KeyDerivationAlgorithm = 1,
@@ -50,29 +50,29 @@ namespace Library.Net.Connections.SecureVersion3
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.KeyExchangeAlgorithm)
+                    if (type == (int)SerializeId.KeyExchangeAlgorithm)
                     {
                         this.KeyExchangeAlgorithm = EnumEx<KeyExchangeAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.KeyDerivationAlgorithm)
+                    else if (type == (int)SerializeId.KeyDerivationAlgorithm)
                     {
                         this.KeyDerivationAlgorithm = EnumEx<KeyDerivationAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.CryptoAlgorithm)
+                    else if (type == (int)SerializeId.CryptoAlgorithm)
                     {
                         this.CryptoAlgorithm = EnumEx<CryptoAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.HashAlgorithm)
+                    else if (type == (int)SerializeId.HashAlgorithm)
                     {
                         this.HashAlgorithm = EnumEx<HashAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.SessionId)
+                    else if (type == (int)SerializeId.SessionId)
                     {
                         this.SessionId = ItemUtilities.GetByteArray(rangeStream);
                     }

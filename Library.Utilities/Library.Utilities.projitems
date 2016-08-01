@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)EqualityComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IntegerUtilities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ItemUtilities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WatchTimer.cs" />
   </ItemGroup>

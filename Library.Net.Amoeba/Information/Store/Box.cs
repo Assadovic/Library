@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Box", Namespace = "http://Library/Net/Amoeba")]
     public sealed class Box : MutableCertificateItemBase<Box>, IBox, ICloneable<Box>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Name = 0,
             CreationTime = 1,
@@ -57,34 +57,34 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Name)
+                        if (type == (int)SerializeId.Name)
                         {
                             this.Name = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.CreationTime)
+                        else if (type == (int)SerializeId.CreationTime)
                         {
                             this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
-                        else if (id == (int)SerializeId.Comment)
+                        else if (type == (int)SerializeId.Comment)
                         {
                             this.Comment = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Seed)
+                        else if (type == (int)SerializeId.Seed)
                         {
                             this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
                         }
-                        else if (id == (byte)SerializeId.Box)
+                        else if (type == (int)SerializeId.Box)
                         {
                             this.Boxes.Add(Box.Import(rangeStream, bufferManager, count + 1));
                         }
 
-                        else if (id == (byte)SerializeId.Certificate)
+                        else if (type == (int)SerializeId.Certificate)
                         {
                             this.Certificate = Certificate.Import(rangeStream, bufferManager);
                         }

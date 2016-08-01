@@ -13,7 +13,7 @@ namespace Library.Security
     [DataContract(Name = "Cash", Namespace = "http://Library/Security")]
     public sealed class Cash : ItemBase<Cash>
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             CashAlgorithm = 0,
             Key = 1,
@@ -42,17 +42,17 @@ namespace Library.Security
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.CashAlgorithm)
+                    if (type == (int)SerializeId.CashAlgorithm)
                     {
                         this.CashAlgorithm = (CashAlgorithm)Enum.Parse(typeof(CashAlgorithm), ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.Key)
+                    else if (type == (int)SerializeId.Key)
                     {
                         this.Key = ItemUtilities.GetByteArray(rangeStream);
                     }

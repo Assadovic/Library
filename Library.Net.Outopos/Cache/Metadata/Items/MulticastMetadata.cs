@@ -10,7 +10,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "MulticastMetadata", Namespace = "http://Library/Net/Outopos")]
     class MulticastMetadata : ImmutableCashItemBase<MulticastMetadata>, IMulticastHeader, IMulticastOptions
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Tag = 0,
             CreationTime = 1,
@@ -49,31 +49,31 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Tag)
+                    if (type == (int)SerializeId.Tag)
                     {
                         this.Tag = Outopos.Tag.Import(rangeStream, bufferManager);
                     }
-                    else if (id == (byte)SerializeId.CreationTime)
+                    else if (type == (int)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Key)
+                    else if (type == (int)SerializeId.Key)
                     {
                         this.Key = Key.Import(rangeStream, bufferManager);
                     }
 
-                    else if (id == (byte)SerializeId.Cash)
+                    else if (type == (int)SerializeId.Cash)
                     {
                         this.Cash = Cash.Import(rangeStream, bufferManager);
                     }
-                    else if (id == (byte)SerializeId.Certificate)
+                    else if (type == (int)SerializeId.Certificate)
                     {
                         this.Certificate = Certificate.Import(rangeStream, bufferManager);
                     }

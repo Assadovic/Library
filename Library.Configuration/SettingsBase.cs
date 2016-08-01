@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
@@ -220,6 +221,16 @@ namespace Library.Configuration
                             var serializer = new DataContractSerializer(type);
 
                             serializer.WriteStartObject(xml, value);
+
+                            {
+                                int i = 0;
+
+                                foreach (var uri in this.GetNamespaces(type))
+                                {
+                                    xml.WriteAttributeString("xmlns", "x" + i++, null, uri);
+                                }
+                            }
+
                             serializer.WriteObjectContent(xml, value);
                             serializer.WriteEndObject(xml);
                         }
@@ -260,6 +271,44 @@ namespace Library.Configuration
 
             sw.Stop();
             Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
+        }
+
+        public IEnumerable<string> GetNamespaces(Type type)
+        {
+            var hashSet = new HashSet<string>();
+
+            var typeList = new List<Type>();
+            typeList.Add(type);
+
+            for (int i = 0; i < typeList.Count; i++)
+            {
+                if (typeList[i].IsArray)
+                {
+                    var elementType = typeList[i].GetElementType();
+                    if (!typeList.Contains(elementType)) typeList.Add(elementType);
+                }
+                else if (typeList[i].IsGenericType)
+                {
+                    typeList.AddRange(typeList[i].GenericTypeArguments
+                        .Where(n => !typeList.Contains(n)));
+                }
+                else
+                {
+                    var classAttribute = System.Attribute.GetCustomAttributes(typeList[i])
+                        .FirstOrDefault(n => n is DataContractAttribute);
+                    if (classAttribute == null) continue;
+
+                    hashSet.Add(((DataContractAttribute)classAttribute).Namespace);
+
+                    typeList.AddRange(typeList[i].GetProperties().Select(n => n.PropertyType)
+                        .Where(n => !typeList.Contains(n)));
+                }
+            }
+
+            var list = hashSet.ToList();
+            list.Sort();
+
+            return list;
         }
 
         #endregion

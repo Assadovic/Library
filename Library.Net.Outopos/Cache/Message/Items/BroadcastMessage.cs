@@ -12,7 +12,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "BroadcastMessage", Namespace = "http://Library/Net/Outopos")]
     public sealed class BroadcastMessage : ImmutableCertificateItemBase<BroadcastMessage>, IBroadcastHeader, IBroadcastContent
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             CreationTime = 0,
 
@@ -61,39 +61,39 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.CreationTime)
+                    if (type == (int)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Cost)
+                    else if (type == (int)SerializeId.Cost)
                     {
                         this.Cost = ItemUtilities.GetInt(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.ExchangePublicKey)
+                    else if (type == (int)SerializeId.ExchangePublicKey)
                     {
                         this.ExchangePublicKey = ExchangePublicKey.Import(rangeStream, bufferManager);
                     }
-                    else if (id == (byte)SerializeId.TrustSignature)
+                    else if (type == (int)SerializeId.TrustSignature)
                     {
                         this.ProtectedTrustSignatures.Add(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.DeleteSignature)
+                    else if (type == (int)SerializeId.DeleteSignature)
                     {
                         this.ProtectedDeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.Tag)
+                    else if (type == (int)SerializeId.Tag)
                     {
                         this.ProtectedTags.Add(Tag.Import(rangeStream, bufferManager));
                     }
 
-                    else if (id == (byte)SerializeId.Certificate)
+                    else if (type == (int)SerializeId.Certificate)
                     {
                         this.Certificate = Certificate.Import(rangeStream, bufferManager);
                     }

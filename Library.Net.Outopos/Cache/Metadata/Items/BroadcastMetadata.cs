@@ -10,7 +10,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
     class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             CreationTime = 0,
 
@@ -42,23 +42,23 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.CreationTime)
+                    if (type == (int)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Key)
+                    else if (type == (int)SerializeId.Key)
                     {
                         this.Key = Key.Import(rangeStream, bufferManager);
                     }
 
-                    else if (id == (byte)SerializeId.Certificate)
+                    else if (type == (int)SerializeId.Certificate)
                     {
                         this.Certificate = Certificate.Import(rangeStream, bufferManager);
                     }

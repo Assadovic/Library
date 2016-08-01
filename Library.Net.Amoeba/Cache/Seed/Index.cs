@@ -10,7 +10,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Index", Namespace = "http://Library/Net/Amoeba")]
     sealed class Index : ItemBase<Index>, IIndex<Group, Key>, ICloneable<Index>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Group = 0,
 
@@ -47,27 +47,27 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Group)
+                        if (type == (int)SerializeId.Group)
                         {
                             this.Groups.Add(Group.Import(rangeStream, bufferManager));
                         }
 
-                        else if (id == (byte)SerializeId.CompressionAlgorithm)
+                        else if (type == (int)SerializeId.CompressionAlgorithm)
                         {
                             this.CompressionAlgorithm = (CompressionAlgorithm)Enum.Parse(typeof(CompressionAlgorithm), ItemUtilities.GetString(rangeStream));
                         }
 
-                        else if (id == (byte)SerializeId.CryptoAlgorithm)
+                        else if (type == (int)SerializeId.CryptoAlgorithm)
                         {
                             this.CryptoAlgorithm = (CryptoAlgorithm)Enum.Parse(typeof(CryptoAlgorithm), ItemUtilities.GetString(rangeStream));
                         }
-                        else if (id == (byte)SerializeId.CryptoKey)
+                        else if (type == (int)SerializeId.CryptoKey)
                         {
                             this.CryptoKey = ItemUtilities.GetByteArray(rangeStream);
                         }

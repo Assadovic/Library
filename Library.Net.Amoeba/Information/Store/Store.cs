@@ -9,7 +9,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Store", Namespace = "http://Library/Net/Amoeba")]
     public sealed class Store : ItemBase<Store>, IStore, ICloneable<Store>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Box = 0,
         }
@@ -36,13 +36,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Box)
+                        if (type == (int)SerializeId.Box)
                         {
                             this.Boxes.Add(Box.Import(rangeStream, bufferManager));
                         }

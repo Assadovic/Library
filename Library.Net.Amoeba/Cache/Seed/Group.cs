@@ -10,7 +10,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Group", Namespace = "http://Library/Net/Amoeba")]
     sealed class Group : ItemBase<Group>, IGroup<Key>, ICloneable<Group>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Key = 0,
 
@@ -45,30 +45,30 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.Keys.Add(Key.Import(rangeStream, bufferManager));
                         }
 
-                        else if (id == (byte)SerializeId.CorrectionAlgorithm)
+                        else if (type == (int)SerializeId.CorrectionAlgorithm)
                         {
                             this.CorrectionAlgorithm = (CorrectionAlgorithm)Enum.Parse(typeof(CorrectionAlgorithm), ItemUtilities.GetString(rangeStream));
                         }
-                        else if (id == (byte)SerializeId.InformationLength)
+                        else if (type == (int)SerializeId.InformationLength)
                         {
                             this.InformationLength = ItemUtilities.GetInt(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.BlockLength)
+                        else if (type == (int)SerializeId.BlockLength)
                         {
                             this.BlockLength = ItemUtilities.GetInt(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Length)
+                        else if (type == (int)SerializeId.Length)
                         {
                             this.Length = ItemUtilities.GetLong(rangeStream);
                         }

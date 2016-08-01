@@ -10,7 +10,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Link", Namespace = "http://Library/Net/Amoeba")]
     public sealed class Link : ItemBase<Link>, ILink, ICloneable<Link>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             TrustSignature = 0,
             DeleteSignature = 1,
@@ -40,17 +40,17 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.TrustSignature)
+                        if (type == (int)SerializeId.TrustSignature)
                         {
                             this.TrustSignatures.Add(ItemUtilities.GetString(rangeStream));
                         }
-                        else if (id == (byte)SerializeId.DeleteSignature)
+                        else if (type == (int)SerializeId.DeleteSignature)
                         {
                             this.DeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
                         }

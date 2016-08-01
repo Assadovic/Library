@@ -10,7 +10,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "UnicastMessage", Namespace = "http://Library/Net/Outopos")]
     public sealed class UnicastMessage : ImmutableCertificateItemBase<UnicastMessage>, IUnicastHeader, IUnicastContent
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Signature = 0,
             CreationTime = 1,
@@ -48,27 +48,27 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Signature)
+                    if (type == (int)SerializeId.Signature)
                     {
                         this.Signature = ItemUtilities.GetString(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.CreationTime)
+                    else if (type == (int)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
-                    else if (id == (byte)SerializeId.Comment)
+                    else if (type == (int)SerializeId.Comment)
                     {
                         this.Comment = ItemUtilities.GetString(rangeStream);
                     }
 
-                    else if (id == (byte)SerializeId.Certificate)
+                    else if (type == (int)SerializeId.Certificate)
                     {
                         this.Certificate = Certificate.Import(rangeStream, bufferManager);
                     }

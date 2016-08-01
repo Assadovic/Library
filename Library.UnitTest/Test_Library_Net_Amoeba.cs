@@ -249,7 +249,7 @@ namespace Library.UnitTest
                 for (int i = 0; i < 256; i++)
                 {
                     var tempBox = new T_Box();
-                    childBox.D_Boxes.Add(tempBox);
+                    childBox.T_Boxes.Add(tempBox);
                     childBox = tempBox;
                 }
 
@@ -266,7 +266,7 @@ namespace Library.UnitTest
                 for (int i = 0; i < 256 + 1; i++)
                 {
                     var tempBox = new T_Box();
-                    childBox.D_Boxes.Add(tempBox);
+                    childBox.T_Boxes.Add(tempBox);
                     childBox = tempBox;
                 }
 

@@ -110,7 +110,7 @@ namespace Library.Net.Outopos
 
     class ConnectionManager : ManagerBase, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Alive = 0,
             Cancel = 1,
@@ -1166,7 +1166,7 @@ namespace Library.Net.Outopos
 
         private sealed class NodesMessage : ItemBase<NodesMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Node = 0,
             }
@@ -1187,13 +1187,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Node)
+                        if (type == (int)SerializeId.Node)
                         {
                             this.ProtectedNodes.Add(Node.Import(rangeStream, bufferManager));
                         }
@@ -1245,7 +1245,7 @@ namespace Library.Net.Outopos
 
         private sealed class BlocksLinkMessage : ItemBase<BlocksLinkMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
             }
@@ -1266,13 +1266,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.ProtectedKeys.Add(Key.Import(rangeStream, bufferManager));
                         }
@@ -1324,7 +1324,7 @@ namespace Library.Net.Outopos
 
         private sealed class BlocksRequestMessage : ItemBase<BlocksRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
             }
@@ -1345,13 +1345,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.ProtectedKeys.Add(Key.Import(rangeStream, bufferManager));
                         }
@@ -1403,7 +1403,7 @@ namespace Library.Net.Outopos
 
         private sealed class BlockMessage : ItemBase<BlockMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
                 Value = 1,
@@ -1429,17 +1429,17 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.Key = Key.Import(rangeStream, bufferManager);
                         }
-                        else if (id == (byte)SerializeId.Value)
+                        else if (type == (int)SerializeId.Value)
                         {
                             if (this.Value.Array != null)
                             {
@@ -1526,7 +1526,7 @@ namespace Library.Net.Outopos
 
         private sealed class BroadcastMetadatasRequestMessage : ItemBase<BroadcastMetadatasRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Signature = 0,
             }
@@ -1547,13 +1547,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Signature)
+                        if (type == (int)SerializeId.Signature)
                         {
                             this.ProtectedSignatures.Add(ItemUtilities.GetString(rangeStream));
                         }
@@ -1602,7 +1602,7 @@ namespace Library.Net.Outopos
 
         private sealed class BroadcastMetadatasMessage : ItemBase<BroadcastMetadatasMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 BroadcastMetadata = 0,
             }
@@ -1623,13 +1623,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.BroadcastMetadata)
+                        if (type == (int)SerializeId.BroadcastMetadata)
                         {
                             this.ProtectedBroadcastMetadatas.Add(BroadcastMetadata.Import(rangeStream, bufferManager));
                         }
@@ -1681,7 +1681,7 @@ namespace Library.Net.Outopos
 
         private sealed class UnicastMetadatasRequestMessage : ItemBase<UnicastMetadatasRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Signature = 0,
             }
@@ -1702,13 +1702,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Signature)
+                        if (type == (int)SerializeId.Signature)
                         {
                             this.ProtectedSignatures.Add(ItemUtilities.GetString(rangeStream));
                         }
@@ -1757,7 +1757,7 @@ namespace Library.Net.Outopos
 
         private sealed class UnicastMetadatasMessage : ItemBase<UnicastMetadatasMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 UnicastMetadata = 0,
             }
@@ -1778,13 +1778,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.UnicastMetadata)
+                        if (type == (int)SerializeId.UnicastMetadata)
                         {
                             this.ProtectedUnicastMetadatas.Add(UnicastMetadata.Import(rangeStream, bufferManager));
                         }
@@ -1836,7 +1836,7 @@ namespace Library.Net.Outopos
 
         private sealed class MulticastMetadatasRequestMessage : ItemBase<MulticastMetadatasRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Tag = 0,
             }
@@ -1857,13 +1857,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Tag)
+                        if (type == (int)SerializeId.Tag)
                         {
                             this.ProtectedTags.Add(Tag.Import(rangeStream, bufferManager));
                         }
@@ -1916,7 +1916,7 @@ namespace Library.Net.Outopos
 
         private sealed class MulticastMetadatasMessage : ItemBase<MulticastMetadatasMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 MulticastMetadata = 0,
             }
@@ -1937,13 +1937,13 @@ namespace Library.Net.Outopos
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.MulticastMetadata)
+                        if (type == (int)SerializeId.MulticastMetadata)
                         {
                             this.ProtectedMulticastMetadatas.Add(MulticastMetadata.Import(rangeStream, bufferManager));
                         }

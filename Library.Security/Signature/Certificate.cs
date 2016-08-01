@@ -13,7 +13,7 @@ namespace Library.Security
     [DataContract(Name = "Certificate", Namespace = "http://Library/Security")]
     public sealed class Certificate : ItemBase<Certificate>
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Nickname = 0,
             DigitalSignatureAlgorithm = 1,
@@ -69,25 +69,25 @@ namespace Library.Security
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Nickname)
+                    if (type == (int)SerializeId.Nickname)
                     {
                         this.Nickname = ItemUtilities.GetString(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.DigitalSignatureAlgorithm)
+                    else if (type == (int)SerializeId.DigitalSignatureAlgorithm)
                     {
                         this.DigitalSignatureAlgorithm = (DigitalSignatureAlgorithm)Enum.Parse(typeof(DigitalSignatureAlgorithm), ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.PublicKey)
+                    else if (type == (int)SerializeId.PublicKey)
                     {
                         this.PublicKey = ItemUtilities.GetByteArray(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.Signature)
+                    else if (type == (int)SerializeId.Signature)
                     {
                         this.Signature = ItemUtilities.GetByteArray(rangeStream);
                     }

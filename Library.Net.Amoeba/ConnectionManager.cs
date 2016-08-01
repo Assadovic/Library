@@ -83,7 +83,7 @@ namespace Library.Net.Amoeba
 
     class ConnectionManager : ManagerBase, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Alive = 0,
             Cancel = 1,
@@ -915,7 +915,7 @@ namespace Library.Net.Amoeba
 
         private sealed class NodesMessage : ItemBase<NodesMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Node = 0,
             }
@@ -936,13 +936,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Node)
+                        if (type == (int)SerializeId.Node)
                         {
                             this.ProtectedNodes.Add(Node.Import(rangeStream, bufferManager));
                         }
@@ -994,7 +994,7 @@ namespace Library.Net.Amoeba
 
         private sealed class BlocksLinkMessage : ItemBase<BlocksLinkMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
             }
@@ -1015,13 +1015,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.ProtectedKeys.Add(Key.Import(rangeStream, bufferManager));
                         }
@@ -1073,7 +1073,7 @@ namespace Library.Net.Amoeba
 
         private sealed class BlocksRequestMessage : ItemBase<BlocksRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
             }
@@ -1094,13 +1094,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.ProtectedKeys.Add(Key.Import(rangeStream, bufferManager));
                         }
@@ -1152,7 +1152,7 @@ namespace Library.Net.Amoeba
 
         private sealed class BlockMessage : ItemBase<BlockMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Key = 0,
                 Value = 1,
@@ -1178,17 +1178,17 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Key)
+                        if (type == (int)SerializeId.Key)
                         {
                             this.Key = Key.Import(rangeStream, bufferManager);
                         }
-                        else if (id == (byte)SerializeId.Value)
+                        else if (type == (int)SerializeId.Value)
                         {
                             if (this.Value.Array != null)
                             {
@@ -1275,7 +1275,7 @@ namespace Library.Net.Amoeba
 
         private sealed class SeedsRequestMessage : ItemBase<SeedsRequestMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Signature = 0,
             }
@@ -1296,13 +1296,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Signature)
+                        if (type == (int)SerializeId.Signature)
                         {
                             this.ProtectedSignatures.Add(ItemUtilities.GetString(rangeStream));
                         }
@@ -1351,7 +1351,7 @@ namespace Library.Net.Amoeba
 
         private sealed class SeedsMessage : ItemBase<SeedsMessage>
         {
-            private enum SerializeId : byte
+            private enum SerializeId
             {
                 Seed = 0,
             }
@@ -1372,13 +1372,13 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Seed)
+                        if (type == (int)SerializeId.Seed)
                         {
                             this.ProtectedSeeds.Add(Seed.Import(rangeStream, bufferManager));
                         }

@@ -12,7 +12,7 @@ namespace Library.Security
     [DataContract(Name = "ExchangePrivateKey", Namespace = "http://Library/Security")]
     public sealed class ExchangePrivateKey : ItemBase<ExchangePrivateKey>, IExchangeDecrypt
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             CreationTime = 0,
             ExchangeAlgorithm = 1,
@@ -43,21 +43,21 @@ namespace Library.Security
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.CreationTime)
+                    if (type == (int)SerializeId.CreationTime)
                     {
                         this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
-                    else if (id == (byte)SerializeId.ExchangeAlgorithm)
+                    else if (type == (int)SerializeId.ExchangeAlgorithm)
                     {
                         this.ExchangeAlgorithm = (ExchangeAlgorithm)Enum.Parse(typeof(ExchangeAlgorithm), ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.PrivateKey)
+                    else if (type == (int)SerializeId.PrivateKey)
                     {
                         this.PrivateKey = ItemUtilities.GetByteArray(rangeStream);
                     }

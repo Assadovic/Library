@@ -10,7 +10,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "Tag", Namespace = "http://Library/Net/Outopos")]
     public class Tag : ItemBase<Tag>, ITag
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Name = 0,
             Id = 1,
@@ -41,17 +41,17 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Name)
+                    if (type == (int)SerializeId.Name)
                     {
                         this.Name = ItemUtilities.GetString(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.Id)
+                    else if (type == (int)SerializeId.Id)
                     {
                         this.Id = ItemUtilities.GetByteArray(rangeStream);
                     }

@@ -7,19 +7,20 @@ using Library.Collections;
 using Library.Io;
 using Library.Net.Amoeba;
 using Library.Security;
+using Library.Utilities;
 
 namespace Library.UnitTest
 {
     [DataContract(Name = "T_Box", Namespace = "http://Library/Net/Amoeba")]
     public sealed class T_Box : MutableCertificateItemBase<T_Box>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Name = 0,
             CreationTime = 1,
             Comment = 2,
             Seed = 3,
-            D_Box = 4,
+            T_Box = 4,
 
             Certificate = 5,
         }
@@ -58,57 +59,36 @@ namespace Library.UnitTest
 
             lock (this.ThisLock)
             {
-                Encoding encoding = new UTF8Encoding(false);
-
                 for (;;)
                 {
-                    byte id;
-                    {
-                        byte[] idBuffer = new byte[1];
-                        if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return;
-                        id = idBuffer[0];
-                    }
+                    int type;
 
-                    int length;
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
-                        byte[] lengthBuffer = new byte[4];
-                        if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return;
-                        length = NetworkConverter.ToInt32(lengthBuffer);
-                    }
+                        if (rangeStream == null) return;
 
-                    using (RangeStream rangeStream = new RangeStream(stream, stream.Position, length, true))
-                    {
-                        if (id == (byte)SerializeId.Name)
+                        if (type == (int)SerializeId.Name)
                         {
-                            using (StreamReader reader = new StreamReader(rangeStream, encoding))
-                            {
-                                this.Name = reader.ReadToEnd();
-                            }
+                            this.Name = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.CreationTime)
+                        else if (type == (int)SerializeId.CreationTime)
                         {
-                            using (StreamReader reader = new StreamReader(rangeStream, encoding))
-                            {
-                                this.CreationTime = DateTime.ParseExact(reader.ReadToEnd(), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
-                            }
+                            this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
-                        else if (id == (int)SerializeId.Comment)
+                        else if (type == (int)SerializeId.Comment)
                         {
-                            using (StreamReader reader = new StreamReader(rangeStream, encoding))
-                            {
-                                this.Comment = reader.ReadToEnd();
-                            }
+                            this.Comment = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Seed)
+                        else if (type == (int)SerializeId.Seed)
                         {
                             this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
                         }
-                        else if (id == (byte)SerializeId.D_Box)
+                        else if (type == (int)SerializeId.T_Box)
                         {
-                            this.D_Boxes.Add(T_Box.Import(rangeStream, bufferManager, count + 1));
+                            this.T_Boxes.Add(T_Box.Import(rangeStream, bufferManager, count + 1));
                         }
 
-                        else if (id == (byte)SerializeId.Certificate)
+                        else if (type == (int)SerializeId.Certificate)
                         {
                             this.Certificate = Certificate.Import(rangeStream, bufferManager);
                         }
@@ -119,109 +99,55 @@ namespace Library.UnitTest
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            //if (count > 256) throw new ArgumentException();
+            if (count > 256) throw new ArgumentException();
 
             lock (this.ThisLock)
             {
-                List<Stream> streams = new List<Stream>();
-                Encoding encoding = new UTF8Encoding(false);
+                var bufferStream = new BufferStream(bufferManager);
 
                 // Name
                 if (this.Name != null)
                 {
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.Name);
-
-                    bufferStream.SetLength(5);
-                    bufferStream.Seek(5, SeekOrigin.Begin);
-
-                    using (WrapperStream wrapperStream = new WrapperStream(bufferStream, true))
-                    using (StreamWriter writer = new StreamWriter(wrapperStream, encoding))
-                    {
-                        writer.Write(this.Name);
-                    }
-
-                    bufferStream.Seek(0, SeekOrigin.Begin);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)bufferStream.Length - 5), 1, 4);
-
-                    streams.Add(bufferStream);
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Name, this.Name);
                 }
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.CreationTime);
-
-                    bufferStream.SetLength(5);
-                    bufferStream.Seek(5, SeekOrigin.Begin);
-
-                    using (WrapperStream wrapperStream = new WrapperStream(bufferStream, true))
-                    using (StreamWriter writer = new StreamWriter(wrapperStream, encoding))
-                    {
-                        writer.Write(this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-                    }
-
-                    bufferStream.Seek(0, SeekOrigin.Begin);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)bufferStream.Length - 5), 1, 4);
-
-                    streams.Add(bufferStream);
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // Comment
                 if (this.Comment != null)
                 {
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.Comment);
-
-                    bufferStream.SetLength(5);
-                    bufferStream.Seek(5, SeekOrigin.Begin);
-
-                    using (WrapperStream wrapperStream = new WrapperStream(bufferStream, true))
-                    using (StreamWriter writer = new StreamWriter(wrapperStream, encoding))
-                    {
-                        writer.Write(this.Comment);
-                    }
-
-                    bufferStream.Seek(0, SeekOrigin.Begin);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)bufferStream.Length - 5), 1, 4);
-
-                    streams.Add(bufferStream);
+                    ItemUtilities.Write(bufferStream, (byte)SerializeId.Comment, this.Comment);
                 }
                 // Seeds
-                foreach (var s in this.Seeds)
+                foreach (var value in this.Seeds)
                 {
-                    Stream exportStream = s.Export(bufferManager);
-
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.Seed);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
-
-                    streams.Add(new UniteStream(bufferStream, exportStream));
+                    using (var stream = value.Export(bufferManager))
+                    {
+                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Seed, stream);
+                    }
                 }
-                // D_Boxes
-                foreach (var b in this.D_Boxes)
+                // Boxes
+                foreach (var value in this.T_Boxes)
                 {
-                    Stream exportStream = b.Export(bufferManager, count + 1);
-
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.D_Box);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
-
-                    streams.Add(new UniteStream(bufferStream, exportStream));
+                    using (var stream = value.Export(bufferManager, count + 1))
+                    {
+                        ItemUtilities.Write(bufferStream, (byte)SerializeId.T_Box, stream);
+                    }
                 }
 
                 // Certificate
                 if (this.Certificate != null)
                 {
-                    Stream exportStream = this.Certificate.Export(bufferManager);
-
-                    BufferStream bufferStream = new BufferStream(bufferManager);
-                    bufferStream.WriteByte((byte)SerializeId.Certificate);
-                    bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
-
-                    streams.Add(new UniteStream(bufferStream, exportStream));
+                    using (var stream = this.Certificate.Export(bufferManager))
+                    {
+                        ItemUtilities.Write(bufferStream, (byte)SerializeId.Certificate, stream);
+                    }
                 }
 
-                return new UniteStream(streams);
+                bufferStream.Seek(0, SeekOrigin.Begin);
+                return bufferStream;
             }
         }
 
@@ -253,7 +179,7 @@ namespace Library.UnitTest
                 || this.Certificate != other.Certificate
 
                 || (this.Seeds == null) != (other.Seeds == null)
-                || (this.D_Boxes == null) != (other.D_Boxes == null))
+                || (this.T_Boxes == null) != (other.T_Boxes == null))
             {
                 return false;
             }
@@ -263,9 +189,9 @@ namespace Library.UnitTest
                 if (!CollectionUtilities.Equals(this.Seeds, other.Seeds)) return false;
             }
 
-            if (this.D_Boxes != null && other.D_Boxes != null)
+            if (this.T_Boxes != null && other.T_Boxes != null)
             {
-                if (!CollectionUtilities.Equals(this.D_Boxes, other.D_Boxes)) return false;
+                if (!CollectionUtilities.Equals(this.T_Boxes, other.T_Boxes)) return false;
             }
 
             return true;
@@ -331,7 +257,7 @@ namespace Library.UnitTest
             }
         }
 
-        #region D_Box
+        #region T_Box
 
         [DataMember(Name = "Name")]
         public string Name
@@ -421,8 +347,8 @@ namespace Library.UnitTest
             }
         }
 
-        [DataMember(Name = "D_Boxes")]
-        public LockedList<T_Box> D_Boxes
+        [DataMember(Name = "T_Boxes")]
+        public LockedList<T_Box> T_Boxes
         {
             get
             {
@@ -438,7 +364,7 @@ namespace Library.UnitTest
 
         #endregion
 
-        #region ICloneable<D_Box>
+        #region ICloneable<T_Box>
 
         public T_Box Clone()
         {

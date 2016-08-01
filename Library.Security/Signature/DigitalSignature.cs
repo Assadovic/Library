@@ -12,7 +12,7 @@ namespace Library.Security
     [DataContract(Name = "DigitalSignature", Namespace = "http://Library/Security")]
     public sealed class DigitalSignature : ItemBase<DigitalSignature>
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Nickname = 0,
             DigitalSignatureAlgorithm = 1,
@@ -20,7 +20,7 @@ namespace Library.Security
             PrivateKey = 3,
         }
 
-        private enum FileSerializeId : byte
+        private enum FileSerializeId
         {
             Name = 0,
             Stream = 1,
@@ -72,25 +72,25 @@ namespace Library.Security
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Nickname)
+                    if (type == (int)SerializeId.Nickname)
                     {
                         this.Nickname = ItemUtilities.GetString(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.DigitalSignatureAlgorithm)
+                    else if (type == (int)SerializeId.DigitalSignatureAlgorithm)
                     {
                         this.DigitalSignatureAlgorithm = (DigitalSignatureAlgorithm)Enum.Parse(typeof(DigitalSignatureAlgorithm), ItemUtilities.GetString(rangeStream));
                     }
-                    else if (id == (byte)SerializeId.PublicKey)
+                    else if (type == (int)SerializeId.PublicKey)
                     {
                         this.PublicKey = ItemUtilities.GetByteArray(rangeStream);
                     }
-                    else if (id == (byte)SerializeId.PrivateKey)
+                    else if (type == (int)SerializeId.PrivateKey)
                     {
                         this.PrivateKey = ItemUtilities.GetByteArray(rangeStream);
                     }
@@ -181,34 +181,22 @@ namespace Library.Security
         public static Certificate CreateFileCertificate(DigitalSignature digitalSignature, string name, Stream stream)
         {
             BufferManager bufferManager = BufferManager.Instance;
-
             var streams = new List<Stream>();
-            Encoding encoding = new UTF8Encoding(false);
 
+            // Name
             {
                 var bufferStream = new BufferStream(bufferManager);
-                bufferStream.SetLength(5);
-                bufferStream.Seek(5, SeekOrigin.Begin);
-
-                using (WrapperStream wrapperStream = new WrapperStream(bufferStream, true))
-                using (StreamWriter writer = new StreamWriter(wrapperStream, encoding))
-                {
-                    writer.Write(Path.GetFileName(name));
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                bufferStream.Write(NetworkConverter.GetBytes((int)bufferStream.Length - 5), 0, 4);
-                bufferStream.WriteByte((byte)FileSerializeId.Name);
+                ItemUtilities.Write(bufferStream, (int)FileSerializeId.Name, Path.GetFileName(name));
 
                 streams.Add(bufferStream);
             }
-
+            // Stream
             {
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
-                bufferStream.WriteByte((byte)FileSerializeId.Stream);
+                IntegerUtilities.WriteInt(bufferStream, (int)FileSerializeId.Stream);
+                IntegerUtilities.WriteLong(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }
@@ -228,23 +216,11 @@ namespace Library.Security
         {
             BufferManager bufferManager = BufferManager.Instance;
             var streams = new List<Stream>();
-            Encoding encoding = new UTF8Encoding(false);
 
             // Name
             {
                 var bufferStream = new BufferStream(bufferManager);
-                bufferStream.SetLength(5);
-                bufferStream.Seek(5, SeekOrigin.Begin);
-
-                using (WrapperStream wrapperStream = new WrapperStream(bufferStream, true))
-                using (StreamWriter writer = new StreamWriter(wrapperStream, encoding))
-                {
-                    writer.Write(Path.GetFileName(name));
-                }
-
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                bufferStream.Write(NetworkConverter.GetBytes((int)bufferStream.Length - 5), 0, 4);
-                bufferStream.WriteByte((byte)FileSerializeId.Name);
+                ItemUtilities.Write(bufferStream, (int)FileSerializeId.Name, Path.GetFileName(name));
 
                 streams.Add(bufferStream);
             }
@@ -253,8 +229,8 @@ namespace Library.Security
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                bufferStream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
-                bufferStream.WriteByte((byte)FileSerializeId.Stream);
+                IntegerUtilities.WriteInt(bufferStream, (int)FileSerializeId.Stream);
+                IntegerUtilities.WriteLong(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }

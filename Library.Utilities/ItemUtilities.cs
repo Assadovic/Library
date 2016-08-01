@@ -54,9 +54,9 @@ namespace Library.Utilities
                 }), 0));
         }
 
-        public static void Write(Stream stream, byte type, Stream exportStream)
+        public static void Write(Stream stream, int type, Stream exportStream)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)exportStream.Length), 0, 4);
 
             using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
@@ -70,7 +70,7 @@ namespace Library.Utilities
             }
         }
 
-        public static void Write(Stream stream, byte type, string value)
+        public static void Write(Stream stream, int type, string value)
         {
             Encoding encoding = _threadLocalEncoding.Value;
 
@@ -78,63 +78,53 @@ namespace Library.Utilities
             {
                 var length = encoding.GetBytes(value, 0, value.Length, safeBuffer.Value, 0);
 
-                stream.WriteByte(type);
+                IntegerUtilities.WriteInt(stream, type);
                 stream.Write(NetworkConverter.GetBytes(length), 0, 4);
                 stream.Write(safeBuffer.Value, 0, length);
             }
         }
 
-        public static void Write(Stream stream, byte type, byte[] value)
+        public static void Write(Stream stream, int type, byte[] value)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)value.Length), 0, 4);
             stream.Write(value, 0, value.Length);
         }
 
-        public static void Write(Stream stream, byte type, byte value)
+        public static void Write(Stream stream, int type, byte value)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)1), 0, 4);
             stream.WriteByte(value);
         }
 
-        public static void Write(Stream stream, byte type, short value)
+        public static void Write(Stream stream, int type, short value)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)2), 0, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 2);
         }
 
-        public static void Write(Stream stream, byte type, int value)
+        public static void Write(Stream stream, int type, int value)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)4), 0, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 4);
         }
 
-        public static void Write(Stream stream, byte type, long value)
+        public static void Write(Stream stream, int type, long value)
         {
-            stream.WriteByte(type);
+            IntegerUtilities.WriteInt(stream, type);
             stream.Write(NetworkConverter.GetBytes((int)8), 0, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 8);
         }
 
-        public static Stream GetStream(out byte id, Stream stream)
+        public static Stream GetStream(out int type, Stream stream)
         {
-            id = 0;
-
-            {
-                byte[] idBuffer = new byte[1];
-                if (stream.Read(idBuffer, 0, idBuffer.Length) != idBuffer.Length) return null;
-                id = idBuffer[0];
-            }
-
-            int length;
-            {
-                byte[] lengthBuffer = new byte[4];
-                if (stream.Read(lengthBuffer, 0, lengthBuffer.Length) != lengthBuffer.Length) return null;
-                length = NetworkConverter.ToInt32(lengthBuffer);
-            }
+            type = IntegerUtilities.GetInt(stream);
+            if (type == -1) return null;
+            long length = IntegerUtilities.GetLong(stream);
+            if (length == -1) return null;
 
             return new RangeStream(stream, stream.Position, length, true);
         }
@@ -160,7 +150,7 @@ namespace Library.Utilities
             }
         }
 
-        public static int GetByte(Stream stream)
+        public static byte GetByte(Stream stream)
         {
             if (stream.Length != 1) throw new ArgumentException();
 
@@ -171,7 +161,7 @@ namespace Library.Utilities
             return buffer[0];
         }
 
-        public static int GetShort(Stream stream)
+        public static short GetShort(Stream stream)
         {
             if (stream.Length != 2) throw new ArgumentException();
 

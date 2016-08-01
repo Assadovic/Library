@@ -14,7 +14,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "Node", Namespace = "http://Library/Net/Outopos")]
     public sealed class Node : ItemBase<Node>, INode
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Id = 0,
             Uri = 1,
@@ -43,18 +43,18 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Id)
+                    if (type == (int)SerializeId.Id)
                     {
                         this.Id = ItemUtilities.GetByteArray(rangeStream);
                     }
 
-                    else if (id == (byte)SerializeId.Uri)
+                    else if (type == (int)SerializeId.Uri)
                     {
                         this.ProtectedUris.Add(ItemUtilities.GetString(rangeStream));
                     }

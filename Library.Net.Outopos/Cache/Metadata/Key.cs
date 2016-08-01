@@ -9,7 +9,7 @@ namespace Library.Net.Outopos
     [DataContract(Name = "Key", Namespace = "http://Library/Net/Outopos")]
     sealed class Key : ItemBase<Key>, IKey
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Hash = 0,
 
@@ -40,18 +40,18 @@ namespace Library.Net.Outopos
         {
             for (;;)
             {
-                byte id;
+                int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
-                    if (id == (byte)SerializeId.Hash)
+                    if (type == (int)SerializeId.Hash)
                     {
                         this.Hash = ItemUtilities.GetByteArray(rangeStream);
                     }
 
-                    else if (id == (byte)SerializeId.HashAlgorithm)
+                    else if (type == (int)SerializeId.HashAlgorithm)
                     {
                         this.HashAlgorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), ItemUtilities.GetString(rangeStream));
                     }

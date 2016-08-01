@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Seed", Namespace = "http://Library/Net/Amoeba")]
     public sealed class Seed : MutableCertificateItemBase<Seed>, ISeed<Key>, ICloneable<Seed>, IThisLock
     {
-        private enum SerializeId : byte
+        private enum SerializeId
         {
             Name = 0,
             Length = 1,
@@ -73,57 +73,57 @@ namespace Library.Net.Amoeba
             {
                 for (;;)
                 {
-                    byte id;
+                    int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out id, stream))
+                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
-                        if (id == (byte)SerializeId.Name)
+                        if (type == (int)SerializeId.Name)
                         {
                             this.Name = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Length)
+                        else if (type == (int)SerializeId.Length)
                         {
                             this.Length = ItemUtilities.GetLong(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.CreationTime)
+                        else if (type == (int)SerializeId.CreationTime)
                         {
                             this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
-                        else if (id == (byte)SerializeId.Comment)
+                        else if (type == (int)SerializeId.Comment)
                         {
                             this.Comment = ItemUtilities.GetString(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Rank)
+                        else if (type == (int)SerializeId.Rank)
                         {
                             this.Rank = ItemUtilities.GetInt(rangeStream);
                         }
-                        else if (id == (byte)SerializeId.Key)
+                        else if (type == (int)SerializeId.Key)
                         {
                             this.Key = Key.Import(rangeStream, bufferManager);
                         }
 
-                        else if (id == (byte)SerializeId.Keyword)
+                        else if (type == (int)SerializeId.Keyword)
                         {
                             this.Keywords.Add(ItemUtilities.GetString(rangeStream));
                         }
 
-                        else if (id == (byte)SerializeId.CompressionAlgorithm)
+                        else if (type == (int)SerializeId.CompressionAlgorithm)
                         {
                             this.CompressionAlgorithm = (CompressionAlgorithm)Enum.Parse(typeof(CompressionAlgorithm), ItemUtilities.GetString(rangeStream));
                         }
 
-                        else if (id == (byte)SerializeId.CryptoAlgorithm)
+                        else if (type == (int)SerializeId.CryptoAlgorithm)
                         {
                             this.CryptoAlgorithm = (CryptoAlgorithm)Enum.Parse(typeof(CryptoAlgorithm), ItemUtilities.GetString(rangeStream));
                         }
-                        else if (id == (byte)SerializeId.CryptoKey)
+                        else if (type == (int)SerializeId.CryptoKey)
                         {
                             this.CryptoKey = ItemUtilities.GetByteArray(rangeStream);
                         }
 
-                        else if (id == (byte)SerializeId.Certificate)
+                        else if (type == (int)SerializeId.Certificate)
                         {
                             this.Certificate = Certificate.Import(rangeStream, bufferManager);
                         }
