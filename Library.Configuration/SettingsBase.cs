@@ -215,7 +215,7 @@ namespace Library.Configuration
                         var xmlWriterSettings = new XmlWriterSettings();
                         xmlWriterSettings.Encoding = new UTF8Encoding(false);
                         xmlWriterSettings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
-                        xmlWriterSettings.NewLineHandling = NewLineHandling.None;
+                        xmlWriterSettings.NewLineHandling = NewLineHandling.Entitize;
 
                         using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
                         using (var xml = XmlWriter.Create(compressStream, xmlWriterSettings))
