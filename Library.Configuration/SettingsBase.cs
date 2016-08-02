@@ -213,7 +213,9 @@ namespace Library.Configuration
                         uniquePath = stream.Name;
 
                         var xmlWriterSettings = new XmlWriterSettings();
+                        xmlWriterSettings.Encoding = new UTF8Encoding(false);
                         xmlWriterSettings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
+                        xmlWriterSettings.NewLineHandling = NewLineHandling.None;
 
                         using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
                         using (var xml = XmlWriter.Create(compressStream, xmlWriterSettings))
