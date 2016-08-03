@@ -112,8 +112,7 @@ namespace Library.Net.Outopos
 
         public override int GetHashCode()
         {
-            if (this.Comment == null) return 0;
-            else return this.Comment.GetHashCode();
+            return this.CreationTime.GetHashCode();
         }
 
         public override bool Equals(object obj)
