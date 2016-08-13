@@ -13,7 +13,7 @@ namespace Library.Net.Proxy
     /// <remarks>
     /// This implementation supports TCP proxy connections with a Socks v5 server.
     /// </remarks>
-    public class Socks5ProxyClient : ProxyClientBase, IThisLock
+    public class Socks5ProxyClient : ProxyClientBase
     {
         private const int SOCKS5_DEFAULT_PORT = 1080;
 
@@ -127,10 +127,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _proxyUserName;
-                }
+                return _proxyUserName;
             }
         }
 
@@ -141,10 +138,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _proxyPassword;
-                }
+                return _proxyPassword;
             }
         }
 
@@ -156,10 +150,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _tcpClient.Client;
-                }
+                return _tcpClient.Client;
             }
         }
 
@@ -540,17 +531,5 @@ namespace Library.Net.Proxy
 
             throw new ProxyClientException(exceptionMsg);
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

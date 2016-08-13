@@ -43,7 +43,7 @@ namespace Library.Net.I2p
 
             _writerThread = new Thread(this.WriterThread);
             _writerThread.Priority = ThreadPriority.BelowNormal;
-            _writerThread.Name = "SamSession_WatchThread";
+            _writerThread.Name = "SamSession_WriterThread";
 
             _acceptThread = new Thread(this.AcceptThread);
             _acceptThread.Priority = ThreadPriority.BelowNormal;

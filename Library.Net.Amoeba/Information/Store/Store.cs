@@ -38,7 +38,7 @@ namespace Library.Net.Amoeba
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -62,7 +62,7 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Box, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Box, stream);
                     }
                 }
 
@@ -92,7 +92,7 @@ namespace Library.Net.Amoeba
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (!CollectionUtilities.Equals(this.Boxes, other.Boxes))
+            if (!CollectionUtils.Equals(this.Boxes, other.Boxes))
             {
                 return false;
             }

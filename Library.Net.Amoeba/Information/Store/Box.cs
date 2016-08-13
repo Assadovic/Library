@@ -59,21 +59,21 @@ namespace Library.Net.Amoeba
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
                         if (type == (int)SerializeId.Name)
                         {
-                            this.Name = ItemUtilities.GetString(rangeStream);
+                            this.Name = ItemUtils.GetString(rangeStream);
                         }
                         else if (type == (int)SerializeId.CreationTime)
                         {
-                            this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                            this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
                         else if (type == (int)SerializeId.Comment)
                         {
-                            this.Comment = ItemUtilities.GetString(rangeStream);
+                            this.Comment = ItemUtils.GetString(rangeStream);
                         }
                         else if (type == (int)SerializeId.Seed)
                         {
@@ -104,24 +104,24 @@ namespace Library.Net.Amoeba
                 // Name
                 if (this.Name != null)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Name, this.Name);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Name, this.Name);
                 }
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // Comment
                 if (this.Comment != null)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
                 }
                 // Seeds
                 foreach (var value in this.Seeds)
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Seed, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Seed, stream);
                     }
                 }
                 // Boxes
@@ -129,7 +129,7 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager, count + 1))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Box, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Box, stream);
                     }
                 }
 
@@ -138,7 +138,7 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = this.Certificate.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 
@@ -170,8 +170,8 @@ namespace Library.Net.Amoeba
             if (this.Name != other.Name
                 || this.CreationTime != other.CreationTime
                 || this.Comment != other.Comment
-                || !CollectionUtilities.Equals(this.Seeds, other.Seeds)
-                || !CollectionUtilities.Equals(this.Boxes, other.Boxes)
+                || !CollectionUtils.Equals(this.Seeds, other.Seeds)
+                || !CollectionUtils.Equals(this.Boxes, other.Boxes)
 
                 || this.Certificate != other.Certificate)
             {

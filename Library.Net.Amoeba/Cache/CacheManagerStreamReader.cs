@@ -166,7 +166,7 @@ namespace Library.Net.Amoeba
                     if (_blockBuffer.Array != null)
                     {
                         _bufferManager.ReturnBuffer(_blockBuffer.Array);
-                        _blockBuffer = new ArraySegment<byte>();
+                        _blockBuffer = default(ArraySegment<byte>);
                     }
                 }
             }

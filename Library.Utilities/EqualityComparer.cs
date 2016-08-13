@@ -16,7 +16,7 @@ namespace Library.Utilities
 
         public int GetHashCode(byte[] value)
         {
-            return ItemUtilities.GetHashCode(value);
+            return ItemUtils.GetHashCode(value);
         }
     }
 

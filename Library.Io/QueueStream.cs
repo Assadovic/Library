@@ -203,7 +203,7 @@ namespace Library.Io
                         {
                             _bufferManager.ReturnBuffer(buffer);
 
-                            _queue.Enqueue(new ArraySegment<byte>());
+                            _queue.Enqueue(default(ArraySegment<byte>));
 
                             return;
                         }
@@ -434,7 +434,7 @@ namespace Library.Io
             {
                 for (;;)
                 {
-                    var buffer = new ArraySegment<byte>();
+                    var buffer = default(ArraySegment<byte>);
 
                     try
                     {
@@ -553,7 +553,7 @@ namespace Library.Io
             {
                 if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-                _queue.Enqueue(new ArraySegment<byte>());
+                _queue.Enqueue(default(ArraySegment<byte>));
                 _watchThread.Join();
             }
 

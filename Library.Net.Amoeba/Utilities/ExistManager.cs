@@ -8,7 +8,7 @@ namespace Library.Net.Amoeba
 {
     // パフォーマンス上の理由から仕方なく、これは高速化にかなり貢献してる
 
-    sealed class ExistManager : ManagerBase, IThisLock
+    sealed class ExistManager : ManagerBase
     {
         private Dictionary<Group, GroupManager> _table = new Dictionary<Group, GroupManager>(new ReferenceEqualityComparer());
 
@@ -22,7 +22,7 @@ namespace Library.Net.Amoeba
 
         public void Add(Group group)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _table[group] = new GroupManager(group);
             }
@@ -30,7 +30,7 @@ namespace Library.Net.Amoeba
 
         public void Remove(Group group)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _table.Remove(group);
             }
@@ -38,7 +38,7 @@ namespace Library.Net.Amoeba
 
         public void Set(Group group, IEnumerable<Key> keys)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 GroupManager groupManager;
                 if (!_table.TryGetValue(group, out groupManager)) throw new ArgumentException();
@@ -52,7 +52,7 @@ namespace Library.Net.Amoeba
 
         public void Set(Key key, bool state)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 foreach (var groupManager in _table.Values)
                 {
@@ -63,7 +63,7 @@ namespace Library.Net.Amoeba
 
         public IEnumerable<Key> GetKeys(Group group, bool state)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 GroupManager groupManager;
                 if (!_table.TryGetValue(group, out groupManager)) throw new ArgumentException();
@@ -74,7 +74,7 @@ namespace Library.Net.Amoeba
 
         public int GetCount(Group group)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 GroupManager groupManager;
                 if (!_table.TryGetValue(group, out groupManager)) throw new ArgumentException();
@@ -192,17 +192,5 @@ namespace Library.Net.Amoeba
 
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

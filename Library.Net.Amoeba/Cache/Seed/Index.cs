@@ -49,7 +49,7 @@ namespace Library.Net.Amoeba
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -60,16 +60,16 @@ namespace Library.Net.Amoeba
 
                         else if (type == (int)SerializeId.CompressionAlgorithm)
                         {
-                            this.CompressionAlgorithm = (CompressionAlgorithm)Enum.Parse(typeof(CompressionAlgorithm), ItemUtilities.GetString(rangeStream));
+                            this.CompressionAlgorithm = (CompressionAlgorithm)Enum.Parse(typeof(CompressionAlgorithm), ItemUtils.GetString(rangeStream));
                         }
 
                         else if (type == (int)SerializeId.CryptoAlgorithm)
                         {
-                            this.CryptoAlgorithm = (CryptoAlgorithm)Enum.Parse(typeof(CryptoAlgorithm), ItemUtilities.GetString(rangeStream));
+                            this.CryptoAlgorithm = (CryptoAlgorithm)Enum.Parse(typeof(CryptoAlgorithm), ItemUtils.GetString(rangeStream));
                         }
                         else if (type == (int)SerializeId.CryptoKey)
                         {
-                            this.CryptoKey = ItemUtilities.GetByteArray(rangeStream);
+                            this.CryptoKey = ItemUtils.GetByteArray(rangeStream);
                         }
                     }
                 }
@@ -87,25 +87,25 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Group, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Group, stream);
                     }
                 }
 
                 // CompressionAlgorithm
                 if (this.CompressionAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
                 }
 
                 // CryptoAlgorithm
                 if (this.CryptoAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
                 }
                 // CryptoKey
                 if (this.CryptoKey != null)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoKey, this.CryptoKey);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CryptoKey, this.CryptoKey);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -135,7 +135,7 @@ namespace Library.Net.Amoeba
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (!CollectionUtilities.Equals(this.Groups, other.Groups)
+            if (!CollectionUtils.Equals(this.Groups, other.Groups)
 
                 || this.CompressionAlgorithm != other.CompressionAlgorithm
 

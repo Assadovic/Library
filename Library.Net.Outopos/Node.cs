@@ -45,18 +45,18 @@ namespace Library.Net.Outopos
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.Id)
                     {
-                        this.Id = ItemUtilities.GetByteArray(rangeStream);
+                        this.Id = ItemUtils.GetByteArray(rangeStream);
                     }
 
                     else if (type == (int)SerializeId.Uri)
                     {
-                        this.ProtectedUris.Add(ItemUtilities.GetString(rangeStream));
+                        this.ProtectedUris.Add(ItemUtils.GetString(rangeStream));
                     }
                 }
             }
@@ -69,13 +69,13 @@ namespace Library.Net.Outopos
             // Id
             if (this.Id != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Id, this.Id);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Id, this.Id);
             }
 
             // Uris
             foreach (var value in this.Uris)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Uri, value);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Uri, value);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -112,7 +112,7 @@ namespace Library.Net.Outopos
 
             if (this.Uris != null && other.Uris != null)
             {
-                if (!CollectionUtilities.Equals(this.Uris, other.Uris)) return false;
+                if (!CollectionUtils.Equals(this.Uris, other.Uris)) return false;
             }
 
             return true;
@@ -148,7 +148,7 @@ namespace Library.Net.Outopos
 
                 if (value != null)
                 {
-                    _hashCode = ItemUtilities.GetHashCode(value);
+                    _hashCode = ItemUtils.GetHashCode(value);
                 }
                 else
                 {

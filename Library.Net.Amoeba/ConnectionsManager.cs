@@ -478,8 +478,8 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                if (CollectionUtilities.Equals(connectionManager.Node.Id, this.BaseNode.Id)
-                    || _connectionManagers.Any(n => CollectionUtilities.Equals(n.Node.Id, connectionManager.Node.Id)))
+                if (CollectionUtils.Equals(connectionManager.Node.Id, this.BaseNode.Id)
+                    || _connectionManagers.Any(n => CollectionUtils.Equals(n.Node.Id, connectionManager.Node.Id)))
                 {
                     connectionManager.Dispose();
                     return;
@@ -509,7 +509,7 @@ namespace Library.Net.Amoeba
                     var tempMessageManager = _messagesManager[connectionManager.Node];
 
                     if (tempMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
+                        && !CollectionUtils.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
                     {
                         _messagesManager.Remove(connectionManager.Node);
                     }
@@ -584,7 +584,7 @@ namespace Library.Net.Amoeba
                 {
                     node = _cuttingNodes
                         .ToArray()
-                        .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                        .Where(n => !_connectionManagers.Any(m => CollectionUtils.Equals(m.Node.Id, n.Id))
                             && !_creatingNodes.Contains(n)
                             && !_waitingNodes.Contains(n))
                         .Randomize()
@@ -594,7 +594,7 @@ namespace Library.Net.Amoeba
                     {
                         node = _routeTable
                             .ToArray()
-                            .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                            .Where(n => !_connectionManagers.Any(m => CollectionUtils.Equals(m.Node.Id, n.Id))
                                 && !_creatingNodes.Contains(n)
                                 && !_waitingNodes.Contains(n))
                             .Randomize()
@@ -1662,7 +1662,7 @@ namespace Library.Net.Amoeba
 
                             if (key != null)
                             {
-                                var buffer = new ArraySegment<byte>();
+                                var buffer = default(ArraySegment<byte>);
 
                                 try
                                 {
@@ -1724,7 +1724,7 @@ namespace Library.Net.Amoeba
 
                             if (key != null)
                             {
-                                var buffer = new ArraySegment<byte>();
+                                var buffer = default(ArraySegment<byte>);
 
                                 try
                                 {

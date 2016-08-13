@@ -450,8 +450,8 @@ namespace Library.Net.Outopos
         {
             lock (_thisLock)
             {
-                if (CollectionUtilities.Equals(connectionManager.Node.Id, this.BaseNode.Id)
-                    || _connectionManagers.Any(n => CollectionUtilities.Equals(n.Node.Id, connectionManager.Node.Id)))
+                if (CollectionUtils.Equals(connectionManager.Node.Id, this.BaseNode.Id)
+                    || _connectionManagers.Any(n => CollectionUtils.Equals(n.Node.Id, connectionManager.Node.Id)))
                 {
                     connectionManager.Dispose();
                     return;
@@ -485,7 +485,7 @@ namespace Library.Net.Outopos
                     var tempMessageManager = _messagesManager[connectionManager.Node];
 
                     if (tempMessageManager.SessionId != null
-                        && !CollectionUtilities.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
+                        && !CollectionUtils.Equals(tempMessageManager.SessionId, connectionManager.SesstionId))
                     {
                         _messagesManager.Remove(connectionManager.Node);
                     }
@@ -560,7 +560,7 @@ namespace Library.Net.Outopos
                 {
                     node = _cuttingNodes
                         .ToArray()
-                        .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                        .Where(n => !_connectionManagers.Any(m => CollectionUtils.Equals(m.Node.Id, n.Id))
                             && !_creatingNodes.Contains(n)
                             && !_waitingNodes.Contains(n))
                         .Randomize()
@@ -570,7 +570,7 @@ namespace Library.Net.Outopos
                     {
                         node = _routeTable
                             .ToArray()
-                            .Where(n => !_connectionManagers.Any(m => CollectionUtilities.Equals(m.Node.Id, n.Id))
+                            .Where(n => !_connectionManagers.Any(m => CollectionUtils.Equals(m.Node.Id, n.Id))
                                 && !_creatingNodes.Contains(n)
                                 && !_waitingNodes.Contains(n))
                             .Randomize()
@@ -969,7 +969,7 @@ namespace Library.Net.Outopos
 
                                         removeUnicastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
 
-                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                        foreach (var list in CollectionUtils.Unite(trustMetadatas.Values, untrustMetadatas.Values))
                                         {
                                             if (list.Count <= 32) continue;
 
@@ -1031,7 +1031,7 @@ namespace Library.Net.Outopos
 
                                         removeMulticastMetadatas.UnionWith(untrustMetadatas.Randomize().Skip(256).SelectMany(n => n.Value));
 
-                                        foreach (var list in CollectionUtilities.Unite(trustMetadatas.Values, untrustMetadatas.Values))
+                                        foreach (var list in CollectionUtils.Unite(trustMetadatas.Values, untrustMetadatas.Values))
                                         {
                                             if (list.Count <= 32) continue;
 

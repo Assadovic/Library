@@ -44,17 +44,17 @@ namespace Library.Security
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.CashAlgorithm)
                     {
-                        this.CashAlgorithm = (CashAlgorithm)Enum.Parse(typeof(CashAlgorithm), ItemUtilities.GetString(rangeStream));
+                        this.CashAlgorithm = (CashAlgorithm)Enum.Parse(typeof(CashAlgorithm), ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.Key)
                     {
-                        this.Key = ItemUtilities.GetByteArray(rangeStream);
+                        this.Key = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -67,12 +67,12 @@ namespace Library.Security
             // CashAlgorithm
             if (this.CashAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.CashAlgorithm, this.CashAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.CashAlgorithm, this.CashAlgorithm.ToString());
             }
             // Key
             if (this.Key != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Key, this.Key);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Key, this.Key);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -150,7 +150,7 @@ namespace Library.Security
 
                 if (value != null)
                 {
-                    _hashCode = ItemUtilities.GetHashCode(value);
+                    _hashCode = ItemUtils.GetHashCode(value);
                 }
                 else
                 {

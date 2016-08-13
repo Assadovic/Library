@@ -42,18 +42,18 @@ namespace Library.Net.Amoeba
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.Hash)
                     {
-                        this.Hash = ItemUtilities.GetByteArray(rangeStream);
+                        this.Hash = ItemUtils.GetByteArray(rangeStream);
                     }
 
                     else if (type == (int)SerializeId.HashAlgorithm)
                     {
-                        this.HashAlgorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), ItemUtilities.GetString(rangeStream));
+                        this.HashAlgorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), ItemUtils.GetString(rangeStream));
                     }
                 }
             }
@@ -66,13 +66,13 @@ namespace Library.Net.Amoeba
             // Hash
             if (this.Hash != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Hash, this.Hash);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Hash, this.Hash);
             }
 
             // HashAlgorithm
             if (this.HashAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -133,7 +133,7 @@ namespace Library.Net.Amoeba
 
                 if (value != null)
                 {
-                    _hashCode = ItemUtilities.GetHashCode(value);
+                    _hashCode = ItemUtils.GetHashCode(value);
                 }
                 else
                 {

@@ -71,25 +71,25 @@ namespace Library.Security
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.Nickname)
                     {
-                        this.Nickname = ItemUtilities.GetString(rangeStream);
+                        this.Nickname = ItemUtils.GetString(rangeStream);
                     }
                     else if (type == (int)SerializeId.DigitalSignatureAlgorithm)
                     {
-                        this.DigitalSignatureAlgorithm = (DigitalSignatureAlgorithm)Enum.Parse(typeof(DigitalSignatureAlgorithm), ItemUtilities.GetString(rangeStream));
+                        this.DigitalSignatureAlgorithm = (DigitalSignatureAlgorithm)Enum.Parse(typeof(DigitalSignatureAlgorithm), ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.PublicKey)
                     {
-                        this.PublicKey = ItemUtilities.GetByteArray(rangeStream);
+                        this.PublicKey = ItemUtils.GetByteArray(rangeStream);
                     }
                     else if (type == (int)SerializeId.Signature)
                     {
-                        this.Signature = ItemUtilities.GetByteArray(rangeStream);
+                        this.Signature = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -102,22 +102,22 @@ namespace Library.Security
             // Nickname
             if (this.Nickname != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Nickname, this.Nickname);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Nickname, this.Nickname);
             }
             // DigitalSignatureAlgorithm
             if (this.DigitalSignatureAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm.ToString());
             }
             // PublicKey
             if (this.PublicKey != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
+                ItemUtils.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
             }
             // Signature
             if (this.Signature != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, this.Signature);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Signature, this.Signature);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

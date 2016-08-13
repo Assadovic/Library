@@ -45,21 +45,21 @@ namespace Library.Security
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.CreationTime)
                     {
-                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                        this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
                     else if (type == (int)SerializeId.ExchangeAlgorithm)
                     {
-                        this.ExchangeAlgorithm = (ExchangeAlgorithm)Enum.Parse(typeof(ExchangeAlgorithm), ItemUtilities.GetString(rangeStream));
+                        this.ExchangeAlgorithm = (ExchangeAlgorithm)Enum.Parse(typeof(ExchangeAlgorithm), ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.PublicKey)
                     {
-                        this.PublicKey = ItemUtilities.GetByteArray(rangeStream);
+                        this.PublicKey = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -72,17 +72,17 @@ namespace Library.Security
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
             // ExchangeAlgorithm
             if (this.ExchangeAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm.ToString());
             }
             // PublicKey
             if (this.PublicKey != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
+                ItemUtils.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -175,7 +175,7 @@ namespace Library.Security
 
                 if (value != null)
                 {
-                    _hashCode = ItemUtilities.GetHashCode(value);
+                    _hashCode = ItemUtils.GetHashCode(value);
                 }
                 else
                 {

@@ -66,19 +66,19 @@ namespace Library.Security
             {
                 _isCanceled = false;
 
-                var minerUtilities = new MinerUtilities();
+                var minerUtils = new MinerUtils();
 
                 try
                 {
                     var task = Task.Run(() =>
                     {
-                        var key = minerUtilities.Create_1(Sha256.ComputeHash(stream), this.Limit, this.ComputationTime);
+                        var key = minerUtils.Create_1(Sha256.ComputeHash(stream), this.Limit, this.ComputationTime);
                         return new Cash(CashAlgorithm.Version1, key);
                     });
 
                     while (!task.IsCompleted)
                     {
-                        if (_isCanceled) minerUtilities.Cancel();
+                        if (_isCanceled) minerUtils.Cancel();
 
                         Thread.Sleep(1000);
                     }
@@ -101,19 +101,19 @@ namespace Library.Security
 
             if (cash.CashAlgorithm == CashAlgorithm.Version1)
             {
-                var minerUtilities = new MinerUtilities();
+                var minerUtils = new MinerUtils();
 
-                return minerUtilities.Verify_1(cash.Key, Sha256.ComputeHash(stream));
+                return minerUtils.Verify_1(cash.Key, Sha256.ComputeHash(stream));
             }
 
             return 0;
         }
 
-        private class MinerUtilities
+        private class MinerUtils
         {
             private static string _path;
 
-            static MinerUtilities()
+            static MinerUtils()
             {
                 OperatingSystem osInfo = Environment.OSVersion;
 

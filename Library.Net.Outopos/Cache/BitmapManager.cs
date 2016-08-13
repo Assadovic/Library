@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Library.Net.Outopos
 {
-    class BitmapManager : ManagerBase, IThisLock
+    class BitmapManager : ManagerBase
     {
         private FileStream _bitmapStream;
         private BufferManager _bufferManager;
@@ -16,7 +16,7 @@ namespace Library.Net.Outopos
         private long _cacheSector = -1;
 
         private byte[] _cacheBuffer;
-        private int _cacheBufferCount = 0;
+        private int _cacheBufferLength = 0;
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
@@ -30,7 +30,7 @@ namespace Library.Net.Outopos
 
             _cacheBuffer = _bufferManager.TakeBuffer(BitmapManager.SectorSize);
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings(_thisLock);
         }
 
         private static long Roundup(long value, long unit)
@@ -43,7 +43,7 @@ namespace Library.Net.Outopos
         {
             get
             {
-                lock (this.ThisLock)
+                lock (_thisLock)
                 {
                     return _length;
                 }
@@ -52,7 +52,7 @@ namespace Library.Net.Outopos
 
         public void SetLength(long length)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 {
                     var size = BitmapManager.Roundup(length, 8);
@@ -61,12 +61,15 @@ namespace Library.Net.Outopos
                     _bitmapStream.Seek(0, SeekOrigin.Begin);
 
                     {
-                        var buffer = new byte[4096];
-
-                        for (long i = (size / buffer.Length), remain = size; i >= 0; i--, remain -= buffer.Length)
+                        using (var safeBuffer = _bufferManager.CreateSafeBuffer(4096))
                         {
-                            _bitmapStream.Write(buffer, 0, (int)Math.Min(remain, buffer.Length));
-                            _bitmapStream.Flush();
+                            Unsafe.Zero(safeBuffer.Value);
+
+                            for (long i = (size / safeBuffer.Value.Length), remain = size; i >= 0; i--, remain -= safeBuffer.Value.Length)
+                            {
+                                _bitmapStream.Write(safeBuffer.Value, 0, (int)Math.Min(remain, safeBuffer.Value.Length));
+                                _bitmapStream.Flush();
+                            }
                         }
                     }
                 }
@@ -77,7 +80,7 @@ namespace Library.Net.Outopos
                     _cacheChanged = false;
                     _cacheSector = -1;
 
-                    _cacheBufferCount = 0;
+                    _cacheBufferLength = 0;
                 }
             }
         }
@@ -87,7 +90,7 @@ namespace Library.Net.Outopos
             if (_cacheChanged)
             {
                 _bitmapStream.Seek(_cacheSector * BitmapManager.SectorSize, SeekOrigin.Begin);
-                _bitmapStream.Write(_cacheBuffer, 0, _cacheBufferCount);
+                _bitmapStream.Write(_cacheBuffer, 0, _cacheBufferLength);
                 _bitmapStream.Flush();
 
                 _cacheChanged = false;
@@ -101,17 +104,17 @@ namespace Library.Net.Outopos
                 this.Flush();
 
                 _bitmapStream.Seek(sector * BitmapManager.SectorSize, SeekOrigin.Begin);
-                _cacheBufferCount = _bitmapStream.Read(_cacheBuffer, 0, _cacheBuffer.Length);
+                _cacheBufferLength = _bitmapStream.Read(_cacheBuffer, 0, _cacheBuffer.Length);
 
                 _cacheSector = sector;
             }
 
-            return new ArraySegment<byte>(_cacheBuffer, 0, _cacheBufferCount);
+            return new ArraySegment<byte>(_cacheBuffer, 0, _cacheBufferLength);
         }
 
         public bool Get(long point)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (point >= _length) throw new ArgumentOutOfRangeException(nameof(point));
 
@@ -126,7 +129,7 @@ namespace Library.Net.Outopos
 
         public void Set(long point, bool state)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 if (point >= _length) throw new ArgumentOutOfRangeException(nameof(point));
 
@@ -153,7 +156,7 @@ namespace Library.Net.Outopos
 
         public void Load(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Load(directoryPath);
                 _length = _settings.Length;
@@ -162,7 +165,7 @@ namespace Library.Net.Outopos
 
         public void Save(string directoryPath)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 _settings.Length = _length;
                 _settings.Save(directoryPath);
@@ -256,17 +259,5 @@ namespace Library.Net.Outopos
                 }
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

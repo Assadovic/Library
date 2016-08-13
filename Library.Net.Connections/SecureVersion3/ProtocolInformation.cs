@@ -52,29 +52,29 @@ namespace Library.Net.Connections.SecureVersion3
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.KeyExchangeAlgorithm)
                     {
-                        this.KeyExchangeAlgorithm = EnumEx<KeyExchangeAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
+                        this.KeyExchangeAlgorithm = EnumEx<KeyExchangeAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.KeyDerivationAlgorithm)
                     {
-                        this.KeyDerivationAlgorithm = EnumEx<KeyDerivationAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
+                        this.KeyDerivationAlgorithm = EnumEx<KeyDerivationAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.CryptoAlgorithm)
                     {
-                        this.CryptoAlgorithm = EnumEx<CryptoAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
+                        this.CryptoAlgorithm = EnumEx<CryptoAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.HashAlgorithm)
                     {
-                        this.HashAlgorithm = EnumEx<HashAlgorithm>.Parse(ItemUtilities.GetString(rangeStream));
+                        this.HashAlgorithm = EnumEx<HashAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.SessionId)
                     {
-                        this.SessionId = ItemUtilities.GetByteArray(rangeStream);
+                        this.SessionId = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -87,27 +87,27 @@ namespace Library.Net.Connections.SecureVersion3
             // KeyExchangeAlgorithm
             if (this.KeyExchangeAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm.ToString());
             }
             // KeyDerivationAlgorithm
             if (this.KeyDerivationAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm.ToString());
             }
             // CryptoAlgorithm
             if (this.CryptoAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
             }
             // HashAlgorithm
             if (this.HashAlgorithm != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
+                ItemUtils.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
             }
             // SessionId
             if (this.SessionId != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.SessionId, this.SessionId);
+                ItemUtils.Write(bufferStream, (int)SerializeId.SessionId, this.SessionId);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -220,7 +220,7 @@ namespace Library.Net.Connections.SecureVersion3
 
                 if (value != null)
                 {
-                    _hashCode = ItemUtilities.GetHashCode(value);
+                    _hashCode = ItemUtils.GetHashCode(value);
                 }
                 else
                 {

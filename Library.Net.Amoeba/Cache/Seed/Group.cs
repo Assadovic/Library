@@ -47,7 +47,7 @@ namespace Library.Net.Amoeba
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -58,19 +58,19 @@ namespace Library.Net.Amoeba
 
                         else if (type == (int)SerializeId.CorrectionAlgorithm)
                         {
-                            this.CorrectionAlgorithm = (CorrectionAlgorithm)Enum.Parse(typeof(CorrectionAlgorithm), ItemUtilities.GetString(rangeStream));
+                            this.CorrectionAlgorithm = (CorrectionAlgorithm)Enum.Parse(typeof(CorrectionAlgorithm), ItemUtils.GetString(rangeStream));
                         }
                         else if (type == (int)SerializeId.InformationLength)
                         {
-                            this.InformationLength = ItemUtilities.GetInt(rangeStream);
+                            this.InformationLength = ItemUtils.GetInt(rangeStream);
                         }
                         else if (type == (int)SerializeId.BlockLength)
                         {
-                            this.BlockLength = ItemUtilities.GetInt(rangeStream);
+                            this.BlockLength = ItemUtils.GetInt(rangeStream);
                         }
                         else if (type == (int)SerializeId.Length)
                         {
-                            this.Length = ItemUtilities.GetLong(rangeStream);
+                            this.Length = ItemUtils.GetLong(rangeStream);
                         }
                     }
                 }
@@ -88,29 +88,29 @@ namespace Library.Net.Amoeba
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
                 // CorrectionAlgorithm
                 if (this.CorrectionAlgorithm != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CorrectionAlgorithm, this.CorrectionAlgorithm.ToString());
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CorrectionAlgorithm, this.CorrectionAlgorithm.ToString());
                 }
                 // InformationLength
                 if (this.InformationLength != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.InformationLength, this.InformationLength);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.InformationLength, this.InformationLength);
                 }
                 // BlockLength
                 if (this.BlockLength != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.BlockLength, this.BlockLength);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.BlockLength, this.BlockLength);
                 }
                 // Length
                 if (this.Length != 0)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Length, this.Length);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Length, this.Length);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -139,7 +139,7 @@ namespace Library.Net.Amoeba
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (!CollectionUtilities.Equals(this.Keys, other.Keys)
+            if (!CollectionUtils.Equals(this.Keys, other.Keys)
 
                 || this.CorrectionAlgorithm != other.CorrectionAlgorithm
                 || this.InformationLength != other.InformationLength

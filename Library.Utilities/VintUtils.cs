@@ -6,17 +6,15 @@ using System.Threading;
 
 namespace Library.Utilities
 {
-    static class VintUtilities
+    static class VintUtils
     {
         private static readonly ThreadLocal<byte[]> _threadLocalBuffer = new ThreadLocal<byte[]>(() => new byte[16]);
 
         public static void WriteVint1(Stream stream, int value)
         {
-            if (value <= 0)
-            {
-                stream.WriteByte(0x00);
-            }
-            else if (value < 0x7F)
+            if (value < 0) value = 0;
+
+            if (value < 0x7F)
             {
                 stream.WriteByte((byte)value);
             }
@@ -74,11 +72,9 @@ namespace Library.Utilities
 
         public static void WriteVint4(Stream stream, long value)
         {
-            if (value <= 0)
-            {
-                stream.WriteByte(0x00);
-            }
-            else if (value < 0x7FFFFFFF)
+            if (value < 0) value = 0;
+
+            if (value < 0x7FFFFFFF)
             {
                 var buffer = _threadLocalBuffer.Value;
 

@@ -50,21 +50,21 @@ namespace Library.Net.Connections.SecureVersion3
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
                         if (type == (int)SerializeId.CreationTime)
                         {
-                            this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                            this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
                         if (type == (int)SerializeId.ExchangeKey)
                         {
-                            this.ExchangeKey = ItemUtilities.GetByteArray(rangeStream);
+                            this.ExchangeKey = ItemUtils.GetByteArray(rangeStream);
                         }
                         if (type == (int)SerializeId.ProtocolHash)
                         {
-                            this.ProtocolHash = ItemUtilities.GetByteArray(rangeStream);
+                            this.ProtocolHash = ItemUtils.GetByteArray(rangeStream);
                         }
 
                         else if (type == (int)SerializeId.Certificate)
@@ -85,17 +85,17 @@ namespace Library.Net.Connections.SecureVersion3
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                    ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
                 // ExchangeKey
                 if (this.ExchangeKey != null)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangeKey, this.ExchangeKey);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.ExchangeKey, this.ExchangeKey);
                 }
                 // ProtocolHash
                 if (this.ProtocolHash != null)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.ProtocolHash, this.ProtocolHash);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.ProtocolHash, this.ProtocolHash);
                 }
 
                 // Certificate
@@ -103,7 +103,7 @@ namespace Library.Net.Connections.SecureVersion3
                 {
                     using (var stream = this.Certificate.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 

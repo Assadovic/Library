@@ -19,7 +19,7 @@ namespace Library.Net.Upnp
         Udp,
     }
 
-    public class UpnpClient : ManagerBase, IThisLock
+    public class UpnpClient : ManagerBase
     {
         private string _services;
         private Uri _location;
@@ -31,7 +31,7 @@ namespace Library.Net.Upnp
 
         public void Connect(TimeSpan timeout)
         {
-            lock (this.ThisLock)
+            lock (_thisLock)
             {
                 try
                 {
@@ -613,18 +613,6 @@ namespace Library.Net.Upnp
 
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 
     [Serializable]

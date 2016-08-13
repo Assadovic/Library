@@ -42,17 +42,17 @@ namespace Library.Net.Amoeba
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
                         if (type == (int)SerializeId.TrustSignature)
                         {
-                            this.TrustSignatures.Add(ItemUtilities.GetString(rangeStream));
+                            this.TrustSignatures.Add(ItemUtils.GetString(rangeStream));
                         }
                         else if (type == (int)SerializeId.DeleteSignature)
                         {
-                            this.DeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
+                            this.DeleteSignatures.Add(ItemUtils.GetString(rangeStream));
                         }
                     }
                 }
@@ -68,12 +68,12 @@ namespace Library.Net.Amoeba
                 // TrustSignatures
                 foreach (var value in this.TrustSignatures)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.TrustSignature, value);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.TrustSignature, value);
                 }
                 // DeleteSignatures
                 foreach (var value in this.DeleteSignatures)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -102,8 +102,8 @@ namespace Library.Net.Amoeba
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (!CollectionUtilities.Equals(this.TrustSignatures, other.TrustSignatures)
-                || !CollectionUtilities.Equals(this.DeleteSignatures, other.DeleteSignatures))
+            if (!CollectionUtils.Equals(this.TrustSignatures, other.TrustSignatures)
+                || !CollectionUtils.Equals(this.DeleteSignatures, other.DeleteSignatures))
             {
                 return false;
             }

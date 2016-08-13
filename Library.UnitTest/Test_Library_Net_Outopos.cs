@@ -324,8 +324,8 @@ namespace Library.UnitTest
 
                     Task.WaitAll(serverTask, clientTask);
 
-                    Assert.IsTrue(CollectionUtilities.Equals(serverConnectionManager.SesstionId, clientSessionId), "ConnectionManager SessionId #1");
-                    Assert.IsTrue(CollectionUtilities.Equals(clientConnectionManager.SesstionId, serverSessionId), "ConnectionManager SessionId #2");
+                    Assert.IsTrue(CollectionUtils.Equals(serverConnectionManager.SesstionId, clientSessionId), "ConnectionManager SessionId #1");
+                    Assert.IsTrue(CollectionUtils.Equals(clientConnectionManager.SesstionId, serverSessionId), "ConnectionManager SessionId #2");
 
                     Assert.AreEqual(serverConnectionManager.Node, clientNode, "ConnectionManager Node #1");
                     Assert.AreEqual(clientConnectionManager.Node, serverNode, "ConnectionManager Node #2");
@@ -367,7 +367,7 @@ namespace Library.UnitTest
                     senderConnection.PushNodes(nodes);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(nodes, item.Nodes), "ConnectionManager #1");
+                    Assert.IsTrue(CollectionUtils.Equals(nodes, item.Nodes), "ConnectionManager #1");
                 }
 
                 connectionManagers.Randomize();
@@ -402,7 +402,7 @@ namespace Library.UnitTest
                     senderConnection.PushBlocksLink(keys);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(keys, item.Keys), "ConnectionManager #2");
+                    Assert.IsTrue(CollectionUtils.Equals(keys, item.Keys), "ConnectionManager #2");
                 }
 
                 connectionManagers.Randomize();
@@ -437,7 +437,7 @@ namespace Library.UnitTest
                     senderConnection.PushBlocksRequest(keys);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(keys, item.Keys), "ConnectionManager #3");
+                    Assert.IsTrue(CollectionUtils.Equals(keys, item.Keys), "ConnectionManager #3");
                 }
 
                 connectionManagers.Randomize();
@@ -460,7 +460,7 @@ namespace Library.UnitTest
 
                     var item = queue.Dequeue();
                     Assert.AreEqual(key, item.Key, "ConnectionManager #4.1");
-                    Assert.IsTrue(CollectionUtilities.Equals(buffer, 0, item.Value.Array, item.Value.Offset, 1024 * 1024 * 4), "ConnectionManager #4.2");
+                    Assert.IsTrue(CollectionUtils.Equals(buffer, 0, item.Value.Array, item.Value.Offset, 1024 * 1024 * 4), "ConnectionManager #4.2");
 
                     _bufferManager.ReturnBuffer(buffer);
                     _bufferManager.ReturnBuffer(item.Value.Array);
@@ -491,7 +491,7 @@ namespace Library.UnitTest
                     senderConnection.PushBroadcastMetadatasRequest(signatures);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(signatures, item.Signatures), "ConnectionManager #5.1");
+                    Assert.IsTrue(CollectionUtils.Equals(signatures, item.Signatures), "ConnectionManager #5.1");
                 }
 
                 connectionManagers.Randomize();
@@ -524,7 +524,7 @@ namespace Library.UnitTest
                     senderConnection.PushBroadcastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.BroadcastMetadatas), "ConnectionManager #6.1");
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.BroadcastMetadatas), "ConnectionManager #6.1");
                 }
 
                 connectionManagers.Randomize();
@@ -552,7 +552,7 @@ namespace Library.UnitTest
                     senderConnection.PushUnicastMetadatasRequest(signatures);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(signatures, item.Signatures), "ConnectionManager #7.1");
+                    Assert.IsTrue(CollectionUtils.Equals(signatures, item.Signatures), "ConnectionManager #7.1");
                 }
 
                 connectionManagers.Randomize();
@@ -585,7 +585,7 @@ namespace Library.UnitTest
                     senderConnection.PushUnicastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.UnicastMetadatas), "ConnectionManager #8.1");
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.UnicastMetadatas), "ConnectionManager #8.1");
                 }
 
                 connectionManagers.Randomize();
@@ -614,7 +614,7 @@ namespace Library.UnitTest
                     senderConnection.PushMulticastMetadatasRequest(tags);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(tags, item.Tags), "ConnectionManager #9.1");
+                    Assert.IsTrue(CollectionUtils.Equals(tags, item.Tags), "ConnectionManager #9.1");
                 }
 
                 connectionManagers.Randomize();
@@ -649,7 +649,7 @@ namespace Library.UnitTest
                     senderConnection.PushMulticastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtilities.Equals(metadatas1, item.MulticastMetadatas), "ConnectionManager #10.1");
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.MulticastMetadatas), "ConnectionManager #10.1");
                 }
 
                 foreach (var connectionManager in connectionManagers)

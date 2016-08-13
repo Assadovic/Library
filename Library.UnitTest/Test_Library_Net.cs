@@ -85,7 +85,7 @@ namespace Library.UnitTest
                     if (slist.Count == 0 && slist2.Count == 0) continue;
                     var length = Math.Min(slist.Count, slist2.Count);
 
-                    Assert.IsTrue(CollectionUtilities.Equals(slist, 0, slist2, 0, length));
+                    Assert.IsTrue(CollectionUtils.Equals(slist, 0, slist2, 0, length));
                 }
 
                 for (int i = 0; i < 1024; i++)
@@ -99,7 +99,7 @@ namespace Library.UnitTest
                     if (slist.Count == 0 && slist2.Count == 0) continue;
                     var length = Math.Min(slist.Count, slist2.Count);
 
-                    Assert.IsTrue(CollectionUtilities.Equals(slist, 0, slist2, 0, length));
+                    Assert.IsTrue(CollectionUtils.Equals(slist, 0, slist2, 0, length));
                 }
             }
         }

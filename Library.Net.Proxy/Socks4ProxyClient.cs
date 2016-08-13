@@ -14,7 +14,7 @@ namespace Library.Net.Proxy
     /// <remarks>
     /// This class implements the Socks4 proxy protocol standard for TCP communciations.
     /// </remarks>
-    public class Socks4ProxyClient : ProxyClientBase, IThisLock
+    public class Socks4ProxyClient : ProxyClientBase
     {
         private const int WAIT_FOR_DATA_INTERVAL = 50;   // 50 ms
         private const int WAIT_FOR_DATA_TIMEOUT = 15000; // 15 seconds
@@ -112,10 +112,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _proxyUserId;
-                }
+                return _proxyUserId;
             }
         }
 
@@ -127,10 +124,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _tcpClient.Client;
-                }
+                return _tcpClient.Client;
             }
         }
 
@@ -374,17 +368,5 @@ namespace Library.Net.Proxy
                 }
             }
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

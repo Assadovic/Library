@@ -116,7 +116,7 @@ namespace Library.Net.Outopos
                     {
                         if (item != null)
                         {
-                            var buffer = new ArraySegment<byte>();
+                            var buffer = default(ArraySegment<byte>);
 
                             try
                             {

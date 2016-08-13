@@ -588,7 +588,7 @@ namespace Library.Net.Outopos
                                         var buffer = new byte[stream2.Length];
                                         stream2.Read(buffer, 0, buffer.Length);
 
-                                        if (!CollectionUtilities.Equals(buffer, _pingHash)) continue;
+                                        if (!CollectionUtils.Equals(buffer, _pingHash)) continue;
 
                                         _responseStopwatch.Stop();
                                     }
@@ -1189,7 +1189,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1210,7 +1210,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Node, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Node, stream);
                     }
                 }
 
@@ -1268,7 +1268,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1289,7 +1289,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
@@ -1347,7 +1347,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1368,7 +1368,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
 
@@ -1431,7 +1431,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1478,14 +1478,14 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = this.Key.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
                     }
                 }
                 // Value
                 if (this.Value.Array != null)
                 {
-                    VintUtilities.WriteVint1(bufferStream, (int)SerializeId.Value);
-                    VintUtilities.WriteVint4(bufferStream, this.Value.Count);
+                    VintUtils.WriteVint1(bufferStream, (int)SerializeId.Value);
+                    VintUtils.WriteVint4(bufferStream, this.Value.Count);
                     bufferStream.Write(this.Value.Array, this.Value.Offset, this.Value.Count);
                 }
 
@@ -1549,13 +1549,13 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
                         if (type == (int)SerializeId.Signature)
                         {
-                            this.ProtectedSignatures.Add(ItemUtilities.GetString(rangeStream));
+                            this.ProtectedSignatures.Add(ItemUtils.GetString(rangeStream));
                         }
                     }
                 }
@@ -1568,7 +1568,7 @@ namespace Library.Net.Outopos
                 // Signatures
                 foreach (var value in this.Signatures)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, value);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Signature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -1625,7 +1625,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1646,7 +1646,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.BroadcastMetadata, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.BroadcastMetadata, stream);
                     }
                 }
 
@@ -1704,13 +1704,13 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
                         if (type == (int)SerializeId.Signature)
                         {
-                            this.ProtectedSignatures.Add(ItemUtilities.GetString(rangeStream));
+                            this.ProtectedSignatures.Add(ItemUtils.GetString(rangeStream));
                         }
                     }
                 }
@@ -1723,7 +1723,7 @@ namespace Library.Net.Outopos
                 // Signatures
                 foreach (var value in this.Signatures)
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, value);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Signature, value);
                 }
 
                 bufferStream.Seek(0, SeekOrigin.Begin);
@@ -1780,7 +1780,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1801,7 +1801,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.UnicastMetadata, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.UnicastMetadata, stream);
                     }
                 }
 
@@ -1859,7 +1859,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1880,7 +1880,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.Tag, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Tag, stream);
                     }
                 }
 
@@ -1939,7 +1939,7 @@ namespace Library.Net.Outopos
                 {
                     int type;
 
-                    using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
                     {
                         if (rangeStream == null) return;
 
@@ -1960,7 +1960,7 @@ namespace Library.Net.Outopos
                 {
                     using (var stream = value.Export(bufferManager))
                     {
-                        ItemUtilities.Write(bufferStream, (int)SerializeId.MulticastMetadata, stream);
+                        ItemUtils.Write(bufferStream, (int)SerializeId.MulticastMetadata, stream);
                     }
                 }
 

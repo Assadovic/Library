@@ -14,6 +14,8 @@ namespace Library.UnitTest
         [Test]
         public void ReedSolomon8()
         {
+            StringBuilder sb = new StringBuilder();
+
             Random random = new Random();
 
             const int blockSize = 1024 * 1024;
@@ -55,7 +57,7 @@ namespace Library.UnitTest
 
                 for (int i = 0; i < buffList.Length; i++)
                 {
-                    Assert.IsTrue(CollectionUtilities.Equals(buffList[i].Array, buffList[i].Offset, buffList2[i].Array, buffList2[i].Offset, blockSize), "ReedSolomon");
+                    Assert.IsTrue(CollectionUtils.Equals(buffList[i].Array, buffList[i].Offset, buffList2[i].Array, buffList2[i].Offset, blockSize), "ReedSolomon");
                 }
 
                 for (int i = 0; i < 128; i++)
@@ -68,10 +70,10 @@ namespace Library.UnitTest
                     _bufferManager.ReturnBuffer(buffList2[i].Array);
                 }
 
-                Console.WriteLine(string.Format("ReedSolomon8 Parallel {0}: ", c) + sw.Elapsed.ToString());
+                sb.AppendLine(string.Format("ReedSolomon8 Parallel {0}: ", c) + sw.Elapsed.ToString());
             }
 
-            Console.Write(Environment.NewLine);
+            Console.WriteLine(sb.ToString());
         }
     }
 }

@@ -201,7 +201,7 @@ namespace Library.Net.Amoeba
                 if (this.State == ManagerState.Stop) return;
 
                 // 差分を更新。
-                if (!CollectionUtilities.Equals(_oldListenUris, this.ListenUris))
+                if (!CollectionUtils.Equals(_oldListenUris, this.ListenUris))
                 {
                     foreach (var item in _tcpListeners.ToArray())
                     {

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Library
 {
-    public static class CollectionUtilities
+    public static class CollectionUtils
     {
         public new static bool Equals(object obj1, object obj2)
         {
@@ -137,14 +137,14 @@ namespace Library
 
             {
                 var equalityComparer = EqualityComparer<T>.Default;
-                return CollectionUtilities.Equals(source, destination, equalityComparer);
+                return CollectionUtils.Equals(source, destination, equalityComparer);
             }
         }
 
         public static bool Equals<T>(IEnumerable<T> source, IEnumerable<T> destination)
         {
             var equalityComparer = EqualityComparer<T>.Default;
-            return CollectionUtilities.Equals(source, destination, equalityComparer);
+            return CollectionUtils.Equals(source, destination, equalityComparer);
         }
 
         public static bool Equals<T>(IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length)
@@ -166,14 +166,14 @@ namespace Library
 
             {
                 var equalityComparer = EqualityComparer<T>.Default;
-                return CollectionUtilities.Equals(source, sourceIndex, destination, destinationIndex, length, equalityComparer);
+                return CollectionUtils.Equals(source, sourceIndex, destination, destinationIndex, length, equalityComparer);
             }
         }
 
         public static bool Equals<T>(IEnumerable<T> source, int sourceIndex, IEnumerable<T> destination, int destinationIndex, int length)
         {
             var equalityComparer = EqualityComparer<T>.Default;
-            return CollectionUtilities.Equals(source, sourceIndex, destination, destinationIndex, length, equalityComparer);
+            return CollectionUtils.Equals(source, sourceIndex, destination, destinationIndex, length, equalityComparer);
         }
 
         public static int Compare<T>(IList<T> source, IList<T> destination, IComparer<T> comparer)
@@ -293,14 +293,14 @@ namespace Library
 
             {
                 var compare = Comparer<T>.Default;
-                return CollectionUtilities.Compare(source, destination, compare);
+                return CollectionUtils.Compare(source, destination, compare);
             }
         }
 
         public static int Compare<T>(IEnumerable<T> source, IEnumerable<T> destination)
         {
             var compare = Comparer<T>.Default;
-            return CollectionUtilities.Compare(source, destination, compare);
+            return CollectionUtils.Compare(source, destination, compare);
         }
 
         public static int Compare<T>(IList<T> source, int sourceIndex, IList<T> destination, int destinationIndex, int length)
@@ -322,14 +322,14 @@ namespace Library
 
             {
                 var compare = Comparer<T>.Default;
-                return CollectionUtilities.Compare(source, sourceIndex, destination, destinationIndex, length, compare);
+                return CollectionUtils.Compare(source, sourceIndex, destination, destinationIndex, length, compare);
             }
         }
 
         public static int Compare<T>(IEnumerable<T> source, int sourceIndex, IEnumerable<T> destination, int destinationIndex, int length)
         {
             var compare = Comparer<T>.Default;
-            return CollectionUtilities.Compare(source, sourceIndex, destination, destinationIndex, length, compare);
+            return CollectionUtils.Compare(source, sourceIndex, destination, destinationIndex, length, compare);
         }
     }
 }

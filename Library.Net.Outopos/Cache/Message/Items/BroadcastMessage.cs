@@ -63,18 +63,18 @@ namespace Library.Net.Outopos
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.CreationTime)
                     {
-                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                        this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
                     else if (type == (int)SerializeId.Cost)
                     {
-                        this.Cost = ItemUtilities.GetInt(rangeStream);
+                        this.Cost = ItemUtils.GetInt(rangeStream);
                     }
                     else if (type == (int)SerializeId.ExchangePublicKey)
                     {
@@ -82,11 +82,11 @@ namespace Library.Net.Outopos
                     }
                     else if (type == (int)SerializeId.TrustSignature)
                     {
-                        this.ProtectedTrustSignatures.Add(ItemUtilities.GetString(rangeStream));
+                        this.ProtectedTrustSignatures.Add(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.DeleteSignature)
                     {
-                        this.ProtectedDeleteSignatures.Add(ItemUtilities.GetString(rangeStream));
+                        this.ProtectedDeleteSignatures.Add(ItemUtils.GetString(rangeStream));
                     }
                     else if (type == (int)SerializeId.Tag)
                     {
@@ -108,38 +108,38 @@ namespace Library.Net.Outopos
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
             // Cost
             if (this.Cost != 0)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Cost, this.Cost);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Cost, this.Cost);
             }
             // ExchangePublicKey
             if (this.ExchangePublicKey != null)
             {
                 using (var stream = this.ExchangePublicKey.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.ExchangePublicKey, stream);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.ExchangePublicKey, stream);
                 }
             }
             // TrustSignatures
             foreach (var value in this.TrustSignatures)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.TrustSignature, value);
+                ItemUtils.Write(bufferStream, (int)SerializeId.TrustSignature, value);
             }
             // DeleteSignatures
             foreach (var value in this.DeleteSignatures)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
+                ItemUtils.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
             }
             // Tags
             foreach (var value in this.Tags)
             {
                 using (var stream = value.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Tag, stream);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Tag, stream);
                 }
             }
 
@@ -148,7 +148,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Certificate.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
                 }
             }
 
@@ -188,17 +188,17 @@ namespace Library.Net.Outopos
 
             if (this.TrustSignatures != null && other.TrustSignatures != null)
             {
-                if (!CollectionUtilities.Equals(this.TrustSignatures, other.TrustSignatures)) return false;
+                if (!CollectionUtils.Equals(this.TrustSignatures, other.TrustSignatures)) return false;
             }
 
             if (this.DeleteSignatures != null && other.DeleteSignatures != null)
             {
-                if (!CollectionUtilities.Equals(this.DeleteSignatures, other.DeleteSignatures)) return false;
+                if (!CollectionUtils.Equals(this.DeleteSignatures, other.DeleteSignatures)) return false;
             }
 
             if (this.Tags != null && other.Tags != null)
             {
-                if (!CollectionUtilities.Equals(this.Tags, other.Tags)) return false;
+                if (!CollectionUtils.Equals(this.Tags, other.Tags)) return false;
             }
 
             return true;

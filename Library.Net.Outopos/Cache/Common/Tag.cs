@@ -43,17 +43,17 @@ namespace Library.Net.Outopos
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.Name)
                     {
-                        this.Name = ItemUtilities.GetString(rangeStream);
+                        this.Name = ItemUtils.GetString(rangeStream);
                     }
                     else if (type == (int)SerializeId.Id)
                     {
-                        this.Id = ItemUtilities.GetByteArray(rangeStream);
+                        this.Id = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -66,12 +66,12 @@ namespace Library.Net.Outopos
             // Name
             if (this.Name != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Name, this.Name);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Name, this.Name);
             }
             // Id
             if (this.Id != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Id, this.Id);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Id, this.Id);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);

@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Library.Net.Proxy
 {
-    public class HttpProxyClient : ProxyClientBase, IThisLock
+    public class HttpProxyClient : ProxyClientBase
     {
         private const int HTTP_PROXY_DEFAULT_PORT = 8080;
         private const string HTTP_PROXY_CONNECT_CMD = "CONNECT {0}:{1} HTTP/1.0 \r\nHOST {0}:{1}\r\n\r\n";
@@ -107,10 +107,7 @@ namespace Library.Net.Proxy
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return _tcpClient.Client;
-                }
+                return _tcpClient.Client;
             }
         }
 
@@ -271,17 +268,5 @@ namespace Library.Net.Proxy
             _respCode = (HttpResponseCodes)code;
             _respText = line.Substring(end + 1).Trim();
         }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

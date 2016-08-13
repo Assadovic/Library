@@ -48,17 +48,17 @@ namespace Library.Net.Outopos
             {
                 int type;
 
-                using (var rangeStream = ItemUtilities.GetStream(out type, stream))
+                using (var rangeStream = ItemUtils.GetStream(out type, stream))
                 {
                     if (rangeStream == null) return;
 
                     if (type == (int)SerializeId.Signature)
                     {
-                        this.Signature = ItemUtilities.GetString(rangeStream);
+                        this.Signature = ItemUtils.GetString(rangeStream);
                     }
                     else if (type == (int)SerializeId.CreationTime)
                     {
-                        this.CreationTime = DateTime.ParseExact(ItemUtilities.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                        this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                     }
 
                     else if (type == (int)SerializeId.Key)
@@ -81,12 +81,12 @@ namespace Library.Net.Outopos
             // Signature
             if (this.Signature != null)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.Signature, this.Signature);
+                ItemUtils.Write(bufferStream, (int)SerializeId.Signature, this.Signature);
             }
             // CreationTime
             if (this.CreationTime != DateTime.MinValue)
             {
-                ItemUtilities.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
             }
 
             // Key
@@ -94,7 +94,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Key.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Key, stream);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
                 }
             }
 
@@ -103,7 +103,7 @@ namespace Library.Net.Outopos
             {
                 using (var stream = this.Certificate.Export(bufferManager))
                 {
-                    ItemUtilities.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                    ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
                 }
             }
 
