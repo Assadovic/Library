@@ -23,15 +23,37 @@ namespace Library.Net.Amoeba
         Error = 3,
     }
 
-    [DataContract(Name = "BackgroundUploadItem", Namespace = "http://Library/Net/Amoeba")]
-    [KnownType(typeof(Link))]
-    [KnownType(typeof(Store))]
-    sealed class BackgroundUploadItem : ICloneable<BackgroundUploadItem>, IThisLock
+    interface IBackgroundUploadItem
     {
-        private BackgroundItemType _type;
+        BackgroundItemType Type { get; }
+
+        BackgroundUploadState State { get; set; }
+
+        object Value { get; set; }
+
+        int Rank { get; set; }
+        KeyCollection Keys { get; }
+        GroupCollection Groups { get; }
+        int BlockLength { get; set; }
+        CompressionAlgorithm CompressionAlgorithm { get; set; }
+        CryptoAlgorithm CryptoAlgorithm { get; set; }
+        byte[] CryptoKey { get; set; }
+        CorrectionAlgorithm CorrectionAlgorithm { get; set; }
+        HashAlgorithm HashAlgorithm { get; set; }
+        DigitalSignature DigitalSignature { get; set; }
+        Seed Seed { get; set; }
+
+        List<Key> LockedKeys { get; }
+        HashSet<Key> UploadKeys { get; }
+        HashSet<Key> UploadedKeys { get; }
+    }
+
+    [DataContract(Name = "BackgroundUploadItem", Namespace = "http://Library/Net/Amoeba")]
+    sealed class BackgroundUploadItem<T> : IBackgroundUploadItem
+    {
         private BackgroundUploadState _state;
 
-        private object _value;
+        private T _value;
 
         private int _rank;
         private KeyCollection _keys;
@@ -52,22 +74,33 @@ namespace Library.Net.Amoeba
         private static readonly object _initializeLock = new object();
         private volatile object _thisLock;
 
-        [DataMember(Name = "Type")]
-        public BackgroundItemType Type
+        private object ThisLock
         {
             get
             {
-                lock (this.ThisLock)
+                if (_thisLock == null)
                 {
-                    return _type;
+                    lock (_initializeLock)
+                    {
+                        if (_thisLock == null)
+                        {
+                            _thisLock = new object();
+                        }
+                    }
                 }
+
+                return _thisLock;
             }
-            set
+        }
+
+        BackgroundItemType IBackgroundUploadItem.Type
+        {
+            get
             {
-                lock (this.ThisLock)
-                {
-                    _type = value;
-                }
+                if (typeof(T) == typeof(Link)) return BackgroundItemType.Link;
+                else if (typeof(T) == typeof(Store)) return BackgroundItemType.Store;
+
+                return BackgroundItemType.None;
             }
         }
 
@@ -91,7 +124,7 @@ namespace Library.Net.Amoeba
         }
 
         [DataMember(Name = "Value")]
-        public object Value
+        public T Value
         {
             get
             {
@@ -106,6 +139,18 @@ namespace Library.Net.Amoeba
                 {
                     _value = value;
                 }
+            }
+        }
+
+        object IBackgroundUploadItem.Value
+        {
+            get
+            {
+                return this.Value;
+            }
+            set
+            {
+                this.Value = (T)value;
             }
         }
 
@@ -354,52 +399,5 @@ namespace Library.Net.Amoeba
                 }
             }
         }
-
-        public BackgroundUploadItem Clone()
-        {
-            lock (this.ThisLock)
-            {
-                var ds = new DataContractSerializer(typeof(BackgroundUploadItem));
-
-                using (BufferStream stream = new BufferStream(BufferManager.Instance))
-                {
-                    using (WrapperStream wrapperStream = new WrapperStream(stream, true))
-                    using (XmlDictionaryWriter xmlDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(wrapperStream))
-                    {
-                        ds.WriteObject(xmlDictionaryWriter, this);
-                    }
-
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
-                    {
-                        return (BackgroundUploadItem)ds.ReadObject(xmlDictionaryReader);
-                    }
-                }
-            }
-        }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                if (_thisLock == null)
-                {
-                    lock (_initializeLock)
-                    {
-                        if (_thisLock == null)
-                        {
-                            _thisLock = new object();
-                        }
-                    }
-                }
-
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

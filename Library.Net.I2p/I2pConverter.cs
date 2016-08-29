@@ -95,7 +95,7 @@ namespace Library.Net.I2p
 
         public static class Base32Address
         {
-            public static string FromDestination(byte[] destination)
+            private static string FromDestination(byte[] destination)
             {
                 using (var sha256 = SHA256.Create())
                 {

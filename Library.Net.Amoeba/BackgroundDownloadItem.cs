@@ -21,41 +21,71 @@ namespace Library.Net.Amoeba
         Error = 3,
     }
 
-    [DataContract(Name = "BackgroundDownloadItem", Namespace = "http://Library/Net/Amoeba")]
-    [KnownType(typeof(Link))]
-    [KnownType(typeof(Store))]
-    sealed class BackgroundDownloadItem : ICloneable<BackgroundDownloadItem>, IThisLock
+    enum BackgroundItemType
     {
-        private BackgroundItemType _type;
+        None,
+        Link,
+        Store,
+    }
+
+    interface IBackgroundDownloadItem
+    {
+        BackgroundItemType Type { get; }
+
+        BackgroundDownloadState State { get; set; }
+
+        Seed Seed { get; set; }
+
+        int Rank { get; set; }
+        Index Index { get; set; }
+        object Value { get; set; }
+
+        IndexCollection Indexes { get; }
+    }
+
+    [DataContract(Name = "BackgroundDownloadItem", Namespace = "http://Library/Net/Amoeba")]
+    sealed class BackgroundDownloadItem<T> : IBackgroundDownloadItem
+    {
         private BackgroundDownloadState _state;
 
         private Seed _seed;
 
         private int _rank;
         private Index _index;
-        private object _value;
+        private T _value;
 
         private IndexCollection _indexes;
 
         private static readonly object _initializeLock = new object();
         private volatile object _thisLock;
 
-        [DataMember(Name = "Type")]
-        public BackgroundItemType Type
+        private object ThisLock
         {
             get
             {
-                lock (this.ThisLock)
+                if (_thisLock == null)
                 {
-                    return _type;
+                    lock (_initializeLock)
+                    {
+                        if (_thisLock == null)
+                        {
+                            _thisLock = new object();
+                        }
+                    }
                 }
+
+                return _thisLock;
             }
-            set
+        }
+
+        BackgroundItemType IBackgroundDownloadItem.Type
+        {
+            get
             {
-                lock (this.ThisLock)
-                {
-                    _type = value;
-                }
+                if (typeof(T) == typeof(Link)) return BackgroundItemType.Link;
+                else if (typeof(T) == typeof(Store)) return BackgroundItemType.Store;
+
+                return BackgroundItemType.None;
             }
         }
 
@@ -136,7 +166,7 @@ namespace Library.Net.Amoeba
         }
 
         [DataMember(Name = "Value")]
-        public object Value
+        public T Value
         {
             get
             {
@@ -154,6 +184,18 @@ namespace Library.Net.Amoeba
             }
         }
 
+        object IBackgroundDownloadItem.Value
+        {
+            get
+            {
+                return this.Value;
+            }
+            set
+            {
+                this.Value = (T)value;
+            }
+        }
+
         [DataMember(Name = "Indexs")]
         public IndexCollection Indexes
         {
@@ -168,52 +210,5 @@ namespace Library.Net.Amoeba
                 }
             }
         }
-
-        public BackgroundDownloadItem Clone()
-        {
-            lock (this.ThisLock)
-            {
-                var ds = new DataContractSerializer(typeof(BackgroundDownloadItem));
-
-                using (BufferStream stream = new BufferStream(BufferManager.Instance))
-                {
-                    using (WrapperStream wrapperStream = new WrapperStream(stream, true))
-                    using (XmlDictionaryWriter xmlDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(wrapperStream))
-                    {
-                        ds.WriteObject(xmlDictionaryWriter, this);
-                    }
-
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
-                    {
-                        return (BackgroundDownloadItem)ds.ReadObject(xmlDictionaryReader);
-                    }
-                }
-            }
-        }
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                if (_thisLock == null)
-                {
-                    lock (_initializeLock)
-                    {
-                        if (_thisLock == null)
-                        {
-                            _thisLock = new object();
-                        }
-                    }
-                }
-
-                return _thisLock;
-            }
-        }
-
-        #endregion
     }
 }

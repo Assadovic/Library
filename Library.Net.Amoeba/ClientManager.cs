@@ -416,9 +416,7 @@ namespace Library.Net.Amoeba
                                     proxyScheme = match2.Groups[1].Value;
                                     proxyHost = match2.Groups[2].Value;
 
-                                    if (connectionFilter.ConnectionType == ConnectionType.Socks4Proxy
-                                        || connectionFilter.ConnectionType == ConnectionType.Socks4aProxy
-                                        || connectionFilter.ConnectionType == ConnectionType.Socks5Proxy)
+                                    if (connectionFilter.ConnectionType == ConnectionType.Socks5Proxy)
                                     {
                                         proxyPort = 1080;
                                     }
@@ -432,9 +430,7 @@ namespace Library.Net.Amoeba
 
                         if (proxyHost == null) return null;
 
-                        if (connectionFilter.ConnectionType == ConnectionType.Socks4Proxy
-                            || connectionFilter.ConnectionType == ConnectionType.Socks4aProxy
-                            || connectionFilter.ConnectionType == ConnectionType.Socks5Proxy
+                        if (connectionFilter.ConnectionType == ConnectionType.Socks5Proxy
                             || connectionFilter.ConnectionType == ConnectionType.HttpProxy)
                         {
                             var socket = ClientManager.Connect(new IPEndPoint(ClientManager.GetIpAddress(proxyHost), proxyPort), new TimeSpan(0, 0, 10));
@@ -442,28 +438,20 @@ namespace Library.Net.Amoeba
 
                             ProxyClientBase proxy = null;
 
-                            if (connectionFilter.ConnectionType == ConnectionType.Socks4Proxy)
-                            {
-                                var user = (options != null) ? options.Where(n => n.Key.ToLower().StartsWith("user")).Select(n => n.Value).FirstOrDefault() : null;
-                                proxy = new Socks4ProxyClient(socket, user, host, port);
-                            }
-                            else if (connectionFilter.ConnectionType == ConnectionType.Socks4aProxy)
-                            {
-                                var user = (options != null) ? options.Where(n => n.Key.ToLower().StartsWith("user")).Select(n => n.Value).FirstOrDefault() : null;
-                                proxy = new Socks4aProxyClient(socket, user, host, port);
-                            }
-                            else if (connectionFilter.ConnectionType == ConnectionType.Socks5Proxy)
+                            if (connectionFilter.ConnectionType == ConnectionType.Socks5Proxy)
                             {
                                 var user = (options != null) ? options.Where(n => n.Key.ToLower().StartsWith("user")).Select(n => n.Value).FirstOrDefault() : null;
                                 var pass = (options != null) ? options.Where(n => n.Key.ToLower().StartsWith("pass")).Select(n => n.Value).FirstOrDefault() : null;
-                                proxy = new Socks5ProxyClient(socket, user, pass, host, port);
+                                proxy = new Socks5ProxyClient(user, pass, host, port);
                             }
                             else if (connectionFilter.ConnectionType == ConnectionType.HttpProxy)
                             {
-                                proxy = new HttpProxyClient(socket, host, port);
+                                proxy = new HttpProxyClient(host, port);
                             }
 
-                            var cap = new SocketCap(proxy.Create(new TimeSpan(0, 0, 30)));
+                            proxy.Create(socket, new TimeSpan(0, 0, 30));
+
+                            var cap = new SocketCap(socket);
                             garbages.Add(cap);
 
                             connection = new BaseConnection(cap, bandwidthLimit, _maxReceiveCount, _bufferManager);

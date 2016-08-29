@@ -64,7 +64,7 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
-                            foreach (var item in _settings.BackgroundUploadItems.ToArray())
+                            foreach (var item in _settings.UploadItems.GetItems().ToArray())
                             {
                                 if (item.UploadKeys.Remove(key))
                                 {
@@ -92,7 +92,7 @@ namespace Library.Net.Amoeba
             _uploadedThread.Start();
         }
 
-        private void SetKeyCount(BackgroundUploadItem item)
+        private void SetKeyCount(IBackgroundUploadItem item)
         {
             lock (_thisLock)
             {
@@ -122,15 +122,15 @@ namespace Library.Net.Amoeba
                 Thread.Sleep(1000 * 1);
                 if (this.State == ManagerState.Stop) return;
 
-                BackgroundUploadItem item = null;
+                IBackgroundUploadItem item = null;
 
                 try
                 {
                     lock (_thisLock)
                     {
-                        if (_settings.BackgroundUploadItems.Count > 0)
+                        if (_settings.UploadItems.GetItems().Any())
                         {
-                            item = _settings.BackgroundUploadItems
+                            item = _settings.UploadItems.GetItems()
                                 .Where(n => n.State == BackgroundUploadState.Encoding)
                                 .FirstOrDefault();
                         }
@@ -195,7 +195,7 @@ namespace Library.Net.Amoeba
                                 {
                                     using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.BackgroundUploadItems.Contains(item));
+                                        isStop = (this.State == ManagerState.Stop || !_settings.UploadItems.Contains(item));
                                     }, 1024 * 1024, true))
                                     {
                                         item.Seed.Length = stream.Length;
@@ -289,7 +289,7 @@ namespace Library.Net.Amoeba
 
                                 while (!task.IsCompleted)
                                 {
-                                    if (this.State == ManagerState.Stop || !_settings.BackgroundUploadItems.Contains(item)) tokenSource.Cancel();
+                                    if (this.State == ManagerState.Stop || !_settings.UploadItems.Contains(item)) tokenSource.Cancel();
 
                                     Thread.Sleep(1000);
                                 }
@@ -331,7 +331,7 @@ namespace Library.Net.Amoeba
                             using (var stream = index.Export(_bufferManager))
                             using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                             {
-                                isStop = (this.State == ManagerState.Stop || !_settings.BackgroundUploadItems.Contains(item));
+                                isStop = (this.State == ManagerState.Stop || !_settings.UploadItems.Contains(item));
                             }, 1024 * 1024, true))
                             {
                                 if (item.HashAlgorithm == HashAlgorithm.Sha256)
@@ -395,7 +395,7 @@ namespace Library.Net.Amoeba
                         {
                             var now = DateTime.UtcNow;
 
-                            foreach (var item in _settings.BackgroundUploadItems.ToArray())
+                            foreach (var item in _settings.UploadItems.GetItems().ToArray())
                             {
                                 if (item.State == BackgroundUploadState.Completed
                                     && (now - item.Seed.CreationTime) > new TimeSpan(32, 0, 0, 0))
@@ -421,7 +421,7 @@ namespace Library.Net.Amoeba
             lock (_thisLock)
             {
                 {
-                    foreach (var item in _settings.BackgroundUploadItems.ToArray())
+                    foreach (var item in _settings.UploadItems.GetItems().ToArray())
                     {
                         if (item.DigitalSignature.ToString() != digitalSignature.ToString()) continue;
 
@@ -430,10 +430,9 @@ namespace Library.Net.Amoeba
                 }
 
                 {
-                    var item = new BackgroundUploadItem();
+                    var item = new BackgroundUploadItem<Link>();
 
                     item.Value = link;
-                    item.Type = BackgroundItemType.Link;
                     item.State = BackgroundUploadState.Encoding;
                     item.Rank = 1;
                     item.CompressionAlgorithm = CompressionAlgorithm.Xz;
@@ -446,7 +445,7 @@ namespace Library.Net.Amoeba
                     item.Seed.CreationTime = DateTime.UtcNow;
                     item.BlockLength = 1024 * 1024 * 1;
 
-                    _settings.BackgroundUploadItems.Add(item);
+                    _settings.UploadItems.Add(item);
                 }
             }
         }
@@ -459,7 +458,7 @@ namespace Library.Net.Amoeba
             lock (_thisLock)
             {
                 {
-                    foreach (var item in _settings.BackgroundUploadItems.ToArray())
+                    foreach (var item in _settings.UploadItems.GetItems().ToArray())
                     {
                         if (item.DigitalSignature.ToString() != digitalSignature.ToString()) continue;
 
@@ -468,10 +467,9 @@ namespace Library.Net.Amoeba
                 }
 
                 {
-                    var item = new BackgroundUploadItem();
+                    var item = new BackgroundUploadItem<Store>();
 
                     item.Value = store;
-                    item.Type = BackgroundItemType.Store;
                     item.State = BackgroundUploadState.Encoding;
                     item.Rank = 1;
                     item.CompressionAlgorithm = CompressionAlgorithm.Xz;
@@ -484,12 +482,12 @@ namespace Library.Net.Amoeba
                     item.Seed.CreationTime = DateTime.UtcNow;
                     item.BlockLength = 1024 * 1024 * 1;
 
-                    _settings.BackgroundUploadItems.Add(item);
+                    _settings.UploadItems.Add(item);
                 }
             }
         }
 
-        private void Remove(BackgroundUploadItem item)
+        private void Remove(IBackgroundUploadItem item)
         {
             lock (_thisLock)
             {
@@ -498,7 +496,7 @@ namespace Library.Net.Amoeba
                     _cacheManager.Unlock(key);
                 }
 
-                _settings.BackgroundUploadItems.Remove(item);
+                _settings.UploadItems.Remove(item);
             }
         }
 
@@ -560,7 +558,7 @@ namespace Library.Net.Amoeba
             {
                 _settings.Load(directoryPath);
 
-                foreach (var item in _settings.BackgroundUploadItems)
+                foreach (var item in _settings.UploadItems.GetItems())
                 {
                     foreach (var key in item.LockedKeys)
                     {
@@ -568,7 +566,7 @@ namespace Library.Net.Amoeba
                     }
                 }
 
-                foreach (var item in _settings.BackgroundUploadItems.ToArray())
+                foreach (var item in _settings.UploadItems.GetItems().ToArray())
                 {
                     try
                     {
@@ -576,7 +574,7 @@ namespace Library.Net.Amoeba
                     }
                     catch (Exception)
                     {
-                        _settings.BackgroundUploadItems.Remove(item);
+                        _settings.UploadItems.Remove(item);
                     }
                 }
             }
@@ -598,7 +596,8 @@ namespace Library.Net.Amoeba
 
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem>>() { Name = "BackgroundUploadItems", Value = new LockedList<BackgroundUploadItem>() },
+                    new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem<Link>>>() { Name = "LinkBackgroundUploadItems", Value = new LockedList<BackgroundUploadItem<Link>>() },
+                    new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem<Store>>>() { Name = "StoreBackgroundUploadItems", Value = new LockedList<BackgroundUploadItem<Store>>() },
                 })
             {
                 _thisLock = lockObject;
@@ -620,14 +619,81 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            public LockedList<BackgroundUploadItem> BackgroundUploadItems
+            private UploadItemsManager _downloadItems;
+
+            public UploadItemsManager UploadItems
             {
                 get
                 {
                     lock (_thisLock)
                     {
-                        return (LockedList<BackgroundUploadItem>)this["BackgroundUploadItems"];
+                        if (_downloadItems == null)
+                        {
+                            _downloadItems = new UploadItemsManager(this);
+                        }
+
+                        return _downloadItems;
                     }
+                }
+            }
+
+            private LockedList<BackgroundUploadItem<Link>> LinkBackgroundUploadItems
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedList<BackgroundUploadItem<Link>>)this["LinkBackgroundUploadItems"];
+                    }
+                }
+            }
+
+            private LockedList<BackgroundUploadItem<Store>> StoreBackgroundUploadItems
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedList<BackgroundUploadItem<Store>>)this["StoreBackgroundUploadItems"];
+                    }
+                }
+            }
+
+            public class UploadItemsManager
+            {
+                private Settings _settings;
+
+                internal UploadItemsManager(Settings settings)
+                {
+                    _settings = settings;
+                }
+
+                public void Add(IBackgroundUploadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) _settings.LinkBackgroundUploadItems.Add((BackgroundUploadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) _settings.StoreBackgroundUploadItems.Add((BackgroundUploadItem<Store>)item);
+                }
+
+                public bool Contains(IBackgroundUploadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) return _settings.LinkBackgroundUploadItems.Contains((BackgroundUploadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) return _settings.StoreBackgroundUploadItems.Contains((BackgroundUploadItem<Store>)item);
+
+                    return false;
+                }
+
+                public void Remove(IBackgroundUploadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) _settings.LinkBackgroundUploadItems.Remove((BackgroundUploadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) _settings.StoreBackgroundUploadItems.Remove((BackgroundUploadItem<Store>)item);
+                }
+
+                public IEnumerable<IBackgroundUploadItem> GetItems()
+                {
+                    return CollectionUtils.Unite(
+                        _settings.LinkBackgroundUploadItems.Cast<IBackgroundUploadItem>(),
+                        _settings.StoreBackgroundUploadItems.Cast<IBackgroundUploadItem>()
+                    );
                 }
             }
         }

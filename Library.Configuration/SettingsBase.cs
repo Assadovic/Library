@@ -5,11 +5,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using Library.Collections;
 using Library.Io;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Library.Configuration
 {
@@ -68,7 +71,7 @@ namespace Library.Configuration
                 _dic[content.Name] = new Content()
                 {
                     Type = content.Type,
-                    Value = content.Value
+                    Value = content.Value,
                 };
             }
         }
@@ -82,6 +85,50 @@ namespace Library.Configuration
             set
             {
                 _dic[propertyName].Value = value;
+            }
+        }
+
+        private static FileStream GetUniqueFileStream(string path)
+        {
+            if (!File.Exists(path))
+            {
+                try
+                {
+                    return new FileStream(path, FileMode.CreateNew);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    throw;
+                }
+                catch (IOException)
+                {
+
+                }
+            }
+
+            for (int index = 1; ; index++)
+            {
+                string text = string.Format(@"{0}/{1} ({2}){3}",
+                    Path.GetDirectoryName(path),
+                    Path.GetFileNameWithoutExtension(path),
+                    index,
+                    Path.GetExtension(path));
+
+                if (!File.Exists(text))
+                {
+                    try
+                    {
+                        return new FileStream(text, FileMode.CreateNew);
+                    }
+                    catch (DirectoryNotFoundException)
+                    {
+                        throw;
+                    }
+                    catch (IOException)
+                    {
+                        if (index > 1024) throw;
+                    }
+                }
             }
         }
 
@@ -116,7 +163,50 @@ namespace Library.Configuration
 
             var successNames = new LockedHashSet<string>();
 
-            // DataContractSerializerのTextバージョン
+            // Json
+            foreach (var extension in new string[] { ".config.gz", ".config.gz.bak" })
+            {
+                Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
+                {
+                    if (!configPath.EndsWith(extension)) return;
+
+                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
+                    if (successNames.Contains(name)) return;
+
+                    Content content = null;
+                    if (!_dic.TryGetValue(name, out content)) return;
+
+                    try
+                    {
+                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
+                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
+                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
+                        {
+                            using (var streamReader = new StreamReader(decompressStream, new UTF8Encoding(false)))
+                            using (var jsonTextReader = new JsonTextReader(streamReader))
+                            {
+                                var serializer = new JsonSerializer();
+                                serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
+
+                                serializer.TypeNameHandling = TypeNameHandling.None;
+                                serializer.Converters.Add(new Newtonsoft.Json.Converters.IsoDateTimeConverter());
+                                serializer.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                                serializer.ContractResolver = new CustomContractResolver();
+
+                                content.Value = serializer.Deserialize(jsonTextReader, content.Type);
+                            }
+                        }
+
+                        successNames.Add(name);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e);
+                    }
+                });
+            }
+
+            // DataContractSerializer Text
             foreach (var extension in new string[] { ".gz", ".gz.bak" })
             {
                 Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
@@ -151,7 +241,7 @@ namespace Library.Configuration
                 });
             }
 
-            // DataContractSerializerのBinaryバージョン
+            // DataContractSerializer Binary
             foreach (var extension in new string[] { ".v2", ".v2.bak" })
             {
                 Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
@@ -209,37 +299,27 @@ namespace Library.Configuration
 
                     using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
                     using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
+                    using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
                     {
                         uniquePath = stream.Name;
 
-                        var xmlWriterSettings = new XmlWriterSettings();
-                        xmlWriterSettings.Encoding = new UTF8Encoding(false);
-                        xmlWriterSettings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
-                        xmlWriterSettings.NewLineHandling = NewLineHandling.Entitize;
-
-                        using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
-                        using (var xml = XmlWriter.Create(compressStream, xmlWriterSettings))
+                        using (var streamWriter = new StreamWriter(compressStream, new UTF8Encoding(false)))
+                        using (var jsonTextWriter = new JsonTextWriter(streamWriter))
                         {
-                            var serializer = new DataContractSerializer(type);
+                            var serializer = new JsonSerializer();
+                            serializer.Formatting = Newtonsoft.Json.Formatting.None;
 
-                            serializer.WriteStartObject(xml, value);
+                            serializer.TypeNameHandling = TypeNameHandling.None;
+                            serializer.Converters.Add(new Newtonsoft.Json.Converters.IsoDateTimeConverter());
+                            serializer.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                            serializer.ContractResolver = new CustomContractResolver();
 
-                            {
-                                int i = 0;
-
-                                foreach (var uri in this.GetNamespaces(type))
-                                {
-                                    xml.WriteAttributeString("xmlns", "x" + i++, null, uri);
-                                }
-                            }
-
-                            serializer.WriteObjectContent(xml, value);
-                            serializer.WriteEndObject(xml);
+                            serializer.Serialize(jsonTextWriter, value);
                         }
                     }
 
-                    string newPath = Path.Combine(directoryPath, name + ".gz");
-                    string bakPath = Path.Combine(directoryPath, name + ".gz.bak");
+                    string newPath = Path.Combine(directoryPath, name + ".config.gz");
+                    string bakPath = Path.Combine(directoryPath, name + ".config.gz.bak");
 
                     if (File.Exists(newPath))
                     {
@@ -254,7 +334,7 @@ namespace Library.Configuration
                     File.Move(uniquePath, newPath);
 
                     {
-                        foreach (var extension in new string[] { ".v2", ".v2.bak" })
+                        foreach (var extension in new string[] { ".v2", ".v2.bak", ".gz", ".gz.bak" })
                         {
                             string deleteFilePath = Path.Combine(directoryPath, name + extension);
 
@@ -275,42 +355,26 @@ namespace Library.Configuration
             Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
         }
 
-        public IEnumerable<string> GetNamespaces(Type type)
+        class CustomContractResolver : DefaultContractResolver
         {
-            var hashSet = new HashSet<string>();
-
-            var typeList = new List<Type>();
-            typeList.Add(type);
-
-            for (int i = 0; i < typeList.Count; i++)
+            protected override JsonContract CreateContract(Type objectType)
             {
-                if (typeList[i].IsArray)
+                if (objectType.GetInterfaces().Any(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
                 {
-                    var elementType = typeList[i].GetElementType();
-                    if (!typeList.Contains(elementType)) typeList.Add(elementType);
+                    return base.CreateArrayContract(objectType);
                 }
-                else if (typeList[i].IsGenericType)
-                {
-                    typeList.AddRange(typeList[i].GenericTypeArguments
-                        .Where(n => !typeList.Contains(n)));
-                }
-                else
-                {
-                    var classAttribute = System.Attribute.GetCustomAttributes(typeList[i])
-                        .FirstOrDefault(n => n is DataContractAttribute);
-                    if (classAttribute == null) continue;
 
-                    hashSet.Add(((DataContractAttribute)classAttribute).Namespace);
+                if (System.Attribute.GetCustomAttributes(objectType).Any(n => n is DataContractAttribute))
+                {
+                    var objectContract = base.CreateObjectContract(objectType);
+                    objectContract.DefaultCreatorNonPublic = false;
+                    objectContract.DefaultCreator = () => FormatterServices.GetUninitializedObject(objectContract.CreatedType);
 
-                    typeList.AddRange(typeList[i].GetProperties().Select(n => n.PropertyType)
-                        .Where(n => !typeList.Contains(n)));
+                    return objectContract;
                 }
+
+                return base.CreateContract(objectType);
             }
-
-            var list = hashSet.ToList();
-            list.Sort();
-
-            return list;
         }
 
         #endregion
@@ -318,50 +382,6 @@ namespace Library.Configuration
         protected bool Contains(string propertyName)
         {
             return _dic.ContainsKey(propertyName);
-        }
-
-        private static FileStream GetUniqueFileStream(string path)
-        {
-            if (!File.Exists(path))
-            {
-                try
-                {
-                    return new FileStream(path, FileMode.CreateNew);
-                }
-                catch (DirectoryNotFoundException)
-                {
-                    throw;
-                }
-                catch (IOException)
-                {
-
-                }
-            }
-
-            for (int index = 1; ; index++)
-            {
-                string text = string.Format(@"{0}/{1} ({2}){3}",
-                    Path.GetDirectoryName(path),
-                    Path.GetFileNameWithoutExtension(path),
-                    index,
-                    Path.GetExtension(path));
-
-                if (!File.Exists(text))
-                {
-                    try
-                    {
-                        return new FileStream(text, FileMode.CreateNew);
-                    }
-                    catch (DirectoryNotFoundException)
-                    {
-                        throw;
-                    }
-                    catch (IOException)
-                    {
-                        if (index > 1024) throw;
-                    }
-                }
-            }
         }
 
         private class Content
