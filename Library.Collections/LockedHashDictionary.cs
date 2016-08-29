@@ -308,7 +308,10 @@ namespace Library.Collections
 
         IDictionaryEnumerator IDictionary.GetEnumerator()
         {
-            throw new NotSupportedException();
+            lock (this.ThisLock)
+            {
+                return _dic.GetEnumerator();
+            }
         }
 
         void IDictionary.Remove(object key)

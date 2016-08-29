@@ -1640,10 +1640,9 @@ namespace Library.Net.Amoeba
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 256 },
-                    new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClustersIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClusterIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
                     new Library.Configuration.SettingContent<LockedHashDictionary<string, ShareInfo>>() { Name = "ShareIndex", Value = new LockedHashDictionary<string, ShareInfo>() },
                     new Library.Configuration.SettingContent<LockedHashDictionary<Seed, SeedInfo>>() { Name = "SeedIndex", Value = new LockedHashDictionary<Seed, SeedInfo>() },
-                    new Library.Configuration.SettingContent<LockedList<SeedInformation>>() { Name = "SeedInformation", Value = new LockedList<SeedInformation>() },
                 })
             {
                 _thisLock = lockObject;
@@ -1655,18 +1654,69 @@ namespace Library.Net.Amoeba
                 {
                     base.Load(directoryPath);
 
-                    if (this.SeedsInformation.Count > 0)
+                    if (File.Exists(Path.Combine(directoryPath, "ClustersIndex.gz"))
+                        && File.Exists(Path.Combine(directoryPath, "ShareIndex.gz"))
+                        && File.Exists(Path.Combine(directoryPath, "SeedInformation.gz")))
                     {
-                        foreach (var seedInformation in this.SeedsInformation)
-                        {
-                            var seedInfo = new SeedInfo();
-                            seedInfo.Path = seedInformation.Path;
-                            seedInfo.Indexes.AddRange(seedInformation.Indexes);
+                        var obsolete_settings = new Obsolete.Settings(_thisLock);
+                        obsolete_settings.Load(directoryPath);
 
-                            this.SeedIndex[seedInformation.Seed] = seedInfo;
+                        if (obsolete_settings.ClusterIndex.Count >= 0)
+                        {
+                            foreach (var pair in obsolete_settings.ClusterIndex)
+                            {
+                                var key = pair.Key;
+                                var obsolete_clusterInfo = pair.Value;
+
+                                var clusterInfo = new ClusterInfo();
+                                clusterInfo.Indexes = obsolete_clusterInfo.Indexes;
+                                clusterInfo.Length = obsolete_clusterInfo.Length;
+                                clusterInfo.UpdateTime = obsolete_clusterInfo.UpdateTime;
+
+                                this.ClusterIndex[key] = clusterInfo;
+                            }
+
+                            obsolete_settings.ClusterIndex.Clear();
+                        }
+                        if (obsolete_settings.ShareIndex.Count > 0)
+                        {
+                            foreach (var pair in obsolete_settings.ShareIndex)
+                            {
+                                var key = pair.Key;
+                                var obsolete_shareInfo = pair.Value;
+
+                                var shareInfo = new ShareInfo();
+                                foreach (var indexPair in obsolete_shareInfo.Indexes)
+                                {
+                                    shareInfo.Indexes.Add(indexPair.Key, indexPair.Value);
+                                }
+                                shareInfo.BlockLength = obsolete_shareInfo.BlockLength;
+
+                                this.ShareIndex[key] = shareInfo;
+                            }
+
+                            obsolete_settings.ShareIndex.Clear();
+                        }
+                        if (obsolete_settings.SeedInfos.Count > 0)
+                        {
+                            foreach (var obsolete_seedInfo in obsolete_settings.SeedInfos)
+                            {
+                                var seedInfo = new SeedInfo();
+                                seedInfo.Path = obsolete_seedInfo.Path;
+                                seedInfo.Indexes.AddRange(obsolete_seedInfo.Indexes);
+
+                                this.SeedIndex[obsolete_seedInfo.Seed] = seedInfo;
+                            }
+
+                            obsolete_settings.SeedInfos.Clear();
                         }
 
-                        this.SeedsInformation.Clear();
+                        foreach (var path in Directory.GetFiles(directoryPath))
+                        {
+                            File.Delete(path);
+                        }
+
+                        this.Save(directoryPath);
                     }
                 }
             }
@@ -1703,7 +1753,7 @@ namespace Library.Net.Amoeba
                 {
                     lock (_thisLock)
                     {
-                        return (LockedHashDictionary<Key, ClusterInfo>)this["ClustersIndex"];
+                        return (LockedHashDictionary<Key, ClusterInfo>)this["ClusterIndex"];
                     }
                 }
             }
@@ -1729,28 +1779,16 @@ namespace Library.Net.Amoeba
                     }
                 }
             }
-
-            [Obsolete]
-            private LockedList<SeedInformation> SeedsInformation
-            {
-                get
-                {
-                    lock (_thisLock)
-                    {
-                        return (LockedList<SeedInformation>)this["SeedInformation"];
-                    }
-                }
-            }
         }
 
-        [DataContract(Name = "Clusters", Namespace = "http://Library/Net/Amoeba/CacheManager")]
+        [DataContract(Name = "ClusterInfo", Namespace = "http://Library/Net/Amoeba/CacheManager")]
         private class ClusterInfo
         {
             private long[] _indexes;
             private int _length;
             private DateTime _updateTime;
 
-            [DataMember(Name = "Indexs")]
+            [DataMember(Name = "Indexes")]
             public long[] Indexes
             {
                 get
@@ -1791,13 +1829,13 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataContract(Name = "ShareIndex", Namespace = "http://Library/Net/Amoeba/CacheManager")]
+        [DataContract(Name = "ShareInfo", Namespace = "http://Library/Net/Amoeba/CacheManager")]
         private class ShareInfo
         {
             private Dictionary<Key, int> _indexes;
             private int _blockLength;
 
-            [DataMember(Name = "KeyAndCluster")]
+            [DataMember(Name = "Indexes")]
             public Dictionary<Key, int> Indexes
             {
                 get
@@ -1856,48 +1894,213 @@ namespace Library.Net.Amoeba
         }
 
         [Obsolete]
-        [DataContract(Name = "SeedInformation", Namespace = "http://Library/Net/Amoeba/CacheManager")]
-        private class SeedInformation
+        class Obsolete
         {
-            private Seed _seed;
-            private IndexCollection _indexes;
-            private string _path;
-
-            [DataMember(Name = "Seed")]
-            public Seed Seed
+            public class Settings : Library.Configuration.SettingsBase
             {
-                get
+                private volatile object _thisLock;
+
+                public Settings(object lockObject)
+                    : base(new List<Library.Configuration.ISettingContent>() {
+                    new Library.Configuration.SettingContent<LockedHashDictionary<Key, Obsolete.ClusterInfo>>() { Name = "ClustersIndex", Value = new LockedHashDictionary<Key, Obsolete.ClusterInfo>() },
+                    new Library.Configuration.SettingContent<LockedHashDictionary<string, Obsolete.ShareInfo>>() { Name = "ShareIndex", Value = new LockedHashDictionary<string, Obsolete.ShareInfo>() },
+                    new Library.Configuration.SettingContent<LockedList<Obsolete.SeedInfo>>() { Name = "SeedInformation", Value = new LockedList<Obsolete.SeedInfo>() },
+                    })
                 {
-                    return _seed;
+                    _thisLock = lockObject;
                 }
-                set
+
+                public override void Load(string directoryPath)
                 {
-                    _seed = value;
+                    lock (_thisLock)
+                    {
+                        base.Load(directoryPath);
+                    }
+                }
+
+                public override void Save(string directoryPath)
+                {
+                    lock (_thisLock)
+                    {
+                        base.Save(directoryPath);
+                    }
+                }
+
+                public long Size
+                {
+                    get
+                    {
+                        lock (_thisLock)
+                        {
+                            return (long)this["Size"];
+                        }
+                    }
+                    set
+                    {
+                        lock (_thisLock)
+                        {
+                            this["Size"] = value;
+                        }
+                    }
+                }
+
+                public LockedHashDictionary<Key, Obsolete.ClusterInfo> ClusterIndex
+                {
+                    get
+                    {
+                        lock (_thisLock)
+                        {
+                            return (LockedHashDictionary<Key, Obsolete.ClusterInfo>)this["ClustersIndex"];
+                        }
+                    }
+                }
+
+                public LockedHashDictionary<string, Obsolete.ShareInfo> ShareIndex
+                {
+                    get
+                    {
+                        lock (_thisLock)
+                        {
+                            return (LockedHashDictionary<string, Obsolete.ShareInfo>)this["ShareIndex"];
+                        }
+                    }
+                }
+
+                public LockedList<Obsolete.SeedInfo> SeedInfos
+                {
+                    get
+                    {
+                        lock (_thisLock)
+                        {
+                            return (LockedList<Obsolete.SeedInfo>)this["SeedInformation"];
+                        }
+                    }
                 }
             }
 
-            [DataMember(Name = "Indexs")]
-            public IndexCollection Indexes
+            [DataContract(Name = "Clusters", Namespace = "http://Library/Net/Amoeba/CacheManager")]
+            public class ClusterInfo
             {
-                get
-                {
-                    if (_indexes == null)
-                        _indexes = new IndexCollection();
+                private long[] _indexes;
+                private int _length;
+                private DateTime _updateTime;
 
-                    return _indexes;
+                [DataMember(Name = "Indexs")]
+                public long[] Indexes
+                {
+                    get
+                    {
+                        return _indexes;
+                    }
+                    set
+                    {
+                        _indexes = value;
+                    }
+                }
+
+                [DataMember(Name = "Length")]
+                public int Length
+                {
+                    get
+                    {
+                        return _length;
+                    }
+                    set
+                    {
+                        _length = value;
+                    }
+                }
+
+                [DataMember(Name = "UpdateTime")]
+                public DateTime UpdateTime
+                {
+                    get
+                    {
+                        return _updateTime;
+                    }
+                    set
+                    {
+                        var utc = value.ToUniversalTime();
+                        _updateTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
+                    }
                 }
             }
 
-            [DataMember(Name = "Path")]
-            public string Path
+            [DataContract(Name = "ShareIndex", Namespace = "http://Library/Net/Amoeba/CacheManager")]
+            public class ShareInfo
             {
-                get
+                private Dictionary<Key, int> _indexes;
+                private int _blockLength;
+
+                [DataMember(Name = "KeyAndCluster")]
+                public Dictionary<Key, int> Indexes
                 {
-                    return _path;
+                    get
+                    {
+                        if (_indexes == null)
+                            _indexes = new Dictionary<Key, int>();
+
+                        return _indexes;
+                    }
                 }
-                set
+
+                [DataMember(Name = "BlockLength")]
+                public int BlockLength
                 {
-                    _path = value;
+                    get
+                    {
+                        return _blockLength;
+                    }
+                    set
+                    {
+                        _blockLength = value;
+                    }
+                }
+            }
+
+            [DataContract(Name = "SeedInformation", Namespace = "http://Library/Net/Amoeba/CacheManager")]
+            public class SeedInfo
+            {
+                private Seed _seed;
+                private IndexCollection _indexes;
+                private string _path;
+
+                [DataMember(Name = "Seed")]
+                public Seed Seed
+                {
+                    get
+                    {
+                        return _seed;
+                    }
+                    set
+                    {
+                        _seed = value;
+                    }
+                }
+
+                [DataMember(Name = "Indexs")]
+                public IndexCollection Indexes
+                {
+                    get
+                    {
+                        if (_indexes == null)
+                            _indexes = new IndexCollection();
+
+                        return _indexes;
+                    }
+                }
+
+                [DataMember(Name = "Path")]
+                public string Path
+                {
+                    get
+                    {
+                        return _path;
+                    }
+                    set
+                    {
+                        _path = value;
+                    }
                 }
             }
         }

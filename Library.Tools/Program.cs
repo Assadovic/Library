@@ -431,30 +431,30 @@ namespace Library.Tools
                                 if (string.IsNullOrEmpty(line)) break;
 
                                 var list = Program.Decode(line).ToList();
-                                pathSettings[list[0]] = list[1];
+                                pathSettings[list[1]] = list[0];
                             }
 
                             var sortedPathSettings = pathSettings.ToList();
                             sortedPathSettings.Sort((x, y) =>
                             {
-                                return new FileInfo(y.Value).LastWriteTimeUtc.CompareTo(new FileInfo(x.Value).LastWriteTimeUtc);
+                                return new FileInfo(y.Key).LastWriteTimeUtc.CompareTo(new FileInfo(x.Key).LastWriteTimeUtc);
                             });
 
                             var sourceSettings = sortedPathSettings[0];
 
                             foreach (var targetSettings in sortedPathSettings.Skip(1))
                             {
-                                if (new FileInfo(targetSettings.Value).LastWriteTimeUtc == new FileInfo(sourceSettings.Value).LastWriteTimeUtc) continue;
+                                if (new FileInfo(targetSettings.Key).LastWriteTimeUtc == new FileInfo(sourceSettings.Key).LastWriteTimeUtc) continue;
 
-                                using (FileStream sourceStream = new FileStream(sourceSettings.Value, FileMode.Open))
+                                using (FileStream sourceStream = new FileStream(sourceSettings.Key, FileMode.Open))
                                 using (StreamReader sourceReader = new StreamReader(sourceStream))
-                                using (FileStream targetStream = new FileStream(targetSettings.Value, FileMode.Create))
+                                using (FileStream targetStream = new FileStream(targetSettings.Key, FileMode.Create))
                                 using (StreamWriter targetWriter = new StreamWriter(targetStream, Encoding.UTF8))
                                 {
                                     var sb = new StringBuilder(sourceReader.ReadToEnd());
 
-                                    var sourceWords = headerSettings[sourceSettings.Key];
-                                    var targetWords = headerSettings[targetSettings.Key];
+                                    var sourceWords = headerSettings[sourceSettings.Value];
+                                    var targetWords = headerSettings[targetSettings.Value];
 
                                     for (int i = 0; i < wordCount; i++)
                                     {
@@ -464,7 +464,7 @@ namespace Library.Tools
                                     targetWriter.Write(sb.ToString());
                                 }
 
-                                new FileInfo(targetSettings.Value).LastWriteTimeUtc = new FileInfo(sourceSettings.Value).LastWriteTimeUtc;
+                                new FileInfo(targetSettings.Key).LastWriteTimeUtc = new FileInfo(sourceSettings.Key).LastWriteTimeUtc;
                             }
 
                             if (configReader.EndOfStream) break;

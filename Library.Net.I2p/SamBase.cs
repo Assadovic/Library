@@ -136,7 +136,7 @@ namespace Library.Net.I2p
         private Socket _socket;
 
         private Stream _stream;
-        private StreamReader _reader;
+        private SocketLineReader _reader;
         private StreamWriter _writer;
 
         public SamBase(Socket socket)
@@ -148,7 +148,7 @@ namespace Library.Net.I2p
                 _stream.ReadTimeout = Timeout.Infinite;
                 _stream.WriteTimeout = Timeout.Infinite;
 
-                _reader = new StreamReader(_stream, new UTF8Encoding(false), false, 1024 * 32);
+                _reader = new SocketLineReader(socket, new UTF8Encoding(false));
                 _writer = new StreamWriter(_stream, new UTF8Encoding(false), 1024 * 32);
                 _writer.NewLine = "\n";
             }

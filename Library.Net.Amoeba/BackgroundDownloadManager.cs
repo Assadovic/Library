@@ -226,30 +226,30 @@ namespace Library.Net.Amoeba
                 Thread.Sleep(1000 * 3);
                 if (this.State == ManagerState.Stop) return;
 
-                BackgroundDownloadItem item = null;
+                IBackgroundDownloadItem item = null;
 
                 try
                 {
                     lock (_thisLock)
                     {
-                        if (_settings.BackgroundDownloadItems.Count > 0)
+                        if (_settings.DownloadItems.GetItems().Any())
                         {
                             {
-                                var items = _settings.BackgroundDownloadItems
-                                   .Where(n => n.State == BackgroundDownloadState.Downloading)
-                                   .Where(x =>
-                                   {
-                                       if (x.Rank == 1) return 0 == (!_cacheManager.Contains(x.Seed.Key) ? 1 : 0);
-                                       else return 0 == (x.Index.Groups.Sum(n => n.InformationLength) - x.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
-                                   })
-                                   .ToList();
+                                var items = _settings.DownloadItems.GetItems()
+                                    .Where(n => n.State == BackgroundDownloadState.Downloading)
+                                    .Where(x =>
+                                    {
+                                        if (x.Rank == 1) return 0 == (!_cacheManager.Contains(x.Seed.Key) ? 1 : 0);
+                                        else return 0 == (x.Index.Groups.Sum(n => n.InformationLength) - x.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
+                                    })
+                                    .ToList();
 
                                 item = items.FirstOrDefault();
                             }
 
                             if (item == null)
                             {
-                                var items = _settings.BackgroundDownloadItems
+                                var items = _settings.DownloadItems.GetItems()
                                     .Where(n => n.State == BackgroundDownloadState.Downloading)
                                     .ToList();
 
@@ -348,7 +348,7 @@ namespace Library.Net.Amoeba
 
                     this.Remove(item);
 
-                    Log.Error(string.Format("{0}: {1}", item.Type, item.Seed.Certificate.ToString()));
+                    Log.Error(string.Format("{0}: {1}", item.Value.GetType().Name, item.Seed.Certificate.ToString()));
                 }
             }
         }
@@ -360,15 +360,15 @@ namespace Library.Net.Amoeba
                 Thread.Sleep(1000 * 3);
                 if (this.State == ManagerState.Stop) return;
 
-                BackgroundDownloadItem item = null;
+                IBackgroundDownloadItem item = null;
 
                 try
                 {
                     lock (_thisLock)
                     {
-                        if (_settings.BackgroundDownloadItems.Count > 0)
+                        if (_settings.DownloadItems.GetItems().Any())
                         {
-                            item = _settings.BackgroundDownloadItems
+                            item = _settings.DownloadItems.GetItems()
                                 .Where(n => n.State == BackgroundDownloadState.Decoding)
                                 .OrderBy(n => (n.Rank != n.Seed.Rank) ? 0 : 1)
                                 .FirstOrDefault();
@@ -404,7 +404,7 @@ namespace Library.Net.Amoeba
                                     using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item));
+                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
 
                                         if (!isStop && (stream.Length > item.Seed.Length))
                                         {
@@ -481,7 +481,7 @@ namespace Library.Net.Amoeba
                                     using (Stream stream = new BufferStream(_bufferManager))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item));
+                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
 
                                         if (!isStop && (stream.Length > item.Seed.Length))
                                         {
@@ -568,7 +568,7 @@ namespace Library.Net.Amoeba
 
                                         while (!task.IsCompleted)
                                         {
-                                            if (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item)) tokenSource.Cancel();
+                                            if (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item)) tokenSource.Cancel();
 
                                             Thread.Sleep(1000);
                                         }
@@ -594,7 +594,7 @@ namespace Library.Net.Amoeba
                                     using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item));
+                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
 
                                         if (!isStop && (stream.Length > item.Seed.Length))
                                         {
@@ -673,7 +673,7 @@ namespace Library.Net.Amoeba
                                     using (Stream stream = new BufferStream(_bufferManager))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.BackgroundDownloadItems.Contains(item));
+                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
 
                                         if (!isStop && (stream.Length > item.Seed.Length))
                                         {
@@ -752,7 +752,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public void Check(BackgroundDownloadItem item)
+        public void Check(IBackgroundDownloadItem item)
         {
             if (_cacheManager.Contains(item.Seed.Key))
             {
@@ -824,14 +824,14 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
-                            foreach (var item in _settings.BackgroundDownloadItems.ToArray())
+                            foreach (var item in _settings.DownloadItems.GetItems().ToArray())
                             {
                                 if (item.State != BackgroundDownloadState.Error) continue;
 
                                 this.Remove(item);
                             }
 
-                            foreach (var item in _settings.BackgroundDownloadItems.ToArray())
+                            foreach (var item in _settings.DownloadItems.GetItems().ToArray())
                             {
                                 if (this.SearchSignatures.Contains(item.Seed.Certificate.ToString())) continue;
 
@@ -849,18 +849,18 @@ namespace Library.Net.Amoeba
                                     if (null != (linkSeed = _connectionsManager.GetLinkSeed(signature))
                                         && linkSeed.Length < 1024 * 1024 * 32)
                                     {
-                                        var item = _settings.BackgroundDownloadItems
+                                        var item = _settings.DownloadItems.GetItems()
                                             .Where(n => n.Type == BackgroundItemType.Link)
                                             .FirstOrDefault(n => n.Seed.Certificate.ToString() == signature);
 
                                         if (item == null)
                                         {
-                                            this.Download(linkSeed, BackgroundItemType.Link, null);
+                                            this.Download(linkSeed, null);
                                         }
                                         else if (linkSeed.CreationTime > item.Seed.CreationTime)
                                         {
                                             this.Remove(item);
-                                            this.Download(linkSeed, BackgroundItemType.Link, item.Value);
+                                            this.Download(linkSeed, item.Value);
                                         }
                                     }
                                 }
@@ -872,18 +872,18 @@ namespace Library.Net.Amoeba
                                     if (null != (storeSeed = _connectionsManager.GetStoreSeed(signature))
                                         && storeSeed.Length < 1024 * 1024 * 32)
                                     {
-                                        var item = _settings.BackgroundDownloadItems
+                                        var item = _settings.DownloadItems.GetItems()
                                             .Where(n => n.Type == BackgroundItemType.Store)
                                             .FirstOrDefault(n => n.Seed.Certificate.ToString() == signature);
 
                                         if (item == null)
                                         {
-                                            this.Download(storeSeed, BackgroundItemType.Store, null);
+                                            this.Download(storeSeed, null);
                                         }
                                         else if (storeSeed.CreationTime > item.Seed.CreationTime)
                                         {
                                             this.Remove(item);
-                                            this.Download(storeSeed, BackgroundItemType.Store, item.Value);
+                                            this.Download(storeSeed, item.Value);
                                         }
                                     }
                                 }
@@ -898,7 +898,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        private void Remove(BackgroundDownloadItem item)
+        private void Remove(IBackgroundDownloadItem item)
         {
             lock (_thisLock)
             {
@@ -923,33 +923,30 @@ namespace Library.Net.Amoeba
 
                 this.UncheckState(item.Index);
 
-                _settings.BackgroundDownloadItems.Remove(item);
+                _settings.DownloadItems.Remove(item);
             }
         }
 
-        private void Download(Seed seed, BackgroundItemType type, object value)
+        private void Download(Seed seed, object value)
         {
             if (seed == null) return;
 
             lock (_thisLock)
             {
-                if (_settings.BackgroundDownloadItems.Any(n => n.Seed == seed)) return;
+                if (_settings.DownloadItems.GetItems().Any(n => n.Seed == seed)) return;
 
                 if (seed.Rank == 0)
                 {
-                    var item = new BackgroundDownloadItem();
+                    IBackgroundDownloadItem item = null;
 
-                    item.Rank = 0;
-                    item.Seed = seed;
-                    item.State = BackgroundDownloadState.Completed;
-                    item.Type = type;
-
-                    if (item.Type == BackgroundItemType.Link)
+                    if (seed.Keywords[0] == ConnectionsManager.Keyword_Link)
                     {
+                        item = new BackgroundDownloadItem<Link>();
                         item.Value = new Link();
                     }
-                    else if (item.Type == BackgroundItemType.Store)
+                    else if (seed.Keywords[0] == ConnectionsManager.Keyword_Store)
                     {
+                        item = new BackgroundDownloadItem<Store>();
                         item.Value = new Store();
                     }
                     else
@@ -957,18 +954,34 @@ namespace Library.Net.Amoeba
                         throw new FormatException();
                     }
 
-                    _settings.BackgroundDownloadItems.Add(item);
+                    item.Rank = 0;
+                    item.Seed = seed;
+                    item.State = BackgroundDownloadState.Completed;
+
+                    _settings.DownloadItems.Add(item);
                 }
                 else
                 {
                     if (seed.Key == null) return;
 
-                    var item = new BackgroundDownloadItem();
+                    IBackgroundDownloadItem item = null;
+
+                    if (seed.Keywords[0] == ConnectionsManager.Keyword_Link)
+                    {
+                        item = new BackgroundDownloadItem<Link>();
+                    }
+                    else if (seed.Keywords[0] == ConnectionsManager.Keyword_Store)
+                    {
+                        item = new BackgroundDownloadItem<Store>();
+                    }
+                    else
+                    {
+                        throw new FormatException();
+                    }
 
                     item.Rank = 1;
                     item.Seed = seed;
                     item.State = BackgroundDownloadState.Downloading;
-                    item.Type = type;
                     item.Value = value;
 
                     if (item.Seed.Key != null)
@@ -976,7 +989,7 @@ namespace Library.Net.Amoeba
                         _cacheManager.Lock(item.Seed.Key);
                     }
 
-                    _settings.BackgroundDownloadItems.Add(item);
+                    _settings.DownloadItems.Add(item);
                 }
             }
         }
@@ -985,7 +998,7 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                var item = _settings.BackgroundDownloadItems
+                var item = _settings.DownloadItems.GetItems()
                     .Where(n => n.Type == BackgroundItemType.Link)
                     .FirstOrDefault(n => n.Seed.Certificate.ToString() == signature);
                 if (item == null) return null;
@@ -1001,7 +1014,7 @@ namespace Library.Net.Amoeba
         {
             lock (_thisLock)
             {
-                var item = _settings.BackgroundDownloadItems
+                var item = _settings.DownloadItems.GetItems()
                     .Where(n => n.Type == BackgroundItemType.Store)
                     .FirstOrDefault(n => n.Seed.Certificate.ToString() == signature);
                 if (item == null) return null;
@@ -1079,7 +1092,7 @@ namespace Library.Net.Amoeba
             {
                 _settings.Load(directoryPath);
 
-                foreach (var item in _settings.BackgroundDownloadItems)
+                foreach (var item in _settings.DownloadItems.GetItems())
                 {
                     if (item.State != BackgroundDownloadState.Completed)
                     {
@@ -1101,7 +1114,7 @@ namespace Library.Net.Amoeba
                     }
                 }
 
-                foreach (var item in _settings.BackgroundDownloadItems.ToArray())
+                foreach (var item in _settings.DownloadItems.GetItems().ToArray())
                 {
                     try
                     {
@@ -1109,7 +1122,7 @@ namespace Library.Net.Amoeba
                     }
                     catch (Exception)
                     {
-                        _settings.BackgroundDownloadItems.Remove(item);
+                        _settings.DownloadItems.Remove(item);
                     }
                 }
             }
@@ -1131,7 +1144,8 @@ namespace Library.Net.Amoeba
 
             public Settings(object lockObject)
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<LockedList<BackgroundDownloadItem>>() { Name = "BackgroundDownloadItems", Value = new LockedList<BackgroundDownloadItem>() },
+                    new Library.Configuration.SettingContent<LockedList<BackgroundDownloadItem<Link>>>() { Name = "LinkBackgroundDownloadItems", Value = new LockedList<BackgroundDownloadItem<Link>>() },
+                    new Library.Configuration.SettingContent<LockedList<BackgroundDownloadItem<Store>>>() { Name = "StoreBackgroundDownloadItems", Value = new LockedList<BackgroundDownloadItem<Store>>() },
                     new Library.Configuration.SettingContent<LockedHashSet<string>>() { Name = "Signatures", Value = new LockedHashSet<string>() },
                 })
             {
@@ -1154,13 +1168,42 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            public LockedList<BackgroundDownloadItem> BackgroundDownloadItems
+            private DownloadItemsManager _downloadItems;
+
+            public DownloadItemsManager DownloadItems
             {
                 get
                 {
                     lock (_thisLock)
                     {
-                        return (LockedList<BackgroundDownloadItem>)this["BackgroundDownloadItems"];
+                        if (_downloadItems == null)
+                        {
+                            _downloadItems = new DownloadItemsManager(this);
+                        }
+
+                        return _downloadItems;
+                    }
+                }
+            }
+
+            private LockedList<BackgroundDownloadItem<Link>> LinkBackgroundDownloadItems
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedList<BackgroundDownloadItem<Link>>)this["LinkBackgroundDownloadItems"];
+                    }
+                }
+            }
+
+            private LockedList<BackgroundDownloadItem<Store>> StoreBackgroundDownloadItems
+            {
+                get
+                {
+                    lock (_thisLock)
+                    {
+                        return (LockedList<BackgroundDownloadItem<Store>>)this["StoreBackgroundDownloadItems"];
                     }
                 }
             }
@@ -1173,6 +1216,44 @@ namespace Library.Net.Amoeba
                     {
                         return (LockedHashSet<string>)this["Signatures"];
                     }
+                }
+            }
+
+            public class DownloadItemsManager
+            {
+                private Settings _settings;
+
+                internal DownloadItemsManager(Settings settings)
+                {
+                    _settings = settings;
+                }
+
+                public void Add(IBackgroundDownloadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) _settings.LinkBackgroundDownloadItems.Add((BackgroundDownloadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) _settings.StoreBackgroundDownloadItems.Add((BackgroundDownloadItem<Store>)item);
+                }
+
+                public bool Contains(IBackgroundDownloadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) return _settings.LinkBackgroundDownloadItems.Contains((BackgroundDownloadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) return _settings.StoreBackgroundDownloadItems.Contains((BackgroundDownloadItem<Store>)item);
+
+                    return false;
+                }
+
+                public void Remove(IBackgroundDownloadItem item)
+                {
+                    if (item.Type == BackgroundItemType.Link) _settings.LinkBackgroundDownloadItems.Remove((BackgroundDownloadItem<Link>)item);
+                    else if (item.Type == BackgroundItemType.Store) _settings.StoreBackgroundDownloadItems.Remove((BackgroundDownloadItem<Store>)item);
+                }
+
+                public IEnumerable<IBackgroundDownloadItem> GetItems()
+                {
+                    return CollectionUtils.Unite(
+                        _settings.LinkBackgroundDownloadItems.Cast<IBackgroundDownloadItem>(),
+                        _settings.StoreBackgroundDownloadItems.Cast<IBackgroundDownloadItem>()
+                    );
                 }
             }
         }

@@ -61,7 +61,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BackgroundItemType.cs" />
     <Compile Include="AmoebaConverter.cs" />
     <Compile Include="AmoebaManager.cs" />
     <Compile Include="Cache\BitmapManager.cs" />

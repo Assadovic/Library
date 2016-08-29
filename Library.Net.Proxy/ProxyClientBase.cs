@@ -20,13 +20,13 @@ namespace Library.Net.Proxy
             }
         }
 
-        public abstract Socket Create(TimeSpan timeout);
+        public abstract void Create(Socket socket, TimeSpan timeout);
 
-        public virtual Task<Socket> CreateAsync(TimeSpan timeout)
+        public virtual Task CreateAsync(Socket socket, TimeSpan timeout)
         {
             return Task.Run(() =>
             {
-                return this.Create(timeout);
+                this.Create(socket, timeout);
             });
         }
     }

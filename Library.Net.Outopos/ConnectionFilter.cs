@@ -13,17 +13,11 @@ namespace Library.Net.Outopos
         [EnumMember(Value = "Tcp")]
         Tcp = 1,
 
-        [EnumMember(Value = "Socks4Proxy")]
-        Socks4Proxy = 2,
-
-        [EnumMember(Value = "Socks4aProxy")]
-        Socks4aProxy = 3,
-
         [EnumMember(Value = "Socks5Proxy")]
-        Socks5Proxy = 4,
+        Socks5Proxy = 2,
 
         [EnumMember(Value = "HttpProxy")]
-        HttpProxy = 5,
+        HttpProxy = 3,
     }
 
     [DataContract(Name = "ConnectionFilter", Namespace = "http://Library/Net/Outopos")]
