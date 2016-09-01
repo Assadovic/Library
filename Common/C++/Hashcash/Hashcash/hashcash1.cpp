@@ -3,10 +3,8 @@
 
 #include "Xorshift.h"
 
-using std::cout;
-using std::endl;
-using std::string;
-using std::exception;
+using namespace std;
+using std::unique_ptr;
 
 #include "cryptlib.h"
 using CryptoPP::Exception;
@@ -14,7 +12,7 @@ using CryptoPP::Exception;
 #include "sha.h"
 using CryptoPP::SHA256;
 
-byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
+unique_ptr<byte> hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
 {
     try
     {
@@ -60,7 +58,7 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
             {
                 for (int32_t j = 0; j < 8; j++)
                 {
-                    if(((finalResult[i] << j) & 0x80) == 0) count++;
+                    if (((finalResult[i] << j) & 0x80) == 0) count++;
                     else goto End1;
                 }
             }
@@ -104,7 +102,7 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
                         {
                             for (int32_t j = 0; j < 8; j++)
                             {
-                                if(((finalResult[i] << j) & 0x80) == 0) count++;
+                                if (((finalResult[i] << j) & 0x80) == 0) count++;
                                 else goto End2;
                             }
                         }
@@ -120,7 +118,7 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
             if (timeout != -1)
             {
                 clockEnd = clock();
-            
+
                 if (((clockEnd - clockStart) / CLOCKS_PER_SEC) > timeout)
                 {
                     break;
@@ -129,9 +127,8 @@ byte* hashcash1_Create(byte* value, int32_t limit, int32_t timeout)
         }
 
     HIT:
-
-        byte* key = (byte*)malloc(hashSize);
-        memcpy(key, finalState, hashSize);
+        unique_ptr<byte> key(new byte[hashSize]);
+        memcpy(key.get(), finalState, hashSize);
 
         return key;
     }
@@ -161,7 +158,7 @@ int32_t hashcash1_Verify(byte* key, byte* value)
     {
         for (int32_t j = 0; j < 8; j++)
         {
-            if(((currentResult[i] << j) & 0x80) == 0) count++;
+            if (((currentResult[i] << j) & 0x80) == 0) count++;
             else goto END;
         }
     }

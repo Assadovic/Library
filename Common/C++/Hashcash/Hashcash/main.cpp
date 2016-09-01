@@ -1,10 +1,8 @@
 ﻿#include "stdafx.h"
 #include "hashcash1.h"
 
-using std::cout;
-using std::endl;
-using std::string;
-using std::exception;
+using namespace std;
+using std::unique_ptr;
 
 inline char getHexValue(int32_t c)
 {
@@ -14,11 +12,11 @@ inline char getHexValue(int32_t c)
 
 string toHexString(byte* value, size_t length)
 {
-    char* chars = (char*)malloc(((length * 2) + 1) * sizeof(char));
+    unique_ptr<char> chars(new char[(length * 2) + 1]);
 
     {
         byte* t_value = value;
-        char* t_chars = chars;
+        char* t_chars = chars.get();
 
         for (int32_t i = length - 1; i >= 0; i--)
         {
@@ -27,18 +25,18 @@ string toHexString(byte* value, size_t length)
             *t_chars++ = getHexValue(b >> 4);
             *t_chars++ = getHexValue(b & 0x0F);
         }
-    
+
         *t_chars = '\0';
     }
 
-    string result = chars;
+    string result = chars.get();
 
-    free(chars);
+    chars.release();
 
     return result;
 }
 
-byte* fromHexString(string value, size_t& size)
+unique_ptr<byte> fromHexString(string value, size_t& size)
 {
     if (value.length() % 2 != 0)
     {
@@ -46,10 +44,10 @@ byte* fromHexString(string value, size_t& size)
     }
 
     size = (value.length() / 2) * sizeof(byte);
-    byte* buffer = (byte*)malloc(size);
+    unique_ptr<byte> buffer(new byte[size / sizeof(byte)]);
 
     {
-        byte* t_buffer = buffer;
+        byte* t_buffer = buffer.get();
         char* t_value = (char*)value.c_str();
 
         for (int32_t i = size - 1; i >= 0; i--)
@@ -105,39 +103,31 @@ int main(int argc, char* argv[])
     {
         if ((string)argv[1] == "hashcash1")
         {
-            if((string)argv[2] == "create")
+            if ((string)argv[2] == "create")
             {
                 size_t valueSize;
-                byte* value = fromHexString((string)argv[3], valueSize);
-                
+                unique_ptr<byte> value = fromHexString((string)argv[3], valueSize);
+
                 int32_t limit = atoi(argv[4]);
                 int32_t timeout = atoi(argv[5]);
 
-                byte* key = hashcash1_Create(value, limit, timeout);
+                unique_ptr<byte> key = hashcash1_Create(value.get(), limit, timeout);
 
-                cout << toHexString(key, 32) << endl;
-
-                free(key);
-
-                free(value);
+                cout << toHexString(key.get(), 32) << endl;
             }
-            else if((string)argv[2] == "verify")
+            else if ((string)argv[2] == "verify")
             {
                 size_t keySize;
-                byte* key = fromHexString((string)argv[3], keySize);
+                unique_ptr<byte> key = fromHexString((string)argv[3], keySize);
                 if (keySize != 32) return 1;
 
                 size_t valueSize;
-                byte* value = fromHexString((string)argv[4], valueSize);
+                unique_ptr<byte> value = fromHexString((string)argv[4], valueSize);
                 if (valueSize != 32) return 1;
 
-                int32_t count = hashcash1_Verify(key, value);
-
-                free(value);
+                int32_t count = hashcash1_Verify(key.get(), value.get());
 
                 cout << count << endl;
-
-                free(key);
             }
         }
     }
@@ -174,7 +164,7 @@ int main(int argc, char* argv[])
         char* arguments[count];
         arguments[1] = "hashcash1";
         arguments[2] = "verify";
-        
+
         // 5seconds, 22bit
         //arguments[3] = "e8637a65315e17953424e0081ed288ed64895b5be8b29274caf95a7d5dcce9d6";
         // 60seconds, 26bit
@@ -188,7 +178,7 @@ int main(int argc, char* argv[])
     }
 
     clockEnd = clock();
-         
+
     cout << (clockEnd - clockStart) << endl;
 
     return 0;

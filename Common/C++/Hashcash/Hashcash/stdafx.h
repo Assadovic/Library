@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string>
 #include <iostream>
+#include <memory>
 #include <time.h>
 #include <tchar.h>
 
@@ -22,11 +23,11 @@ typedef unsigned char byte;
 #endif
 
 #ifndef PORTABLE_32_BIT_TEST
-    #if _WIN64 || __amd64__
-    #define PORTABLE_64_BIT
-    #else
-    #define PORTABLE_32_BIT
-    #endif
+#if _WIN64 || __amd64__
+#define PORTABLE_64_BIT
 #else
-    #define PORTABLE_32_BIT
+#define PORTABLE_32_BIT
+#endif
+#else
+#define PORTABLE_32_BIT
 #endif
