@@ -1,3 +1,3 @@
 [submodule "Common/C++/Hashcash/cryptopp"]
 	path = Common/C++/Hashcash/cryptopp
-	url = git@github.com:weidai11/cryptopp.git
+	url = git@github.com:Alliance-Network/cryptopp.git
