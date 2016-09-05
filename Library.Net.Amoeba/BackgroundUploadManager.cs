@@ -38,7 +38,7 @@ namespace Library.Net.Amoeba
 
             _settings = new Settings(_thisLock);
 
-            _connectionsManager.UploadedEvent += (object sender, IEnumerable<Key> keys) =>
+            _connectionsManager.UploadedEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -46,7 +46,7 @@ namespace Library.Net.Amoeba
                 }
             };
 
-            _cacheManager.RemoveKeyEvent += (object sender, IEnumerable<Key> keys) =>
+            _cacheManager.RemoveKeyEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -174,7 +174,10 @@ namespace Library.Net.Amoeba
                             {
                                 lock (_thisLock)
                                 {
-                                    item.Seed.Rank = 0;
+                                    item.Seed = new Seed(null);
+                                    item.Seed.Name = item.Name;
+                                    item.Seed.Length = item.Length;
+                                    item.CreationTime = item.CreationTime;
 
                                     if (item.DigitalSignature != null)
                                     {
@@ -196,11 +199,11 @@ namespace Library.Net.Amoeba
                                     using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
                                         isStop = (this.State == ManagerState.Stop || !_settings.UploadItems.Contains(item));
-                                    }, 1024 * 1024, true))
+                                    }, 1024 * 1024 * 32, true))
                                     {
-                                        item.Seed.Length = stream.Length;
+                                        if (stream.Length == 0) throw new InvalidOperationException("Stream Length");
 
-                                        if (item.Seed.Length == 0) throw new InvalidOperationException("Stream Length");
+                                        item.Length = stream.Length;
 
                                         if (item.HashAlgorithm == HashAlgorithm.Sha256)
                                         {
@@ -240,21 +243,16 @@ namespace Library.Net.Amoeba
                     {
                         lock (_thisLock)
                         {
-                            item.Seed.Rank = item.Rank;
-                            item.Seed.Key = item.Keys[0];
+                            var metadata = new Metadata(item.Depth, item.Keys[0], item.CompressionAlgorithm, item.CryptoAlgorithm, item.CryptoKey);
+
                             item.Keys.Clear();
-
-                            item.Seed.CompressionAlgorithm = item.CompressionAlgorithm;
-
-                            item.Seed.CryptoAlgorithm = item.CryptoAlgorithm;
-                            item.Seed.CryptoKey = item.CryptoKey;
 
                             if (item.DigitalSignature != null)
                             {
                                 item.Seed.CreateCertificate(item.DigitalSignature);
                             }
 
-                            item.UploadKeys.Add(item.Seed.Key);
+                            item.UploadKeys.Add(item.Seed.Metadata.Key);
 
                             foreach (var key in item.UploadKeys)
                             {
@@ -332,7 +330,7 @@ namespace Library.Net.Amoeba
                             using (ProgressStream encodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                             {
                                 isStop = (this.State == ManagerState.Stop || !_settings.UploadItems.Contains(item));
-                            }, 1024 * 1024, true))
+                            }, 1024 * 1024 * 32, true))
                             {
                                 if (item.HashAlgorithm == HashAlgorithm.Sha256)
                                 {
@@ -360,7 +358,7 @@ namespace Library.Net.Amoeba
 
                             item.CryptoKey = cryptoKey;
                             item.Keys.AddRange(keys);
-                            item.Rank++;
+                            item.Depth++;
                             item.Groups.Clear();
                         }
                     }
@@ -434,15 +432,14 @@ namespace Library.Net.Amoeba
 
                     item.Value = link;
                     item.State = BackgroundUploadState.Encoding;
-                    item.Rank = 1;
+                    item.Name = ConnectionsManager.Keyword_Link;
+                    item.CreationTime = DateTime.UtcNow;
+                    item.Depth = 1;
                     item.CompressionAlgorithm = CompressionAlgorithm.Xz;
                     item.CryptoAlgorithm = CryptoAlgorithm.Aes256;
                     item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
                     item.HashAlgorithm = HashAlgorithm.Sha256;
                     item.DigitalSignature = digitalSignature;
-                    item.Seed = new Seed();
-                    item.Seed.Keywords.Add(ConnectionsManager.Keyword_Link);
-                    item.Seed.CreationTime = DateTime.UtcNow;
                     item.BlockLength = 1024 * 1024 * 1;
 
                     _settings.UploadItems.Add(item);
@@ -471,15 +468,14 @@ namespace Library.Net.Amoeba
 
                     item.Value = store;
                     item.State = BackgroundUploadState.Encoding;
-                    item.Rank = 1;
+                    item.Name = ConnectionsManager.Keyword_Store;
+                    item.CreationTime = DateTime.UtcNow;
+                    item.Depth = 1;
                     item.CompressionAlgorithm = CompressionAlgorithm.Xz;
                     item.CryptoAlgorithm = CryptoAlgorithm.Aes256;
                     item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
                     item.HashAlgorithm = HashAlgorithm.Sha256;
                     item.DigitalSignature = digitalSignature;
-                    item.Seed = new Seed();
-                    item.Seed.Keywords.Add(ConnectionsManager.Keyword_Store);
-                    item.Seed.CreationTime = DateTime.UtcNow;
                     item.BlockLength = 1024 * 1024 * 1;
 
                     _settings.UploadItems.Add(item);

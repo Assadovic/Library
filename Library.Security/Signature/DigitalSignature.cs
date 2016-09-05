@@ -9,7 +9,7 @@ using Library.Utilities;
 
 namespace Library.Security
 {
-    [DataContract(Name = "DigitalSignature", Namespace = "http://Library/Security")]
+    [DataContract(Name = "DigitalSignature")]
     public sealed class DigitalSignature : ItemBase<DigitalSignature>
     {
         private enum SerializeId
@@ -195,8 +195,8 @@ namespace Library.Security
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                VintUtils.WriteVint1(bufferStream, (int)FileSerializeId.Stream);
-                VintUtils.WriteVint4(bufferStream, exportStream.Length);
+                VintUtils.WriteVint(bufferStream, (int)FileSerializeId.Stream);
+                VintUtils.WriteVint(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }
@@ -229,8 +229,8 @@ namespace Library.Security
                 Stream exportStream = new WrapperStream(stream, true);
 
                 var bufferStream = new BufferStream(bufferManager);
-                VintUtils.WriteVint1(bufferStream, (int)FileSerializeId.Stream);
-                VintUtils.WriteVint4(bufferStream, exportStream.Length);
+                VintUtils.WriteVint(bufferStream, (int)FileSerializeId.Stream);
+                VintUtils.WriteVint(bufferStream, exportStream.Length);
 
                 streams.Add(new UniteStream(bufferStream, exportStream));
             }

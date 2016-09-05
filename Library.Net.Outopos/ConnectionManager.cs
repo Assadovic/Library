@@ -18,14 +18,17 @@ using Library.Utilities;
 namespace Library.Net.Outopos
 {
     [Flags]
-    [DataContract(Name = "ProtocolVersion", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "ProtocolVersion")]
     enum ProtocolVersion
     {
         //[EnumMember(Value = "Version1")]
         //Version1 = 0x01,
 
-        [EnumMember(Value = "Version2")]
-        Version2 = 0x02,
+        //[EnumMember(Value = "Version2")]
+        //Version2 = 0x02,
+
+        [EnumMember(Value = "Version3")]
+        Version3 = 0x04,
     }
 
     class PullNodesEventArgs : EventArgs
@@ -98,7 +101,7 @@ namespace Library.Net.Outopos
 
     delegate void CloseEventHandler(object sender, EventArgs e);
 
-    [DataContract(Name = "ConnectDirection", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "ConnectDirection")]
     public enum ConnectDirection
     {
         [EnumMember(Value = "In")]
@@ -187,7 +190,7 @@ namespace Library.Net.Outopos
 
         public ConnectionManager(Connection connection, byte[] mySessionId, Node baseNode, ConnectDirection direction, BufferManager bufferManager)
         {
-            _myProtocolVersion = ProtocolVersion.Version2;
+            _myProtocolVersion = ProtocolVersion.Version3;
             _connection = connection;
             _mySessionId = mySessionId;
             _baseNode = baseNode;
@@ -310,10 +313,10 @@ namespace Library.Net.Outopos
 
                         xml.WriteStartElement("Protocol");
 
-                        if (_myProtocolVersion.HasFlag(ProtocolVersion.Version2))
+                        if (_myProtocolVersion.HasFlag(ProtocolVersion.Version3))
                         {
                             xml.WriteStartElement("Outopos");
-                            xml.WriteAttributeString("Version", "2");
+                            xml.WriteAttributeString("Version", "3");
                             xml.WriteEndElement(); //Outopos
                         }
 
@@ -338,9 +341,9 @@ namespace Library.Net.Outopos
                                 {
                                     var version = xml.GetAttribute("Version");
 
-                                    if (version == "2")
+                                    if (version == "3")
                                     {
-                                        _otherProtocolVersion |= ProtocolVersion.Version2;
+                                        _otherProtocolVersion |= ProtocolVersion.Version3;
                                     }
                                 }
                             }
@@ -349,7 +352,7 @@ namespace Library.Net.Outopos
 
                     _protocolVersion = _myProtocolVersion & _otherProtocolVersion;
 
-                    if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+                    if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
                     {
                         using (Stream stream = new MemoryStream(_mySessionId))
                         {
@@ -443,7 +446,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 try
                 {
@@ -477,7 +480,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 try
                 {
@@ -509,7 +512,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 try
                 {
@@ -552,7 +555,7 @@ namespace Library.Net.Outopos
 
                     sw.Restart();
 
-                    if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+                    if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
                     {
                         using (Stream stream = _connection.Receive(_receiveTimeSpan))
                         {
@@ -762,7 +765,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -799,7 +802,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -836,7 +839,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -873,7 +876,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -913,7 +916,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -950,7 +953,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -987,7 +990,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -1024,7 +1027,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -1061,7 +1064,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -1098,7 +1101,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 Stream stream = new BufferStream(_bufferManager);
 
@@ -1135,7 +1138,7 @@ namespace Library.Net.Outopos
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
-            if (_protocolVersion.HasFlag(ProtocolVersion.Version2))
+            if (_protocolVersion.HasFlag(ProtocolVersion.Version3))
             {
                 try
                 {
@@ -1484,8 +1487,8 @@ namespace Library.Net.Outopos
                 // Value
                 if (this.Value.Array != null)
                 {
-                    VintUtils.WriteVint1(bufferStream, (int)SerializeId.Value);
-                    VintUtils.WriteVint4(bufferStream, this.Value.Count);
+                    VintUtils.WriteVint(bufferStream, (int)SerializeId.Value);
+                    VintUtils.WriteVint(bufferStream, this.Value.Count);
                     bufferStream.Write(this.Value.Array, this.Value.Offset, this.Value.Count);
                 }
 

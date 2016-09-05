@@ -2,7 +2,7 @@
 
 namespace Library.Security
 {
-    [DataContract(Name = "ExchangeAlgorithm", Namespace = "http://Library/Security")]
+    [DataContract(Name = "ExchangeAlgorithm")]
     public enum ExchangeAlgorithm : byte
     {
         [EnumMember(Value = "Rsa2048")]

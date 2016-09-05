@@ -2,7 +2,7 @@
 
 namespace Library.Net.Connections
 {
-    [DataContract(Name = "SecureConnectionType", Namespace = "http://Library/Net/Connection")]
+    [DataContract(Name = "SecureConnectionType")]
     public enum SecureConnectionType
     {
         [EnumMember(Value = "Connect")]

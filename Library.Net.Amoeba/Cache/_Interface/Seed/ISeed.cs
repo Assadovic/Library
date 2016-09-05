@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Library.Net.Amoeba
 {
-    public interface ISeed<TKey> : IKeywords, ICompressionAlgorithm, ICryptoAlgorithm
-         where TKey : IKey
+    interface ISeed<TMetadata, TKey>
+        where TMetadata : IMetadata<TKey>
+        where TKey : IKey
     {
         string Name { get; }
         long Length { get; }
         DateTime CreationTime { get; }
-        string Comment { get; }
-        int Rank { get; }
-        TKey Key { get; }
+        ICollection<string> Keywords { get; }
+        TMetadata Metadata { get; }
     }
 }

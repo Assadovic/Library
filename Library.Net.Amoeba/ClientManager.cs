@@ -9,7 +9,7 @@ using Library.Net.Proxy;
 
 namespace Library.Net.Amoeba
 {
-    public delegate Cap CreateCapEventHandler(object sender, string uri);
+    public delegate Cap CreateCapEventHandler(string uri);
 
     class ClientManager : ManagerBase, Library.Configuration.ISettings
     {
@@ -70,12 +70,12 @@ namespace Library.Net.Amoeba
 
         protected virtual Cap OnCreateCapEvent(string uri)
         {
-            return _createCapEvent?.Invoke(this, uri);
+            return _createCapEvent?.Invoke(uri);
         }
 
         protected virtual bool OnCheckUriEvent(string uri)
         {
-            return _checkUriEvent?.Invoke(this, uri) ?? true;
+            return _checkUriEvent?.Invoke(uri) ?? true;
         }
 
         private static IEnumerable<KeyValuePair<string, string>> Decode(string option)

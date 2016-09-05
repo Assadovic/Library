@@ -7,7 +7,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "Tag", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "Tag")]
     public class Tag : ItemBase<Tag>, ITag
     {
         private enum SerializeId

@@ -4,7 +4,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "UploadItem", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "UploadItem")]
     sealed class UploadItem
     {
         [DataMember(Name = "Type")]

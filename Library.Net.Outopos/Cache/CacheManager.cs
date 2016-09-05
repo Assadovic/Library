@@ -627,7 +627,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        [DataContract(Name = "ClusterInfo", Namespace = "http://Library/Net/Outopos/CacheManager")]
+        [DataContract(Name = "ClusterInfo")]
         private class ClusterInfo
         {
             private long[] _indexes;

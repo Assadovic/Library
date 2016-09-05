@@ -9,7 +9,7 @@ using Library.Utilities;
 
 namespace Library.Security
 {
-    [DataContract(Name = "Exchange", Namespace = "http://Library/Security")]
+    [DataContract(Name = "Exchange")]
     public sealed class Exchange : ItemBase<Exchange>, IExchangeEncrypt, IExchangeDecrypt
     {
         private enum SerializeId

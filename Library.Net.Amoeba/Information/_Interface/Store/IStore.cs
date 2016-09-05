@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    public interface IStore
+    interface IStore
     {
         ICollection<Box> Boxes { get; }
     }

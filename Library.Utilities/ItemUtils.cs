@@ -56,8 +56,8 @@ namespace Library.Utilities
 
         public static void Write(Stream stream, int type, Stream exportStream)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, exportStream.Length);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, exportStream.Length);
 
             using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
             {
@@ -78,52 +78,52 @@ namespace Library.Utilities
             {
                 var length = encoding.GetBytes(value, 0, value.Length, safeBuffer.Value, 0);
 
-                VintUtils.WriteVint1(stream, type);
-                VintUtils.WriteVint4(stream, length);
+                VintUtils.WriteVint(stream, type);
+                VintUtils.WriteVint(stream, length);
                 stream.Write(safeBuffer.Value, 0, length);
             }
         }
 
         public static void Write(Stream stream, int type, byte[] value)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, value.Length);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, value.Length);
             stream.Write(value, 0, value.Length);
         }
 
         public static void Write(Stream stream, int type, byte value)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, 1);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, 1);
             stream.WriteByte(value);
         }
 
         public static void Write(Stream stream, int type, short value)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, 2);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, 2);
             stream.Write(NetworkConverter.GetBytes(value), 0, 2);
         }
 
         public static void Write(Stream stream, int type, int value)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, 4);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, 4);
             stream.Write(NetworkConverter.GetBytes(value), 0, 4);
         }
 
         public static void Write(Stream stream, int type, long value)
         {
-            VintUtils.WriteVint1(stream, type);
-            VintUtils.WriteVint4(stream, 8);
+            VintUtils.WriteVint(stream, type);
+            VintUtils.WriteVint(stream, 8);
             stream.Write(NetworkConverter.GetBytes(value), 0, 8);
         }
 
         public static Stream GetStream(out int type, Stream stream)
         {
-            type = VintUtils.GetVint1(stream);
+            type = (int)VintUtils.GetVint(stream);
             if (type < 0) return null;
-            long length = VintUtils.GetVint4(stream);
+            long length = VintUtils.GetVint(stream);
             if (length < 0) return null;
 
             return new RangeStream(stream, stream.Position, length, true);

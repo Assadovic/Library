@@ -6,7 +6,7 @@ using System.Threading;
 namespace Library
 {
     [Serializable]
-    [DataContract(Name = "ItemBase", Namespace = "http://Library")]
+    [DataContract(Name = "ItemBase")]
     public abstract class ItemBase<T> : IEquatable<T>
         where T : ItemBase<T>
     {

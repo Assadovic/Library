@@ -6,7 +6,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "Key", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "Key")]
     sealed class Key : ItemBase<Key>, IKey
     {
         private enum SerializeId

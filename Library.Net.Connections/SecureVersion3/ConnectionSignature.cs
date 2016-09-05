@@ -9,7 +9,7 @@ using Library.Utilities;
 
 namespace Library.Net.Connections.SecureVersion3
 {
-    [DataContract(Name = "ConnectionSignature", Namespace = "http://Library/Net/Connection/SecureVersion3")]
+    [DataContract(Name = "ConnectionSignature")]
     sealed class ConnectionSignature : MutableCertificateItemBase<ConnectionSignature>, ICloneable<ConnectionSignature>, IThisLock
     {
         private enum SerializeId

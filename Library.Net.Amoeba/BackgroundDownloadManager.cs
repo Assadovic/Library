@@ -43,7 +43,7 @@ namespace Library.Net.Amoeba
 
             _settings = new Settings(_thisLock);
 
-            _cacheManager.SetKeyEvent += (object sender, IEnumerable<Key> keys) =>
+            _cacheManager.SetKeyEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -51,7 +51,7 @@ namespace Library.Net.Amoeba
                 }
             };
 
-            _cacheManager.RemoveKeyEvent += (object sender, IEnumerable<Key> keys) =>
+            _cacheManager.RemoveKeyEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -105,7 +105,7 @@ namespace Library.Net.Amoeba
             _removeThread.Name = "BackgroundDownloadManager_RemoveThread";
             _removeThread.Start();
 
-            _connectionsManager.GetLockSignaturesEvent = (object sender) =>
+            _connectionsManager.GetLockSignaturesEvent = () =>
             {
                 return this.SearchSignatures;
             };
@@ -239,7 +239,7 @@ namespace Library.Net.Amoeba
                                     .Where(n => n.State == BackgroundDownloadState.Downloading)
                                     .Where(x =>
                                     {
-                                        if (x.Rank == 1) return 0 == (!_cacheManager.Contains(x.Seed.Key) ? 1 : 0);
+                                        if (x.Depth == 1) return 0 == (!_cacheManager.Contains(x.Seed.Metadata.Key) ? 1 : 0);
                                         else return 0 == (x.Index.Groups.Sum(n => n.InformationLength) - x.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
                                     })
                                     .ToList();
@@ -271,13 +271,13 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    if (item.Rank == 1)
+                    if (item.Depth == 1)
                     {
-                        if (!_cacheManager.Contains(item.Seed.Key))
+                        if (!_cacheManager.Contains(item.Seed.Metadata.Key))
                         {
                             item.State = BackgroundDownloadState.Downloading;
 
-                            _connectionsManager.Download(item.Seed.Key);
+                            _connectionsManager.Download(item.Seed.Metadata.Key);
                         }
                         else
                         {
@@ -370,7 +370,7 @@ namespace Library.Net.Amoeba
                         {
                             item = _settings.DownloadItems.GetItems()
                                 .Where(n => n.State == BackgroundDownloadState.Decoding)
-                                .OrderBy(n => (n.Rank != n.Seed.Rank) ? 0 : 1)
+                                .OrderBy(n => (n.Depth != n.Seed.Metadata.Depth) ? 0 : 1)
                                 .FirstOrDefault();
                         }
                     }
@@ -384,180 +384,27 @@ namespace Library.Net.Amoeba
 
                 try
                 {
-                    if (item.Rank == 1)
+                    if ((item.Depth == 1 && !_cacheManager.Contains(item.Seed.Metadata.Key))
+                        || !item.Index.Groups.All(n => _existManager.GetCount(n) >= n.InformationLength))
                     {
-                        if (!_cacheManager.Contains(item.Seed.Key))
-                        {
-                            item.State = BackgroundDownloadState.Downloading;
-                        }
-                        else
-                        {
-                            item.State = BackgroundDownloadState.Decoding;
-
-                            if (item.Rank < item.Seed.Rank)
-                            {
-                                string fileName = null;
-                                bool largeFlag = false;
-
-                                try
-                                {
-                                    using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
-                                    using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
-                                    {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
-
-                                        if (!isStop && (stream.Length > item.Seed.Length))
-                                        {
-                                            isStop = true;
-                                            largeFlag = true;
-                                        }
-                                    }, 1024 * 1024, true))
-                                    {
-                                        fileName = stream.Name;
-
-                                        _cacheManager.Decoding(decodingProgressStream, item.Seed.CompressionAlgorithm, item.Seed.CryptoAlgorithm, item.Seed.CryptoKey,
-                                            new KeyCollection() { item.Seed.Key });
-                                    }
-                                }
-                                catch (StopIoException)
-                                {
-                                    if (File.Exists(fileName))
-                                        File.Delete(fileName);
-
-                                    if (largeFlag)
-                                    {
-                                        throw new Exception();
-                                    }
-
-                                    continue;
-                                }
-                                catch (Exception)
-                                {
-                                    if (File.Exists(fileName))
-                                        File.Delete(fileName);
-
-                                    throw;
-                                }
-
-                                Index index;
-
-                                using (FileStream stream = new FileStream(fileName, FileMode.Open))
-                                {
-                                    index = Index.Import(stream, _bufferManager);
-                                }
-
-                                File.Delete(fileName);
-
-                                lock (_thisLock)
-                                {
-                                    this.UncheckState(item.Index);
-
-                                    item.Index = index;
-
-                                    this.CheckState(item.Index);
-
-                                    foreach (var group in item.Index.Groups)
-                                    {
-                                        foreach (var key in group.Keys)
-                                        {
-                                            _cacheManager.Lock(key);
-                                        }
-                                    }
-
-                                    item.Indexes.Add(index);
-
-                                    item.Rank++;
-
-                                    item.State = BackgroundDownloadState.Downloading;
-                                }
-                            }
-                            else
-                            {
-                                bool largeFlag = false;
-                                object value = null;
-
-                                try
-                                {
-                                    using (Stream stream = new BufferStream(_bufferManager))
-                                    using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
-                                    {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
-
-                                        if (!isStop && (stream.Length > item.Seed.Length))
-                                        {
-                                            isStop = true;
-                                            largeFlag = true;
-                                        }
-                                    }, 1024 * 1024, true))
-                                    {
-                                        _cacheManager.Decoding(decodingProgressStream, item.Seed.CompressionAlgorithm, item.Seed.CryptoAlgorithm, item.Seed.CryptoKey,
-                                            new KeyCollection() { item.Seed.Key });
-
-                                        if (stream.Length != item.Seed.Length) throw new Exception();
-
-                                        stream.Seek(0, SeekOrigin.Begin);
-
-                                        if (item.Type == BackgroundItemType.Link)
-                                        {
-                                            value = Link.Import(stream, _bufferManager);
-                                        }
-                                        else if (item.Type == BackgroundItemType.Store)
-                                        {
-                                            value = Store.Import(stream, _bufferManager);
-                                        }
-                                    }
-                                }
-                                catch (StopIoException)
-                                {
-                                    if (largeFlag)
-                                    {
-                                        throw new Exception();
-                                    }
-
-                                    continue;
-                                }
-                                catch (Exception)
-                                {
-                                    throw;
-                                }
-
-                                lock (_thisLock)
-                                {
-                                    item.Value = value;
-
-                                    if (item.Seed.Key != null)
-                                    {
-                                        _cacheManager.Unlock(item.Seed.Key);
-                                    }
-
-                                    foreach (var index in item.Indexes)
-                                    {
-                                        foreach (var group in index.Groups)
-                                        {
-                                            foreach (var key in group.Keys)
-                                            {
-                                                _cacheManager.Unlock(key);
-                                            }
-                                        }
-                                    }
-
-                                    item.Indexes.Clear();
-
-                                    item.State = BackgroundDownloadState.Completed;
-                                }
-                            }
-                        }
+                        item.State = BackgroundDownloadState.Downloading;
                     }
                     else
                     {
-                        if (!item.Index.Groups.All(n => _existManager.GetCount(n) >= n.InformationLength))
+                        var keys = new KeyCollection();
+                        var compressionAlgorithm = CompressionAlgorithm.None;
+                        var cryptoAlgorithm = CryptoAlgorithm.None;
+                        byte[] cryptoKey = null;
+
+                        if (item.Depth == 1)
                         {
-                            item.State = BackgroundDownloadState.Downloading;
+                            keys.Add(item.Seed.Metadata.Key);
+                            compressionAlgorithm = item.Seed.Metadata.CompressionAlgorithm;
+                            cryptoAlgorithm = item.Seed.Metadata.CryptoAlgorithm;
+                            cryptoKey = item.Seed.Metadata.CryptoKey;
                         }
                         else
                         {
-                            var keys = new List<Key>();
-
                             try
                             {
                                 foreach (var group in item.Index.Groups.ToArray())
@@ -582,161 +429,163 @@ namespace Library.Net.Amoeba
                                 continue;
                             }
 
+                            compressionAlgorithm = item.Index.CompressionAlgorithm;
+                            cryptoAlgorithm = item.Index.CryptoAlgorithm;
+                            cryptoKey = item.Index.CryptoKey;
+                        }
+
+                        item.State = BackgroundDownloadState.Decoding;
+
+                        if (item.Depth < item.Seed.Metadata.Depth)
+                        {
+                            string fileName = null;
+                            bool largeFlag = false;
+
+                            try
+                            {
+                                using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
+                                using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
+                                {
+                                    isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
+
+                                    if (!isStop && (stream.Length > item.Seed.Length))
+                                    {
+                                        isStop = true;
+                                        largeFlag = true;
+                                    }
+                                }, 1024 * 1024 * 32, true))
+                                {
+                                    fileName = stream.Name;
+
+                                    _cacheManager.Decoding(decodingProgressStream, compressionAlgorithm, cryptoAlgorithm, cryptoKey, keys);
+                                }
+                            }
+                            catch (StopIoException)
+                            {
+                                if (File.Exists(fileName))
+                                    File.Delete(fileName);
+
+                                if (largeFlag)
+                                {
+                                    throw new Exception();
+                                }
+
+                                continue;
+                            }
+                            catch (Exception)
+                            {
+                                if (File.Exists(fileName))
+                                    File.Delete(fileName);
+
+                                throw;
+                            }
+
+                            Index index;
+
+                            using (FileStream stream = new FileStream(fileName, FileMode.Open))
+                            {
+                                index = Index.Import(stream, _bufferManager);
+                            }
+
+                            File.Delete(fileName);
+
+                            lock (_thisLock)
+                            {
+                                this.UncheckState(item.Index);
+
+                                item.Index = index;
+
+                                this.CheckState(item.Index);
+
+                                foreach (var group in item.Index.Groups)
+                                {
+                                    foreach (var key in group.Keys)
+                                    {
+                                        _cacheManager.Lock(key);
+                                    }
+                                }
+
+                                item.Indexes.Add(index);
+
+                                item.Depth++;
+
+                                item.State = BackgroundDownloadState.Downloading;
+                            }
+                        }
+                        else
+                        {
                             item.State = BackgroundDownloadState.Decoding;
 
-                            if (item.Rank < item.Seed.Rank)
+                            bool largeFlag = false;
+                            object value = null;
+
+                            try
                             {
-                                string fileName = null;
-                                bool largeFlag = false;
-
-                                try
+                                using (Stream stream = new BufferStream(_bufferManager))
+                                using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                 {
-                                    using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
-                                    using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
-                                    {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
+                                    isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
 
-                                        if (!isStop && (stream.Length > item.Seed.Length))
-                                        {
-                                            isStop = true;
-                                            largeFlag = true;
-                                        }
-                                    }, 1024 * 1024, true))
+                                    if (!isStop && (stream.Length > item.Seed.Length))
                                     {
-                                        fileName = stream.Name;
+                                        isStop = true;
+                                        largeFlag = true;
+                                    }
+                                }, 1024 * 1024 * 32, true))
+                                {
+                                    _cacheManager.Decoding(decodingProgressStream, compressionAlgorithm, cryptoAlgorithm, cryptoKey, keys);
 
-                                        _cacheManager.Decoding(decodingProgressStream, item.Index.CompressionAlgorithm, item.Index.CryptoAlgorithm, item.Index.CryptoKey,
-                                            new KeyCollection(keys));
+                                    if (stream.Length != item.Seed.Length) throw new Exception();
+
+                                    stream.Seek(0, SeekOrigin.Begin);
+
+                                    if (item.Type == BackgroundItemType.Link)
+                                    {
+                                        value = Link.Import(stream, _bufferManager);
+                                    }
+                                    else if (item.Type == BackgroundItemType.Store)
+                                    {
+                                        value = Store.Import(stream, _bufferManager);
                                     }
                                 }
-                                catch (StopIoException)
+                            }
+                            catch (StopIoException)
+                            {
+                                if (largeFlag)
                                 {
-                                    if (File.Exists(fileName))
-                                        File.Delete(fileName);
-
-                                    if (largeFlag)
-                                    {
-                                        throw new Exception();
-                                    }
-
-                                    continue;
-                                }
-                                catch (Exception)
-                                {
-                                    if (File.Exists(fileName))
-                                        File.Delete(fileName);
-
-                                    throw;
+                                    throw new Exception();
                                 }
 
-                                Index index;
+                                continue;
+                            }
+                            catch (Exception)
+                            {
+                                throw;
+                            }
 
-                                using (FileStream stream = new FileStream(fileName, FileMode.Open))
+                            lock (_thisLock)
+                            {
+                                item.Value = value;
+
+                                if (item.Seed.Metadata.Key != null)
                                 {
-                                    index = Index.Import(stream, _bufferManager);
+                                    _cacheManager.Unlock(item.Seed.Metadata.Key);
                                 }
 
-                                File.Delete(fileName);
-
-                                lock (_thisLock)
+                                foreach (var index in item.Indexes)
                                 {
-                                    this.UncheckState(item.Index);
-
-                                    item.Index = index;
-
-                                    this.CheckState(item.Index);
-
-                                    foreach (var group in item.Index.Groups)
+                                    foreach (var group in index.Groups)
                                     {
                                         foreach (var key in group.Keys)
                                         {
-                                            _cacheManager.Lock(key);
-                                        }
-                                    }
-
-                                    item.Indexes.Add(index);
-
-                                    item.Rank++;
-
-                                    item.State = BackgroundDownloadState.Downloading;
-                                }
-                            }
-                            else
-                            {
-                                item.State = BackgroundDownloadState.Decoding;
-
-                                bool largeFlag = false;
-                                object value = null;
-
-                                try
-                                {
-                                    using (Stream stream = new BufferStream(_bufferManager))
-                                    using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
-                                    {
-                                        isStop = (this.State == ManagerState.Stop || !_settings.DownloadItems.Contains(item));
-
-                                        if (!isStop && (stream.Length > item.Seed.Length))
-                                        {
-                                            isStop = true;
-                                            largeFlag = true;
-                                        }
-                                    }, 1024 * 1024, true))
-                                    {
-                                        _cacheManager.Decoding(decodingProgressStream, item.Index.CompressionAlgorithm, item.Index.CryptoAlgorithm, item.Index.CryptoKey,
-                                            new KeyCollection(keys));
-
-                                        if (stream.Length != item.Seed.Length) throw new Exception();
-
-                                        stream.Seek(0, SeekOrigin.Begin);
-
-                                        if (item.Type == BackgroundItemType.Link)
-                                        {
-                                            value = Link.Import(stream, _bufferManager);
-                                        }
-                                        else if (item.Type == BackgroundItemType.Store)
-                                        {
-                                            value = Store.Import(stream, _bufferManager);
+                                            _cacheManager.Unlock(key);
                                         }
                                     }
                                 }
-                                catch (StopIoException)
-                                {
-                                    if (largeFlag)
-                                    {
-                                        throw new Exception();
-                                    }
 
-                                    continue;
-                                }
-                                catch (Exception)
-                                {
-                                    throw;
-                                }
+                                item.Indexes.Clear();
 
-                                lock (_thisLock)
-                                {
-                                    item.Value = value;
-
-                                    if (item.Seed.Key != null)
-                                    {
-                                        _cacheManager.Unlock(item.Seed.Key);
-                                    }
-
-                                    foreach (var index in item.Indexes)
-                                    {
-                                        foreach (var group in index.Groups)
-                                        {
-                                            foreach (var key in group.Keys)
-                                            {
-                                                _cacheManager.Unlock(key);
-                                            }
-                                        }
-                                    }
-
-                                    item.Indexes.Clear();
-
-                                    item.State = BackgroundDownloadState.Completed;
-                                }
+                                item.State = BackgroundDownloadState.Completed;
                             }
                         }
                     }
@@ -754,13 +603,13 @@ namespace Library.Net.Amoeba
 
         public void Check(IBackgroundDownloadItem item)
         {
-            if (_cacheManager.Contains(item.Seed.Key))
+            if (_cacheManager.Contains(item.Seed.Metadata.Key))
             {
                 var buffer = new ArraySegment<byte>();
 
                 try
                 {
-                    buffer = _cacheManager[item.Seed.Key];
+                    buffer = _cacheManager[item.Seed.Metadata.Key];
                 }
                 catch (Exception)
                 {
@@ -904,9 +753,9 @@ namespace Library.Net.Amoeba
             {
                 if (item.State != BackgroundDownloadState.Completed)
                 {
-                    if (item.Seed.Key != null)
+                    if (item.Seed.Metadata != null)
                     {
-                        _cacheManager.Unlock(item.Seed.Key);
+                        _cacheManager.Unlock(item.Seed.Metadata.Key);
                     }
 
                     foreach (var index in item.Indexes)
@@ -935,16 +784,16 @@ namespace Library.Net.Amoeba
             {
                 if (_settings.DownloadItems.GetItems().Any(n => n.Seed == seed)) return;
 
-                if (seed.Rank == 0)
+                if (seed.Metadata == null)
                 {
                     IBackgroundDownloadItem item = null;
 
-                    if (seed.Keywords[0] == ConnectionsManager.Keyword_Link)
+                    if (seed.Name == ConnectionsManager.Keyword_Link)
                     {
                         item = new BackgroundDownloadItem<Link>();
                         item.Value = new Link();
                     }
-                    else if (seed.Keywords[0] == ConnectionsManager.Keyword_Store)
+                    else if (seed.Name == ConnectionsManager.Keyword_Store)
                     {
                         item = new BackgroundDownloadItem<Store>();
                         item.Value = new Store();
@@ -954,7 +803,7 @@ namespace Library.Net.Amoeba
                         throw new FormatException();
                     }
 
-                    item.Rank = 0;
+                    item.Depth = 0;
                     item.Seed = seed;
                     item.State = BackgroundDownloadState.Completed;
 
@@ -962,15 +811,15 @@ namespace Library.Net.Amoeba
                 }
                 else
                 {
-                    if (seed.Key == null) return;
+                    if (seed.Metadata.Key == null) return;
 
                     IBackgroundDownloadItem item = null;
 
-                    if (seed.Keywords[0] == ConnectionsManager.Keyword_Link)
+                    if (seed.Name == ConnectionsManager.Keyword_Link)
                     {
                         item = new BackgroundDownloadItem<Link>();
                     }
-                    else if (seed.Keywords[0] == ConnectionsManager.Keyword_Store)
+                    else if (seed.Name == ConnectionsManager.Keyword_Store)
                     {
                         item = new BackgroundDownloadItem<Store>();
                     }
@@ -979,15 +828,12 @@ namespace Library.Net.Amoeba
                         throw new FormatException();
                     }
 
-                    item.Rank = 1;
+                    item.Depth = 1;
                     item.Seed = seed;
                     item.State = BackgroundDownloadState.Downloading;
                     item.Value = value;
 
-                    if (item.Seed.Key != null)
-                    {
-                        _cacheManager.Lock(item.Seed.Key);
-                    }
+                    _cacheManager.Lock(item.Seed.Metadata.Key);
 
                     _settings.DownloadItems.Add(item);
                 }
@@ -1096,9 +942,9 @@ namespace Library.Net.Amoeba
                 {
                     if (item.State != BackgroundDownloadState.Completed)
                     {
-                        if (item.Seed.Key != null)
+                        if (item.Seed.Metadata != null)
                         {
-                            _cacheManager.Lock(item.Seed.Key);
+                            _cacheManager.Lock(item.Seed.Metadata.Key);
                         }
 
                         foreach (var index in item.Indexes)

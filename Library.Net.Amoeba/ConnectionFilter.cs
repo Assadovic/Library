@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "ConnectionType", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "ConnectionType")]
     public enum ConnectionType
     {
         [EnumMember(Value = "None")]
@@ -20,7 +20,7 @@ namespace Library.Net.Amoeba
         HttpProxy = 3,
     }
 
-    [DataContract(Name = "ConnectionFilter", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "ConnectionFilter")]
     public sealed class ConnectionFilter : IEquatable<ConnectionFilter>, IThisLock
     {
         private ConnectionType _connectionType;
@@ -170,7 +170,7 @@ namespace Library.Net.Amoeba
         #endregion
     }
 
-    [DataContract(Name = "UriCondition", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "UriCondition")]
     public sealed class UriCondition : IEquatable<UriCondition>, IThisLock
     {
         private string _value;

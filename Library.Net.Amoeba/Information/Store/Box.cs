@@ -8,34 +8,25 @@ using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Box", Namespace = "http://Library/Net/Amoeba")]
-    public sealed class Box : MutableCertificateItemBase<Box>, IBox, ICloneable<Box>, IThisLock
+    [DataContract(Name = "Box")]
+    public sealed class Box : ItemBase<Box>, IBox, ICloneable<Box>, IThisLock
     {
         private enum SerializeId
         {
             Name = 0,
-            CreationTime = 1,
-            Comment = 2,
-            Seed = 3,
-            Box = 4,
-
-            Certificate = 5,
+            Seed = 1,
+            Box = 2,
         }
 
         private string _name;
-        private DateTime _creationTime;
-        private string _comment;
         private SeedCollection _seeds;
         private BoxCollection _boxes;
-
-        private Certificate _certificate;
 
         private volatile int _hashCode;
 
         private volatile object _thisLock;
 
         public static readonly int MaxNameLength = 256;
-        public static readonly int MaxCommentLength = 1024;
         public static readonly int MaxSeedCount = 1024 * 64;
         public static readonly int MaxBoxCount = 8192;
 
@@ -67,14 +58,6 @@ namespace Library.Net.Amoeba
                         {
                             this.Name = ItemUtils.GetString(rangeStream);
                         }
-                        else if (type == (int)SerializeId.CreationTime)
-                        {
-                            this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
-                        }
-                        else if (type == (int)SerializeId.Comment)
-                        {
-                            this.Comment = ItemUtils.GetString(rangeStream);
-                        }
                         else if (type == (int)SerializeId.Seed)
                         {
                             this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
@@ -82,11 +65,6 @@ namespace Library.Net.Amoeba
                         else if (type == (int)SerializeId.Box)
                         {
                             this.Boxes.Add(Box.Import(rangeStream, bufferManager, count + 1));
-                        }
-
-                        else if (type == (int)SerializeId.Certificate)
-                        {
-                            this.Certificate = Certificate.Import(rangeStream, bufferManager);
                         }
                     }
                 }
@@ -106,16 +84,6 @@ namespace Library.Net.Amoeba
                 {
                     ItemUtils.Write(bufferStream, (int)SerializeId.Name, this.Name);
                 }
-                // CreationTime
-                if (this.CreationTime != DateTime.MinValue)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-                }
-                // Comment
-                if (this.Comment != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
-                }
                 // Seeds
                 foreach (var value in this.Seeds)
                 {
@@ -130,15 +98,6 @@ namespace Library.Net.Amoeba
                     using (var stream = value.Export(bufferManager, count + 1))
                     {
                         ItemUtils.Write(bufferStream, (int)SerializeId.Box, stream);
-                    }
-                }
-
-                // Certificate
-                if (this.Certificate != null)
-                {
-                    using (var stream = this.Certificate.Export(bufferManager))
-                    {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
                     }
                 }
 
@@ -168,12 +127,8 @@ namespace Library.Net.Amoeba
             if (object.ReferenceEquals(this, other)) return true;
 
             if (this.Name != other.Name
-                || this.CreationTime != other.CreationTime
-                || this.Comment != other.Comment
                 || !CollectionUtils.Equals(this.Seeds, other.Seeds)
-                || !CollectionUtils.Equals(this.Boxes, other.Boxes)
-
-                || this.Certificate != other.Certificate)
+                || !CollectionUtils.Equals(this.Boxes, other.Boxes))
             {
                 return false;
             }
@@ -186,58 +141,6 @@ namespace Library.Net.Amoeba
             lock (this.ThisLock)
             {
                 return this.Name;
-            }
-        }
-
-        public override void CreateCertificate(DigitalSignature digitalSignature)
-        {
-            lock (this.ThisLock)
-            {
-                base.CreateCertificate(digitalSignature);
-            }
-        }
-
-        public override bool VerifyCertificate()
-        {
-            lock (this.ThisLock)
-            {
-                return base.VerifyCertificate();
-            }
-        }
-
-        protected override Stream GetCertificateStream()
-        {
-            lock (this.ThisLock)
-            {
-                var temp = this.Certificate;
-                this.Certificate = null;
-
-                try
-                {
-                    return this.Export(BufferManager.Instance);
-                }
-                finally
-                {
-                    this.Certificate = temp;
-                }
-            }
-        }
-
-        public override Certificate Certificate
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _certificate;
-                }
-            }
-            protected set
-            {
-                lock (this.ThisLock)
-                {
-                    _certificate = value;
-                }
             }
         }
 
@@ -273,52 +176,6 @@ namespace Library.Net.Amoeba
                     else
                     {
                         _hashCode = 0;
-                    }
-                }
-            }
-        }
-
-        [DataMember(Name = "CreationTime")]
-        public DateTime CreationTime
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _creationTime;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    var utc = value.ToUniversalTime();
-                    _creationTime = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
-                }
-            }
-        }
-
-        [DataMember(Name = "Comment")]
-        public string Comment
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _comment;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    if (value != null && value.Length > Box.MaxCommentLength)
-                    {
-                        throw new ArgumentException();
-                    }
-                    else
-                    {
-                        _comment = value;
                     }
                 }
             }

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "ConnectionType", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "ConnectionType")]
     public enum ConnectionType
     {
         [EnumMember(Value = "None")]
@@ -20,7 +20,7 @@ namespace Library.Net.Outopos
         HttpProxy = 3,
     }
 
-    [DataContract(Name = "ConnectionFilter", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "ConnectionFilter")]
     public sealed class ConnectionFilter : IEquatable<ConnectionFilter>, IThisLock
     {
         private ConnectionType _connectionType;
@@ -170,7 +170,7 @@ namespace Library.Net.Outopos
         #endregion
     }
 
-    [DataContract(Name = "UriCondition", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "UriCondition")]
     public sealed class UriCondition : IEquatable<UriCondition>, IThisLock
     {
         private string _value;

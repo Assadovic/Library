@@ -10,7 +10,7 @@ using Library.Utilities;
 
 namespace Library.Security
 {
-    [DataContract(Name = "Certificate", Namespace = "http://Library/Security")]
+    [DataContract(Name = "Certificate")]
     public sealed class Certificate : ItemBase<Certificate>
     {
         private enum SerializeId

@@ -6,7 +6,7 @@ using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Store", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "Store")]
     public sealed class Store : ItemBase<Store>, IStore, ICloneable<Store>, IThisLock
     {
         private enum SerializeId

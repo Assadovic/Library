@@ -6,12 +6,13 @@ using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Library.Io;
 using Library.Security;
+using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
     public static class AmoebaConverter
     {
-        enum ConvertCompressionAlgorithm : byte
+        enum ConvertCompressionAlgorithm
         {
             None = 0,
             Deflate = 1,
@@ -20,7 +21,7 @@ namespace Library.Net.Amoeba
         private static readonly BufferManager _bufferManager = BufferManager.Instance;
         private static readonly Regex _base64Regex = new Regex(@"^([a-zA-Z0-9\-_]*).*?$", RegexOptions.Compiled | RegexOptions.Singleline);
 
-        private static Stream ToStream<T>(ItemBase<T> item)
+        private static Stream ToStream<T>(int version, ItemBase<T> item)
                 where T : ItemBase<T>
         {
             Stream stream = null;
@@ -29,7 +30,7 @@ namespace Library.Net.Amoeba
             {
                 stream = new RangeStream(item.Export(_bufferManager));
 
-                var list = new List<KeyValuePair<byte, Stream>>();
+                var list = new List<KeyValuePair<int, Stream>>();
 
                 try
                 {
@@ -54,7 +55,7 @@ namespace Library.Net.Amoeba
 
                         deflateBufferStream.Seek(0, SeekOrigin.Begin);
 
-                        list.Add(new KeyValuePair<byte, Stream>((byte)ConvertCompressionAlgorithm.Deflate, deflateBufferStream));
+                        list.Add(new KeyValuePair<int, Stream>((byte)ConvertCompressionAlgorithm.Deflate, deflateBufferStream));
                     }
                     catch (Exception)
                     {
@@ -69,7 +70,7 @@ namespace Library.Net.Amoeba
 
                 }
 
-                list.Add(new KeyValuePair<byte, Stream>((byte)ConvertCompressionAlgorithm.None, stream));
+                list.Add(new KeyValuePair<int, Stream>((byte)ConvertCompressionAlgorithm.None, stream));
 
                 list.Sort((x, y) =>
                 {
@@ -85,7 +86,8 @@ namespace Library.Net.Amoeba
                 }
 
                 var headerStream = new BufferStream(_bufferManager);
-                headerStream.WriteByte((byte)list[0].Key);
+                VintUtils.WriteVint(headerStream, version);
+                VintUtils.WriteVint(headerStream, list[0].Key);
 
                 var dataStream = new UniteStream(headerStream, list[0].Value);
 
@@ -103,7 +105,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        private static T FromStream<T>(Stream stream)
+        private static T FromStream<T>(int version, Stream stream)
             where T : ItemBase<T>
         {
             try
@@ -127,15 +129,17 @@ namespace Library.Net.Amoeba
                     }
 
                     targetStream.Seek(0, SeekOrigin.Begin);
-                    var type = (byte)targetStream.ReadByte();
+
+                    if (version != VintUtils.GetVint(targetStream)) throw new ArgumentException("version");
+                    int type = (int)VintUtils.GetVint(targetStream);
 
                     using (Stream dataStream = new RangeStream(targetStream, targetStream.Position, targetStream.Length - targetStream.Position - 4, true))
                     {
-                        if (type == (byte)ConvertCompressionAlgorithm.None)
+                        if (type == (int)ConvertCompressionAlgorithm.None)
                         {
                             return ItemBase<T>.Import(dataStream, _bufferManager);
                         }
-                        else if (type == (byte)ConvertCompressionAlgorithm.Deflate)
+                        else if (type == (int)ConvertCompressionAlgorithm.Deflate)
                         {
                             using (BufferStream deflateBufferStream = new BufferStream(_bufferManager))
                             {
@@ -196,7 +200,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                using (Stream stream = AmoebaConverter.ToStream<Node>(item))
+                using (Stream stream = AmoebaConverter.ToStream<Node>(0, item))
                 {
                     return "Node:" + AmoebaConverter.ToBase64String(stream);
                 }
@@ -216,7 +220,7 @@ namespace Library.Net.Amoeba
             {
                 using (Stream stream = AmoebaConverter.FromBase64String(item.Remove(0, "Node:".Length)))
                 {
-                    return AmoebaConverter.FromStream<Node>(stream);
+                    return AmoebaConverter.FromStream<Node>(0, stream);
                 }
             }
             catch (Exception)
@@ -231,7 +235,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                using (Stream stream = AmoebaConverter.ToStream<Seed>(item))
+                using (Stream stream = AmoebaConverter.ToStream<Seed>(0, item))
                 {
                     return "Seed:" + AmoebaConverter.ToBase64String(stream);
                 }
@@ -251,7 +255,7 @@ namespace Library.Net.Amoeba
             {
                 using (Stream stream = AmoebaConverter.FromBase64String(item.Remove(0, "Seed:".Length)))
                 {
-                    return AmoebaConverter.FromStream<Seed>(stream);
+                    return AmoebaConverter.FromStream<Seed>(0, stream);
                 }
             }
             catch (Exception)
@@ -266,7 +270,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                return AmoebaConverter.ToStream<Box>(item);
+                return AmoebaConverter.ToStream<Box>(0, item);
             }
             catch (Exception)
             {
@@ -280,7 +284,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                return AmoebaConverter.FromStream<Box>(stream);
+                return AmoebaConverter.FromStream<Box>(0, stream);
             }
             catch (Exception)
             {

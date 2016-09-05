@@ -9,7 +9,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "BroadcastMessage", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "BroadcastMessage")]
     public sealed class BroadcastMessage : ImmutableCertificateItemBase<BroadcastMessage>, IBroadcastHeader, IBroadcastContent
     {
         private enum SerializeId

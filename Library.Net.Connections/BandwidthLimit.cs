@@ -15,7 +15,7 @@ namespace Library.Net.Connections
         BandwidthLimit BandwidthLimit { get; set; }
     }
 
-    [DataContract(Name = "BandwidthLimit", Namespace = "http://Library/Net/Connection")]
+    [DataContract(Name = "BandwidthLimit")]
     public sealed class BandwidthLimit : ManagerBase, IEquatable<BandwidthLimit>, ICloneable<BandwidthLimit>, IThisLock
     {
         private Thread _watchThread;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -7,7 +8,7 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "BackgroundUploadState", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "BackgroundUploadState")]
     enum BackgroundUploadState
     {
         [EnumMember(Value = "Encoding")]
@@ -31,7 +32,10 @@ namespace Library.Net.Amoeba
 
         object Value { get; set; }
 
-        int Rank { get; set; }
+        string Name { get; set; }
+        long Length { get; set; }
+        DateTime CreationTime { get; set; }
+        int Depth { get; set; }
         KeyCollection Keys { get; }
         GroupCollection Groups { get; }
         int BlockLength { get; set; }
@@ -48,14 +52,17 @@ namespace Library.Net.Amoeba
         HashSet<Key> UploadedKeys { get; }
     }
 
-    [DataContract(Name = "BackgroundUploadItem", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "BackgroundUploadItem")]
     sealed class BackgroundUploadItem<T> : IBackgroundUploadItem
     {
         private BackgroundUploadState _state;
 
         private T _value;
 
-        private int _rank;
+        private string _name;
+        private long _length;
+        private DateTime _creationTime;
+        private int _depth;
         private KeyCollection _keys;
         private GroupCollection _groups;
         private int _blockLength;
@@ -154,21 +161,78 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Rank")]
-        public int Rank
+        [DataMember(Name = "Name")]
+        public string Name
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _rank;
+                    return _name;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _rank = value;
+                    _name = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Length")]
+        public long Length
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _length;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _length = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "CreationTime")]
+        public DateTime CreationTime
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _creationTime;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _creationTime = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Depth")]
+        public int Depth
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _depth;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _depth = value;
                 }
             }
         }

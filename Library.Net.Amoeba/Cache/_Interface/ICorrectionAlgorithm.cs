@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "CorrectionAlgorithm", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "CorrectionAlgorithm")]
     enum CorrectionAlgorithm : byte
     {
         [EnumMember(Value = "None")]

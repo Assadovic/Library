@@ -7,7 +7,7 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    public delegate bool CheckUriEventHandler(object sender, string uri);
+    public delegate bool CheckUriEventHandler(string uri);
 
     // 色々力技が必要になり個々のクラスが見苦しので、このクラスで覆う
 
@@ -56,25 +56,25 @@ namespace Library.Net.Amoeba
             _backgroundDownloadManager = new BackgroundDownloadManager(_connectionsManager, _cacheManager, _bufferManager);
             _backgroundUploadManager = new BackgroundUploadManager(_connectionsManager, _cacheManager, _bufferManager);
 
-            _clientManager.CreateCapEvent = (object sender, string uri) =>
+            _clientManager.CreateCapEvent = (string uri) =>
             {
-                return _createCapEvent?.Invoke(this, uri);
+                return _createCapEvent?.Invoke(uri);
             };
 
-            _serverManager.AcceptCapEvent = (object sender, out string uri) =>
+            _serverManager.AcceptCapEvent = (out string uri) =>
             {
                 uri = null;
-                return _acceptCapEvent?.Invoke(this, out uri);
+                return _acceptCapEvent?.Invoke(out uri);
             };
 
-            _clientManager.CheckUriEvent = (object sender, string uri) =>
+            _clientManager.CheckUriEvent = (string uri) =>
             {
-                return _checkUriEvent?.Invoke(this, uri) ?? true;
+                return _checkUriEvent?.Invoke(uri) ?? true;
             };
 
-            _serverManager.CheckUriEvent = (object sender, string uri) =>
+            _serverManager.CheckUriEvent = (string uri) =>
             {
-                return _checkUriEvent?.Invoke(this, uri) ?? true;
+                return _checkUriEvent?.Invoke(uri) ?? true;
             };
         }
 
@@ -535,7 +535,6 @@ namespace Library.Net.Amoeba
         public void Upload(string filePath,
             string name,
             IEnumerable<string> keywords,
-            string comment,
             DigitalSignature digitalSignature,
             int priority)
         {
@@ -547,7 +546,6 @@ namespace Library.Net.Amoeba
                 _uploadManager.Upload(filePath,
                     name,
                     keywords,
-                    comment,
                     digitalSignature,
                     priority);
             }
@@ -556,7 +554,6 @@ namespace Library.Net.Amoeba
         public void Share(string filePath,
             string name,
             IEnumerable<string> keywords,
-            string comment,
             DigitalSignature digitalSignature,
             int priority)
         {
@@ -568,7 +565,6 @@ namespace Library.Net.Amoeba
                 _uploadManager.Share(filePath,
                     name,
                     keywords,
-                    comment,
                     digitalSignature,
                     priority);
             }

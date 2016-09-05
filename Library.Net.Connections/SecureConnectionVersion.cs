@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Library.Net.Connections
 {
     [Flags]
-    [DataContract(Name = "SecureConnectionVersion", Namespace = "http://Library/Net/Connection")]
+    [DataContract(Name = "SecureConnectionVersion")]
     public enum SecureConnectionVersion
     {
         //[EnumMember(Value = "Version1")]

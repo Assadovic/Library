@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "CompressionAlgorithm", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "CompressionAlgorithm")]
     public enum CompressionAlgorithm : byte
     {
         [EnumMember(Value = "None")]
@@ -12,7 +12,7 @@ namespace Library.Net.Amoeba
         Xz = 1,
     }
 
-    public interface ICompressionAlgorithm
+    interface ICompressionAlgorithm
     {
         CompressionAlgorithm CompressionAlgorithm { get; }
     }

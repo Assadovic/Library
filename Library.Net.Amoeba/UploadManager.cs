@@ -48,7 +48,7 @@ namespace Library.Net.Amoeba
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
-            _connectionsManager.UploadedEvent += (object sender, IEnumerable<Key> keys) =>
+            _connectionsManager.UploadedEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -56,7 +56,7 @@ namespace Library.Net.Amoeba
                 }
             };
 
-            _cacheManager.RemoveKeyEvent += (object sender, IEnumerable<Key> keys) =>
+            _cacheManager.RemoveKeyEvent += (IEnumerable<Key> keys) =>
             {
                 foreach (var key in keys)
                 {
@@ -64,7 +64,7 @@ namespace Library.Net.Amoeba
                 }
             };
 
-            _cacheManager.RemoveShareEvent += (object sender, string path) =>
+            _cacheManager.RemoveShareEvent += (string path) =>
             {
                 _removeSharePaths.Enqueue(path);
             };
@@ -169,11 +169,11 @@ namespace Library.Net.Amoeba
 
                         contexts.Add(new InformationContext("Id", item.Key));
                         contexts.Add(new InformationContext("Priority", item.Value.Priority));
-                        contexts.Add(new InformationContext("Name", item.Value.Seed.Name));
-                        contexts.Add(new InformationContext("Length", item.Value.Seed.Length));
-                        contexts.Add(new InformationContext("CreationTime", item.Value.Seed.CreationTime));
+                        contexts.Add(new InformationContext("Name", item.Value.Name));
+                        contexts.Add(new InformationContext("Length", item.Value.Length));
+                        contexts.Add(new InformationContext("CreationTime", item.Value.CreationTime));
                         contexts.Add(new InformationContext("State", item.Value.State));
-                        contexts.Add(new InformationContext("Rank", item.Value.Rank));
+                        contexts.Add(new InformationContext("Depth", item.Value.Depth));
                         contexts.Add(new InformationContext("Path", item.Value.FilePath));
 
                         if (item.Value.State == UploadState.Completed || item.Value.State == UploadState.Uploading)
@@ -306,10 +306,10 @@ namespace Library.Net.Amoeba
                                     item.EncodeOffset = Math.Min(readSize, stream.Length);
                                 }, 1024 * 1024, true))
                                 {
-                                    item.EncodeLength = stream.Length;
-                                    item.Seed.Length = stream.Length;
+                                    if (stream.Length == 0) throw new InvalidOperationException("Stream Length");
 
-                                    if (item.Seed.Length == 0) throw new InvalidOperationException("Stream Length");
+                                    item.Length = stream.Length;
+                                    item.EncodeLength = stream.Length;
 
                                     item.State = UploadState.ComputeHash;
 
@@ -361,10 +361,10 @@ namespace Library.Net.Amoeba
                                     item.EncodeOffset = Math.Min(readSize, stream.Length);
                                 }, 1024 * 1024, true))
                                 {
-                                    item.EncodeLength = stream.Length;
-                                    item.Seed.Length = stream.Length;
+                                    if (stream.Length == 0) throw new InvalidOperationException("Stream Length");
 
-                                    if (item.Seed.Length == 0) throw new InvalidOperationException("Stream Length");
+                                    item.Length = stream.Length;
+                                    item.EncodeLength = stream.Length;
 
                                     keys = _cacheManager.Share(hashProgressStream, stream.Name, item.HashAlgorithm, item.BlockLength);
                                 }
@@ -443,34 +443,39 @@ namespace Library.Net.Amoeba
                     {
                         lock (_thisLock)
                         {
-                            item.Seed.Rank = item.Rank;
-                            item.Seed.Key = item.Keys[0];
-                            item.Keys.Clear();
-
-                            if (item.Type == UploadType.Upload)
+                            Metadata metadata = null;
                             {
-                                item.Seed.CompressionAlgorithm = item.CompressionAlgorithm;
-
-                                item.Seed.CryptoAlgorithm = item.CryptoAlgorithm;
-                                item.Seed.CryptoKey = item.CryptoKey;
-                            }
-                            else if (item.Type == UploadType.Share)
-                            {
-                                if (item.Rank != 1)
+                                if (item.Type == UploadType.Upload)
                                 {
-                                    item.Seed.CompressionAlgorithm = item.CompressionAlgorithm;
-
-                                    item.Seed.CryptoAlgorithm = item.CryptoAlgorithm;
-                                    item.Seed.CryptoKey = item.CryptoKey;
+                                    metadata = new Metadata(item.Depth, item.Keys[0], item.CompressionAlgorithm, item.CryptoAlgorithm, item.CryptoKey);
                                 }
+                                else if (item.Type == UploadType.Share)
+                                {
+                                    if (item.Depth == 1)
+                                    {
+                                        metadata = new Metadata(item.Depth, item.Keys[0], CompressionAlgorithm.None, CryptoAlgorithm.None, null);
+                                    }
+                                    else
+                                    {
+                                        metadata = new Metadata(item.Depth, item.Keys[0], item.CompressionAlgorithm, item.CryptoAlgorithm, item.CryptoKey);
+                                    }
+                                }
+
+                                item.Keys.Clear();
                             }
+
+                            item.Seed = new Seed(metadata);
+                            item.Seed.Name = item.Name;
+                            item.Seed.Length = item.Length;
+                            item.Seed.CreationTime = item.CreationTime;
+                            item.Seed.Keywords.AddRange(item.Keywords);
 
                             if (item.DigitalSignature != null)
                             {
                                 item.Seed.CreateCertificate(item.DigitalSignature);
                             }
 
-                            item.UploadKeys.Add(item.Seed.Key);
+                            item.UploadKeys.Add(item.Seed.Metadata.Key);
 
                             foreach (var key in item.UploadKeys)
                             {
@@ -479,16 +484,18 @@ namespace Library.Net.Amoeba
 
                             this.CheckState(item);
 
-                            if (item.Type == UploadType.Upload)
                             {
-                                _cacheManager.SetSeed(item.Seed.Clone(), item.Indexes.Select(n => n.Clone()).ToArray());
-                            }
-                            else if (item.Type == UploadType.Share)
-                            {
-                                _cacheManager.SetSeed(item.Seed.Clone(), item.FilePath, item.Indexes.Select(n => n.Clone()).ToArray());
-                            }
+                                if (item.Type == UploadType.Upload)
+                                {
+                                    _cacheManager.SetSeed(item.Seed.Clone(), item.RetainKeys.ToArray());
+                                }
+                                else if (item.Type == UploadType.Share)
+                                {
+                                    _cacheManager.SetSeed(item.Seed.Clone(), item.FilePath, item.RetainKeys.ToArray());
+                                }
 
-                            item.Indexes.Clear();
+                                item.RetainKeys.Clear();
+                            }
 
                             foreach (var key in item.LockedKeys)
                             {
@@ -558,6 +565,7 @@ namespace Library.Net.Amoeba
                             {
                                 item.UploadKeys.Add(key);
                                 item.LockedKeys.Add(key);
+                                item.RetainKeys.Add(key);
                             }
 
                             item.Groups.Add(group);
@@ -594,21 +602,17 @@ namespace Library.Net.Amoeba
 
                             index.CryptoAlgorithm = item.CryptoAlgorithm;
                             index.CryptoKey = item.CryptoKey;
-
-                            item.Indexes.Add(index);
                         }
                         else if (item.Type == UploadType.Share)
                         {
                             index.Groups.AddRange(item.Groups);
 
-                            if (item.Rank != 1)
+                            if (item.Depth != 1)
                             {
                                 index.CompressionAlgorithm = item.CompressionAlgorithm;
 
                                 index.CryptoAlgorithm = item.CryptoAlgorithm;
                                 index.CryptoKey = item.CryptoKey;
-
-                                item.Indexes.Add(index);
                             }
                         }
 
@@ -665,7 +669,7 @@ namespace Library.Net.Amoeba
 
                             item.CryptoKey = cryptoKey;
                             item.Keys.AddRange(keys);
-                            item.Rank++;
+                            item.Depth++;
                             item.Groups.Clear();
                         }
                     }
@@ -686,7 +690,6 @@ namespace Library.Net.Amoeba
         public void Upload(string filePath,
             string name,
             IEnumerable<string> keywords,
-            string comment,
             DigitalSignature digitalSignature,
             int priority)
         {
@@ -696,18 +699,16 @@ namespace Library.Net.Amoeba
 
                 item.State = UploadState.ComputeHash;
                 item.Type = UploadType.Upload;
-                item.Rank = 1;
+                item.Name = name;
+                item.Keywords.AddRange(keywords);
+                item.CreationTime = DateTime.UtcNow;
+                item.Depth = 1;
                 item.FilePath = filePath;
                 item.CompressionAlgorithm = CompressionAlgorithm.Xz;
                 item.CryptoAlgorithm = CryptoAlgorithm.Aes256;
                 item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.DigitalSignature = digitalSignature;
-                item.Seed = new Seed();
-                item.Seed.Name = name;
-                item.Seed.Keywords.AddRange(keywords);
-                item.Seed.CreationTime = DateTime.UtcNow;
-                item.Seed.Comment = comment;
                 item.BlockLength = 1024 * 1024 * 1;
                 item.Priority = priority;
 
@@ -719,7 +720,6 @@ namespace Library.Net.Amoeba
         public void Share(string filePath,
             string name,
             IEnumerable<string> keywords,
-            string comment,
             DigitalSignature digitalSignature,
             int priority)
         {
@@ -735,18 +735,16 @@ namespace Library.Net.Amoeba
 
                 item.State = UploadState.ComputeHash;
                 item.Type = UploadType.Share;
-                item.Rank = 1;
+                item.Name = name;
+                item.CreationTime = DateTime.UtcNow;
+                item.Keywords.AddRange(keywords);
+                item.Depth = 1;
                 item.FilePath = filePath;
                 item.CompressionAlgorithm = CompressionAlgorithm.Xz;
                 item.CryptoAlgorithm = CryptoAlgorithm.Aes256;
                 item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.DigitalSignature = digitalSignature;
-                item.Seed = new Seed();
-                item.Seed.Name = name;
-                item.Seed.Keywords.AddRange(keywords);
-                item.Seed.CreationTime = DateTime.UtcNow;
-                item.Seed.Comment = comment;
                 item.BlockLength = 1024 * 1024 * 1;
                 item.Priority = priority;
 
@@ -789,18 +787,16 @@ namespace Library.Net.Amoeba
                 if (item.Type == UploadType.Upload)
                 {
                     this.Upload(item.FilePath,
-                        item.Seed.Name,
-                        item.Seed.Keywords,
-                        item.Seed.Comment,
+                        item.Name,
+                        item.Keywords,
                         item.DigitalSignature,
                         item.Priority);
                 }
                 else if (item.Type == UploadType.Share)
                 {
                     this.Share(item.FilePath,
-                        item.Seed.Name,
-                        item.Seed.Keywords,
-                        item.Seed.Comment,
+                        item.Name,
+                        item.Keywords,
                         item.DigitalSignature,
                         item.Priority);
                 }

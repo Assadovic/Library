@@ -43,7 +43,9 @@ namespace Library.UnitTest
         [Test]
         public void Test_AmoebaConverter_Seed()
         {
-            var seed = new Seed();
+            var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+            var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+            var seed = new Seed(metadata);
             seed.Name = "aaaa.zip";
             seed.Keywords.AddRange(new KeywordCollection
             {
@@ -53,12 +55,6 @@ namespace Library.UnitTest
             });
             seed.CreationTime = DateTime.Now;
             seed.Length = 10000;
-            seed.Comment = "eeee";
-            seed.Rank = 1;
-            seed.Key = new Key(new byte[32], HashAlgorithm.Sha256);
-            seed.CompressionAlgorithm = CompressionAlgorithm.Xz;
-            seed.CryptoAlgorithm = CryptoAlgorithm.Aes256;
-            seed.CryptoKey = new byte[32 + 32];
 
             DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
             seed.CreateCertificate(digitalSignature);
@@ -72,15 +68,23 @@ namespace Library.UnitTest
         [Test]
         public void Test_AmoebaConverter_Box()
         {
+            var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+            var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+            var seed = new Seed(metadata);
+            seed.Name = "aaaa.zip";
+            seed.Keywords.AddRange(new KeywordCollection
+                {
+                    "bbbb",
+                    "cccc",
+                    "dddd",
+                });
+            seed.CreationTime = DateTime.Now;
+            seed.Length = 10000;
+
             var box = new Box();
             box.Name = "Box";
-            box.Comment = "Comment";
-            box.CreationTime = DateTime.Now;
+            box.Seeds.Add(seed);
             box.Boxes.Add(new Box() { Name = "Box" });
-            box.Seeds.Add(new Seed() { Name = "Seed" });
-
-            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
-            box.CreateCertificate(digitalSignature);
 
             Box box2;
 
@@ -124,7 +128,7 @@ namespace Library.UnitTest
                 var id = new byte[32];
                 _random.NextBytes(id);
 
-                key = new Key(id, HashAlgorithm.Sha256);
+                key = new Key(HashAlgorithm.Sha256, id);
             }
 
             Key key2;
@@ -142,7 +146,9 @@ namespace Library.UnitTest
         {
             foreach (var a in new DigitalSignatureAlgorithm[] { DigitalSignatureAlgorithm.Rsa2048_Sha256, DigitalSignatureAlgorithm.Rsa2048_Sha256 })
             {
-                var seed = new Seed();
+                var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+                var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+                var seed = new Seed(metadata);
                 seed.Name = "aaaa.zip";
                 seed.Keywords.AddRange(new KeywordCollection
                 {
@@ -152,12 +158,6 @@ namespace Library.UnitTest
                 });
                 seed.CreationTime = DateTime.Now;
                 seed.Length = 10000;
-                seed.Comment = "eeee";
-                seed.Rank = 1;
-                seed.Key = new Key(new byte[32], HashAlgorithm.Sha256);
-                seed.CompressionAlgorithm = CompressionAlgorithm.Xz;
-                seed.CryptoAlgorithm = CryptoAlgorithm.Aes256;
-                seed.CryptoKey = new byte[32 + 32];
 
                 DigitalSignature digitalSignature = new DigitalSignature("123", a);
                 seed.CreateCertificate(digitalSignature);
@@ -181,15 +181,23 @@ namespace Library.UnitTest
         [Test]
         public void Test_Box()
         {
+            var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+            var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+            var seed = new Seed(metadata);
+            seed.Name = "aaaa.zip";
+            seed.Keywords.AddRange(new KeywordCollection
+                {
+                    "bbbb",
+                    "cccc",
+                    "dddd",
+                });
+            seed.CreationTime = DateTime.Now;
+            seed.Length = 10000;
+
             var box = new Box();
             box.Name = "Box";
-            box.Comment = "Comment";
-            box.CreationTime = DateTime.Now;
-            box.Seeds.Add(new Seed() { Name = "Seed" });
+            box.Seeds.Add(seed);
             box.Boxes.Add(new Box() { Name = "Box" });
-
-            DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
-            box.CreateCertificate(digitalSignature);
 
             var box2 = box.Clone();
 
@@ -203,7 +211,6 @@ namespace Library.UnitTest
             }
 
             Assert.AreEqual(box, box3, "Box #2");
-            Assert.IsTrue(box3.VerifyCertificate(), "Box #3");
 
             {
                 var parentBox = new Box();
@@ -530,7 +537,7 @@ namespace Library.UnitTest
                             var id = new byte[32];
                             _random.NextBytes(id);
 
-                            key = new Key(id, HashAlgorithm.Sha256);
+                            key = new Key(HashAlgorithm.Sha256, id);
                         }
 
                         keys.Add(key);
@@ -565,7 +572,7 @@ namespace Library.UnitTest
                             var id = new byte[32];
                             _random.NextBytes(id);
 
-                            key = new Key(id, HashAlgorithm.Sha256);
+                            key = new Key(HashAlgorithm.Sha256, id);
                         }
 
                         keys.Add(key);
@@ -591,7 +598,7 @@ namespace Library.UnitTest
                     };
 
                     var buffer = _bufferManager.TakeBuffer(1024 * 1024 * 8);
-                    var key = new Key(Sha256.ComputeHash(buffer), HashAlgorithm.Sha256);
+                    var key = new Key(HashAlgorithm.Sha256, Sha256.ComputeHash(buffer));
 
                     senderConnection.PushBlock(key, new ArraySegment<byte>(buffer, 0, 1024 * 1024 * 4));
 
@@ -648,7 +655,9 @@ namespace Library.UnitTest
 
                     for (int j = 0; j < 32; j++)
                     {
-                        var seed = new Seed();
+                        var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+                        var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+                        var seed = new Seed(metadata);
                         seed.Name = "aaaa.zip";
                         seed.Keywords.AddRange(new KeywordCollection
                         {
@@ -658,12 +667,6 @@ namespace Library.UnitTest
                         });
                         seed.CreationTime = DateTime.Now;
                         seed.Length = 10000;
-                        seed.Comment = "eeee";
-                        seed.Rank = 1;
-                        seed.Key = new Key(new byte[32], HashAlgorithm.Sha256);
-                        seed.CompressionAlgorithm = CompressionAlgorithm.Xz;
-                        seed.CryptoAlgorithm = CryptoAlgorithm.Aes256;
-                        seed.CryptoKey = new byte[32 + 32];
 
                         seeds.Add(seed);
                     }

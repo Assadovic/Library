@@ -7,7 +7,7 @@ using Library.Security;
 
 namespace Library.Net.Outopos
 {
-    public delegate bool CheckUriEventHandler(object sender, string uri);
+    public delegate bool CheckUriEventHandler(string uri);
 
     public sealed class OutoposManager : StateManagerBase, Library.Configuration.ISettings, IThisLock
     {
@@ -50,25 +50,25 @@ namespace Library.Net.Outopos
             _downloadManager = new DownloadManager(_connectionsManager, _cacheManager, _bufferManager);
             _uploadManager = new UploadManager(_connectionsManager, _cacheManager, _bufferManager);
 
-            _clientManager.CreateCapEvent = (object sender, string uri) =>
+            _clientManager.CreateCapEvent = (string uri) =>
             {
-                return _createCapEvent?.Invoke(this, uri);
+                return _createCapEvent?.Invoke(uri);
             };
 
-            _serverManager.AcceptCapEvent = (object sender, out string uri) =>
+            _serverManager.AcceptCapEvent = (out string uri) =>
             {
                 uri = null;
-                return _acceptCapEvent?.Invoke(this, out uri);
+                return _acceptCapEvent?.Invoke(out uri);
             };
 
-            _clientManager.CheckUriEvent = (object sender, string uri) =>
+            _clientManager.CheckUriEvent = (string uri) =>
             {
-                return _checkUriEvent?.Invoke(this, uri) ?? true;
+                return _checkUriEvent?.Invoke(uri) ?? true;
             };
 
-            _serverManager.CheckUriEvent = (object sender, string uri) =>
+            _serverManager.CheckUriEvent = (string uri) =>
             {
-                return _checkUriEvent?.Invoke(this, uri) ?? true;
+                return _checkUriEvent?.Invoke(uri) ?? true;
             };
 
             _connectionsManager.GetLockSignaturesEvent = (object sender) =>

@@ -10,7 +10,7 @@ using Library.Utilities;
 
 namespace Library.Net.Connections.SecureVersion3
 {
-    [DataContract(Name = "ProtocolInformation", Namespace = "http://Library/Net/Connection/SecureVersion3")]
+    [DataContract(Name = "ProtocolInformation")]
     class ProtocolInformation : ItemBase<ProtocolInformation>
     {
         private enum SerializeId

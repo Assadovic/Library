@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Library.Net.Connections.SecureVersion3
 {
     [Flags]
-    [DataContract(Name = "CryptoAlgorithm", Namespace = "http://Library/Net/Connection/SecureVersion3")]
+    [DataContract(Name = "CryptoAlgorithm")]
     enum CryptoAlgorithm
     {
         [EnumMember(Value = "Aes256")]

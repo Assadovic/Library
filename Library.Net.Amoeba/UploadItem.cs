@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "UploadState", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "UploadState")]
     public enum UploadState
     {
         [EnumMember(Value = "ComputeHash")]
@@ -13,7 +14,7 @@ namespace Library.Net.Amoeba
         [EnumMember(Value = "Encoding")]
         Encoding = 1,
 
-        [EnumMember(Value = "ComputeCorrection")]
+        [EnumMember(Value = "ParityEncoding")]
         ParityEncoding = 2,
 
         [EnumMember(Value = "Uploading")]
@@ -26,7 +27,7 @@ namespace Library.Net.Amoeba
         Error = 5,
     }
 
-    [DataContract(Name = "UploadType", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "UploadType")]
     enum UploadType
     {
         [EnumMember(Value = "Upload")]
@@ -36,7 +37,7 @@ namespace Library.Net.Amoeba
         Share = 1,
     }
 
-    [DataContract(Name = "UploadItem", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "UploadItem")]
     sealed class UploadItem
     {
         private UploadType _type;
@@ -45,7 +46,11 @@ namespace Library.Net.Amoeba
 
         private string _filePath;
 
-        private int _rank;
+        private string _name;
+        private long _length;
+        private DateTime _creationTime;
+        private KeywordCollection _keywords;
+        private int _depth;
         private KeyCollection _keys;
         private GroupCollection _groups;
         private int _blockLength;
@@ -55,6 +60,7 @@ namespace Library.Net.Amoeba
         private CorrectionAlgorithm _correctionAlgorithm;
         private HashAlgorithm _hashAlgorithm;
         private DigitalSignature _digitalSignature;
+
         private Seed _seed;
 
         private long _encodeOffset;
@@ -63,7 +69,7 @@ namespace Library.Net.Amoeba
         private List<Key> _LockedKeys;
         private HashSet<Key> _uploadKeys;
         private HashSet<Key> _uploadedKeys;
-        private IndexCollection _indexes;
+        private HashSet<Key> _retainKeys;
 
         private static readonly object _initializeLock = new object();
         private volatile object _thisLock;
@@ -163,21 +169,93 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Rank")]
-        public int Rank
+        [DataMember(Name = "Name")]
+        public string Name
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _rank;
+                    return _name;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _rank = value;
+                    _name = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Length")]
+        public long Length
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _length;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _length = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "CreationTime")]
+        public DateTime CreationTime
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _creationTime;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _creationTime = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Keywords")]
+        public KeywordCollection Keywords
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    if (_keywords == null)
+                        _keywords = new KeywordCollection();
+
+                    return _keywords;
+                }
+            }
+        }
+
+        [DataMember(Name = "Depth")]
+        public int Depth
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _depth;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _depth = value;
                 }
             }
         }
@@ -447,17 +525,17 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Indexs")]
-        public IndexCollection Indexes
+        [DataMember(Name = "RetainKeys")]
+        public HashSet<Key> RetainKeys
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    if (_indexes == null)
-                        _indexes = new IndexCollection();
+                    if (_retainKeys == null)
+                        _retainKeys = new HashSet<Key>();
 
-                    return _indexes;
+                    return _retainKeys;
                 }
             }
         }

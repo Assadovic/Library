@@ -7,7 +7,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "BroadcastMetadata", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "BroadcastMetadata")]
     class BroadcastMetadata : ImmutableCertificateItemBase<BroadcastMetadata>, IBroadcastHeader, IBroadcastOptions
     {
         private enum SerializeId

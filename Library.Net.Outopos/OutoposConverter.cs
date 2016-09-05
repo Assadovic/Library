@@ -6,12 +6,13 @@ using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Library.Io;
 using Library.Security;
+using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
     public static class OutoposConverter
     {
-        enum ConvertCompressionAlgorithm : byte
+        enum ConvertCompressionAlgorithm
         {
             None = 0,
             Deflate = 1,
@@ -20,7 +21,7 @@ namespace Library.Net.Outopos
         private static readonly BufferManager _bufferManager = BufferManager.Instance;
         private static readonly Regex _base64Regex = new Regex(@"^([a-zA-Z0-9\-_]*).*?$", RegexOptions.Compiled | RegexOptions.Singleline);
 
-        private static Stream ToStream<T>(ItemBase<T> item)
+        private static Stream ToStream<T>(int version, ItemBase<T> item)
                 where T : ItemBase<T>
         {
             Stream stream = null;
@@ -29,7 +30,7 @@ namespace Library.Net.Outopos
             {
                 stream = new RangeStream(item.Export(_bufferManager));
 
-                var list = new List<KeyValuePair<byte, Stream>>();
+                var list = new List<KeyValuePair<int, Stream>>();
 
                 try
                 {
@@ -54,7 +55,7 @@ namespace Library.Net.Outopos
 
                         deflateBufferStream.Seek(0, SeekOrigin.Begin);
 
-                        list.Add(new KeyValuePair<byte, Stream>((byte)ConvertCompressionAlgorithm.Deflate, deflateBufferStream));
+                        list.Add(new KeyValuePair<int, Stream>((byte)ConvertCompressionAlgorithm.Deflate, deflateBufferStream));
                     }
                     catch (Exception)
                     {
@@ -69,7 +70,7 @@ namespace Library.Net.Outopos
 
                 }
 
-                list.Add(new KeyValuePair<byte, Stream>((byte)ConvertCompressionAlgorithm.None, stream));
+                list.Add(new KeyValuePair<int, Stream>((byte)ConvertCompressionAlgorithm.None, stream));
 
                 list.Sort((x, y) =>
                 {
@@ -79,23 +80,14 @@ namespace Library.Net.Outopos
                     return x.Key.CompareTo(y.Key);
                 });
 
-#if DEBUG
-                if (list[0].Value.Length != stream.Length)
-                {
-                    Debug.WriteLine("AmoebaConverter ToStream : {0}→{1} {2}",
-                        NetworkConverter.ToSizeString(stream.Length),
-                        NetworkConverter.ToSizeString(list[0].Value.Length),
-                        NetworkConverter.ToSizeString(list[0].Value.Length - stream.Length));
-                }
-#endif
-
                 for (int i = 1; i < list.Count; i++)
                 {
                     list[i].Value.Dispose();
                 }
 
                 var headerStream = new BufferStream(_bufferManager);
-                headerStream.WriteByte((byte)list[0].Key);
+                VintUtils.WriteVint(headerStream, version);
+                VintUtils.WriteVint(headerStream, list[0].Key);
 
                 var dataStream = new UniteStream(headerStream, list[0].Value);
 
@@ -113,7 +105,7 @@ namespace Library.Net.Outopos
             }
         }
 
-        private static T FromStream<T>(Stream stream)
+        private static T FromStream<T>(int version, Stream stream)
             where T : ItemBase<T>
         {
             try
@@ -137,15 +129,17 @@ namespace Library.Net.Outopos
                     }
 
                     targetStream.Seek(0, SeekOrigin.Begin);
-                    var type = (byte)targetStream.ReadByte();
+
+                    if (version != VintUtils.GetVint(targetStream)) throw new ArgumentException("version");
+                    int type = (int)VintUtils.GetVint(targetStream);
 
                     using (Stream dataStream = new RangeStream(targetStream, targetStream.Position, targetStream.Length - targetStream.Position - 4, true))
                     {
-                        if (type == (byte)ConvertCompressionAlgorithm.None)
+                        if (type == (int)ConvertCompressionAlgorithm.None)
                         {
                             return ItemBase<T>.Import(dataStream, _bufferManager);
                         }
-                        else if (type == (byte)ConvertCompressionAlgorithm.Deflate)
+                        else if (type == (int)ConvertCompressionAlgorithm.Deflate)
                         {
                             using (BufferStream deflateBufferStream = new BufferStream(_bufferManager))
                             {
@@ -159,13 +153,6 @@ namespace Library.Net.Outopos
                                         deflateBufferStream.Write(safeBuffer.Value, 0, length);
                                     }
                                 }
-
-#if DEBUG
-                                Debug.WriteLine("AmoebaConverter FromStream : {0}→{1} {2}",
-                                    NetworkConverter.ToSizeString(dataStream.Length),
-                                    NetworkConverter.ToSizeString(deflateBufferStream.Length),
-                                    NetworkConverter.ToSizeString(dataStream.Length - deflateBufferStream.Length));
-#endif
 
                                 deflateBufferStream.Seek(0, SeekOrigin.Begin);
 
@@ -213,7 +200,7 @@ namespace Library.Net.Outopos
 
             try
             {
-                using (Stream stream = OutoposConverter.ToStream<Node>(item))
+                using (Stream stream = OutoposConverter.ToStream<Node>(0, item))
                 {
                     return "Node:" + OutoposConverter.ToBase64String(stream);
                 }
@@ -233,7 +220,7 @@ namespace Library.Net.Outopos
             {
                 using (Stream stream = OutoposConverter.FromBase64String(item.Remove(0, "Node:".Length)))
                 {
-                    return OutoposConverter.FromStream<Node>(stream);
+                    return OutoposConverter.FromStream<Node>(0, stream);
                 }
             }
             catch (Exception)
@@ -248,7 +235,7 @@ namespace Library.Net.Outopos
 
             try
             {
-                using (Stream stream = OutoposConverter.ToStream<Tag>(item))
+                using (Stream stream = OutoposConverter.ToStream<Tag>(0, item))
                 {
                     return "Tag:" + OutoposConverter.ToBase64String(stream);
                 }
@@ -268,7 +255,7 @@ namespace Library.Net.Outopos
             {
                 using (Stream stream = OutoposConverter.FromBase64String(item.Remove(0, "Tag:".Length)))
                 {
-                    return OutoposConverter.FromStream<Tag>(stream);
+                    return OutoposConverter.FromStream<Tag>(0, stream);
                 }
             }
             catch (Exception)

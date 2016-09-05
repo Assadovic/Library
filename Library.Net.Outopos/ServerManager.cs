@@ -10,7 +10,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    public delegate Cap AcceptCapEventHandler(object sender, out string uri);
+    public delegate Cap AcceptCapEventHandler(out string uri);
 
     class ServerManager : StateManagerBase, Library.Configuration.ISettings
     {
@@ -100,12 +100,12 @@ namespace Library.Net.Outopos
         protected virtual Cap OnAcceptCapEvent(out string uri)
         {
             uri = null;
-            return _acceptCapEvent?.Invoke(this, out uri);
+            return _acceptCapEvent?.Invoke(out uri);
         }
 
         protected virtual bool OnCheckUriEvent(string uri)
         {
-            return _checkUriEvent?.Invoke(this, uri) ?? true;
+            return _checkUriEvent?.Invoke(uri) ?? true;
         }
 
         public Connection AcceptConnection(out string uri, BandwidthLimit bandwidthLimit)

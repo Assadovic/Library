@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "CryptoAlgorithm", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "CryptoAlgorithm")]
     public enum CryptoAlgorithm : byte
     {
         [EnumMember(Value = "None")]
@@ -12,7 +12,7 @@ namespace Library.Net.Amoeba
         Aes256 = 1,
     }
 
-    public interface ICryptoAlgorithm
+    interface ICryptoAlgorithm
     {
         CryptoAlgorithm CryptoAlgorithm { get; }
         byte[] CryptoKey { get; }

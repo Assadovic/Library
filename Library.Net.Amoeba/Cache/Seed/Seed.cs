@@ -8,41 +8,25 @@ using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Seed", Namespace = "http://Library/Net/Amoeba")]
-    public sealed class Seed : MutableCertificateItemBase<Seed>, ISeed<Key>, ICloneable<Seed>, IThisLock
+    [DataContract(Name = "Seed")]
+    public sealed class Seed : MutableCertificateItemBase<Seed>, ISeed<Metadata, Key>, ICloneable<Seed>, IThisLock
     {
         private enum SerializeId
         {
             Name = 0,
             Length = 1,
             CreationTime = 2,
-            Comment = 3,
-            Rank = 4,
-            Key = 5,
+            Keyword = 3,
+            Metadata = 4,
 
-            Keyword = 6,
-
-            CompressionAlgorithm = 7,
-
-            CryptoAlgorithm = 8,
-            CryptoKey = 9,
-
-            Certificate = 10,
+            Certificate = 5,
         }
 
         private string _name;
         private long _length;
         private DateTime _creationTime;
-        private string _comment;
-        private int _rank;
-        private Key _key;
-
         private KeywordCollection _keywords;
-
-        private CompressionAlgorithm _compressionAlgorithm = 0;
-
-        private CryptoAlgorithm _cryptoAlgorithm = 0;
-        private byte[] _cryptoKey;
+        private Metadata _metadata;
 
         private Certificate _certificate;
 
@@ -51,15 +35,11 @@ namespace Library.Net.Amoeba
         private volatile object _thisLock;
 
         public static readonly int MaxNameLength = 256;
-        public static readonly int MaxCommentLength = 1024;
-
         public static readonly int MaxKeywordCount = 3;
 
-        public static readonly int MaxCryptoKeyLength = 256;
-
-        public Seed()
+        public Seed(Metadata metadata)
         {
-
+            this.Metadata = metadata;
         }
 
         protected override void Initialize()
@@ -91,36 +71,13 @@ namespace Library.Net.Amoeba
                         {
                             this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
                         }
-                        else if (type == (int)SerializeId.Comment)
-                        {
-                            this.Comment = ItemUtils.GetString(rangeStream);
-                        }
-                        else if (type == (int)SerializeId.Rank)
-                        {
-                            this.Rank = ItemUtils.GetInt(rangeStream);
-                        }
-                        else if (type == (int)SerializeId.Key)
-                        {
-                            this.Key = Key.Import(rangeStream, bufferManager);
-                        }
-
                         else if (type == (int)SerializeId.Keyword)
                         {
                             this.Keywords.Add(ItemUtils.GetString(rangeStream));
                         }
-
-                        else if (type == (int)SerializeId.CompressionAlgorithm)
+                        else if (type == (int)SerializeId.Metadata)
                         {
-                            this.CompressionAlgorithm = (CompressionAlgorithm)Enum.Parse(typeof(CompressionAlgorithm), ItemUtils.GetString(rangeStream));
-                        }
-
-                        else if (type == (int)SerializeId.CryptoAlgorithm)
-                        {
-                            this.CryptoAlgorithm = (CryptoAlgorithm)Enum.Parse(typeof(CryptoAlgorithm), ItemUtils.GetString(rangeStream));
-                        }
-                        else if (type == (int)SerializeId.CryptoKey)
-                        {
-                            this.CryptoKey = ItemUtils.GetByteArray(rangeStream);
+                            this.Metadata = Metadata.Import(rangeStream, bufferManager);
                         }
 
                         else if (type == (int)SerializeId.Certificate)
@@ -153,46 +110,18 @@ namespace Library.Net.Amoeba
                 {
                     ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
                 }
-                // Comment
-                if (this.Comment != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
-                }
-                // Rank
-                if (this.Rank != 0)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Rank, this.Rank);
-                }
-                // Key
-                if (this.Key != null)
-                {
-                    using (var stream = this.Key.Export(bufferManager))
-                    {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Key, stream);
-                    }
-                }
-
                 // Keywords
                 foreach (var value in this.Keywords)
                 {
                     ItemUtils.Write(bufferStream, (int)SerializeId.Keyword, value);
                 }
-
-                // CompressionAlgorithm
-                if (this.CompressionAlgorithm != 0)
+                // Metadata
+                if (this.Metadata != null)
                 {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CompressionAlgorithm, this.CompressionAlgorithm.ToString());
-                }
-
-                // CryptoAlgorithm
-                if (this.CryptoAlgorithm != 0)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
-                }
-                // CryptoKey
-                if (this.CryptoKey != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CryptoKey, this.CryptoKey);
+                    using (var stream = this.Metadata.Export(bufferManager))
+                    {
+                        ItemUtils.Write(bufferStream, (int)SerializeId.Metadata, stream);
+                    }
                 }
 
                 // Certificate
@@ -232,25 +161,11 @@ namespace Library.Net.Amoeba
             if (this.Name != other.Name
                 || this.Length != other.Length
                 || this.CreationTime != other.CreationTime
-                || this.Comment != other.Comment
-                || this.Rank != other.Rank
-                || this.Key != other.Key
-
-                || !CollectionUtils.Equals(this.Keywords, other.Keywords)
-
-                || this.CompressionAlgorithm != other.CompressionAlgorithm
-
-                || this.CryptoAlgorithm != other.CryptoAlgorithm
-                || (this.CryptoKey == null) != (other.CryptoKey == null)
+                || this.Metadata != other.Metadata
 
                 || this.Certificate != other.Certificate)
             {
                 return false;
-            }
-
-            if (this.CryptoKey != null && other.CryptoKey != null)
-            {
-                if (!Unsafe.Equals(this.CryptoKey, other.CryptoKey)) return false;
             }
 
             return true;
@@ -316,7 +231,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        #region ISeed<Key>
+        #region ISeed<Metadata, Key>
 
         [DataMember(Name = "Name")]
         public string Name
@@ -383,84 +298,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Comment")]
-        public string Comment
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _comment;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    if (value != null && value.Length > Seed.MaxCommentLength)
-                    {
-                        throw new ArgumentException();
-                    }
-                    else
-                    {
-                        _comment = value;
-                    }
-                }
-            }
-        }
-
-        [DataMember(Name = "Rank")]
-        public int Rank
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _rank;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _rank = value;
-                }
-            }
-        }
-
-        [DataMember(Name = "Key")]
-        public Key Key
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _key;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    _key = value;
-
-                    if (value != null)
-                    {
-                        _hashCode = value.GetHashCode();
-                    }
-                    else
-                    {
-                        _hashCode = 0;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region IKeywords
-
-        ICollection<string> IKeywords.Keywords
+        ICollection<string> ISeed<Metadata, Key>.Keywords
         {
             get
             {
@@ -486,87 +324,29 @@ namespace Library.Net.Amoeba
             }
         }
 
-        #endregion
-
-        #region ICompressionAlgorithm
-
-        [DataMember(Name = "CompressionAlgorithm")]
-        public CompressionAlgorithm CompressionAlgorithm
+        [DataMember(Name = "Metadata")]
+        public Metadata Metadata
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _compressionAlgorithm;
+                    return _metadata;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    if (!Enum.IsDefined(typeof(CompressionAlgorithm), value))
+                    _metadata = value;
+
+                    if (value != null)
                     {
-                        throw new ArgumentException();
+                        _hashCode = value.GetHashCode();
                     }
                     else
                     {
-                        _compressionAlgorithm = value;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region ICryptoAlgorithm
-
-        [DataMember(Name = "CryptoAlgorithm")]
-        public CryptoAlgorithm CryptoAlgorithm
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _cryptoAlgorithm;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    if (!Enum.IsDefined(typeof(CryptoAlgorithm), value))
-                    {
-                        throw new ArgumentException();
-                    }
-                    else
-                    {
-                        _cryptoAlgorithm = value;
-                    }
-                }
-            }
-        }
-
-        [DataMember(Name = "CryptoKey")]
-        public byte[] CryptoKey
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _cryptoKey;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    if (value != null && value.Length > Seed.MaxCryptoKeyLength)
-                    {
-                        throw new ArgumentException();
-                    }
-                    else
-                    {
-                        _cryptoKey = value;
+                        _hashCode = 0;
                     }
                 }
             }

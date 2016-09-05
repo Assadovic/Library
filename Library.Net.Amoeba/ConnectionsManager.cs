@@ -12,9 +12,9 @@ using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    public delegate IEnumerable<string> GetSignaturesEventHandler(object sender);
+    public delegate IEnumerable<string> GetSignaturesEventHandler();
 
-    delegate void UploadedEventHandler(object sender, IEnumerable<Key> keys);
+    delegate void UploadedEventHandler(IEnumerable<Key> keys);
 
     class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings
     {
@@ -91,7 +91,7 @@ namespace Library.Net.Amoeba
         private readonly SafeInteger _acceptConnectionCount = new SafeInteger();
 
         private GetSignaturesEventHandler _getLockSignaturesEvent;
-        private UploadedEventHandler _uploadedEvent;
+        public event UploadedEventHandler UploadedEvent;
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
@@ -208,24 +208,6 @@ namespace Library.Net.Amoeba
                 lock (_thisLock)
                 {
                     _getLockSignaturesEvent = value;
-                }
-            }
-        }
-
-        public event UploadedEventHandler UploadedEvent
-        {
-            add
-            {
-                lock (_thisLock)
-                {
-                    _uploadedEvent += value;
-                }
-            }
-            remove
-            {
-                lock (_thisLock)
-                {
-                    _uploadedEvent -= value;
                 }
             }
         }
@@ -409,12 +391,12 @@ namespace Library.Net.Amoeba
 
         protected virtual IEnumerable<string> OnLockSignaturesEvent()
         {
-            return _getLockSignaturesEvent?.Invoke(this);
+            return _getLockSignaturesEvent?.Invoke();
         }
 
         protected virtual void OnUploadedEvent(IEnumerable<Key> keys)
         {
-            _uploadedEvent?.Invoke(this, keys);
+            this.UploadedEvent?.Invoke(keys);
         }
 
         private static bool Check(Node node)
@@ -2452,9 +2434,7 @@ namespace Library.Net.Amoeba
                 var now = DateTime.UtcNow;
 
                 if (seed == null
-                    || seed.Name != null
-                    || seed.Comment != null
-                    || seed.Keywords.Count != 1 || seed.Keywords[0] != ConnectionsManager.Keyword_Link
+                    || seed.Name != ConnectionsManager.Keyword_Link
                     || (seed.CreationTime - now).Minutes > 30) return false;
 
                 if (seed.Certificate == null) throw new CertificateException();
@@ -2483,9 +2463,7 @@ namespace Library.Net.Amoeba
                 var now = DateTime.UtcNow;
 
                 if (seed == null
-                    || seed.Name != null
-                    || seed.Comment != null
-                    || seed.Keywords.Count != 1 || seed.Keywords[0] != ConnectionsManager.Keyword_Store
+                    || seed.Name != ConnectionsManager.Keyword_Store
                     || (seed.CreationTime - now).Minutes > 30) return false;
 
                 if (seed.Certificate == null) throw new CertificateException();

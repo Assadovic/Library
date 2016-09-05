@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Library.Security
 {
-    [DataContract(Name = "CashItemBase", Namespace = "http://Library/Security")]
+    [DataContract(Name = "CashItemBase")]
     public abstract class ImmutableCashItemBase<T> : ImmutableCertificateItemBase<T>, ICash
         where T : ImmutableCashItemBase<T>
     {

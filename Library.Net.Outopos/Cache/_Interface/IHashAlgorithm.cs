@@ -2,7 +2,7 @@
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "HashAlgorithm", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "HashAlgorithm")]
     public enum HashAlgorithm : byte
     {
         [EnumMember(Value = "Sha256")]

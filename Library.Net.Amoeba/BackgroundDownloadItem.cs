@@ -5,7 +5,7 @@ using Library.Io;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "BackgroundDownloadState", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "BackgroundDownloadState")]
     enum BackgroundDownloadState
     {
         [EnumMember(Value = "Downloading")]
@@ -36,14 +36,14 @@ namespace Library.Net.Amoeba
 
         Seed Seed { get; set; }
 
-        int Rank { get; set; }
+        int Depth { get; set; }
         Index Index { get; set; }
         object Value { get; set; }
 
         IndexCollection Indexes { get; }
     }
 
-    [DataContract(Name = "BackgroundDownloadItem", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "BackgroundDownloadItem")]
     sealed class BackgroundDownloadItem<T> : IBackgroundDownloadItem
     {
         private BackgroundDownloadState _state;
@@ -127,8 +127,8 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Rank")]
-        public int Rank
+        [DataMember(Name = "Depth")]
+        public int Depth
         {
             get
             {
@@ -196,7 +196,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Indexs")]
+        [DataMember(Name = "Indexes")]
         public IndexCollection Indexes
         {
             get

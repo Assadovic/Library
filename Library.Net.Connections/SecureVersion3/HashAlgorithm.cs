@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Library.Net.Connections.SecureVersion3
 {
     [Flags]
-    [DataContract(Name = "HashAlgorithm", Namespace = "http://Library/Net/Connection/SecureVersion3")]
+    [DataContract(Name = "HashAlgorithm")]
     enum HashAlgorithm
     {
         [EnumMember(Value = "Sha256")]

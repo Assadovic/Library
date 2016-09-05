@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
     /// <summary>
     /// ノードに関する情報を表します
     /// </summary>
-    [DataContract(Name = "Node", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "Node")]
     public sealed class Node : ItemBase<Node>, INode
     {
         private enum SerializeId

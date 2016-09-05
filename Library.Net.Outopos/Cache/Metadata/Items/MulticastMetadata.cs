@@ -7,7 +7,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "MulticastMetadata", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "MulticastMetadata")]
     class MulticastMetadata : ImmutableCashItemBase<MulticastMetadata>, IMulticastHeader, IMulticastOptions
     {
         private enum SerializeId

@@ -6,29 +6,26 @@ using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Key", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "Key")]
     public sealed class Key : ItemBase<Key>, IKey
     {
         private enum SerializeId
         {
-            Hash = 0,
-
-            HashAlgorithm = 1,
+            HashAlgorithm = 0,
+            Hash = 1,
         }
 
-        private volatile byte[] _hash;
-
         private volatile HashAlgorithm _hashAlgorithm = 0;
+        private volatile byte[] _hash;
 
         private volatile int _hashCode;
 
         public static readonly int MaxHashLength = 32;
 
-        public Key(byte[] hash, HashAlgorithm hashAlgorithm)
+        public Key(HashAlgorithm hashAlgorithm, byte[] hash)
         {
-            this.Hash = hash;
-
             this.HashAlgorithm = hashAlgorithm;
+            this.Hash = hash;
         }
 
         protected override void Initialize()
@@ -46,14 +43,13 @@ namespace Library.Net.Amoeba
                 {
                     if (rangeStream == null) return;
 
-                    if (type == (int)SerializeId.Hash)
-                    {
-                        this.Hash = ItemUtils.GetByteArray(rangeStream);
-                    }
-
-                    else if (type == (int)SerializeId.HashAlgorithm)
+                    if (type == (int)SerializeId.HashAlgorithm)
                     {
                         this.HashAlgorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), ItemUtils.GetString(rangeStream));
+                    }
+                    else if (type == (int)SerializeId.Hash)
+                    {
+                        this.Hash = ItemUtils.GetByteArray(rangeStream);
                     }
                 }
             }
@@ -63,16 +59,15 @@ namespace Library.Net.Amoeba
         {
             var bufferStream = new BufferStream(bufferManager);
 
-            // Hash
-            if (this.Hash != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.Hash, this.Hash);
-            }
-
             // HashAlgorithm
             if (this.HashAlgorithm != 0)
             {
                 ItemUtils.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
+            }
+            // Hash
+            if (this.Hash != null)
+            {
+                ItemUtils.Write(bufferStream, (int)SerializeId.Hash, this.Hash);
             }
 
             bufferStream.Seek(0, SeekOrigin.Begin);
@@ -96,9 +91,8 @@ namespace Library.Net.Amoeba
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if ((this.Hash == null) != (other.Hash == null)
-
-                || this.HashAlgorithm != other.HashAlgorithm)
+            if (this.HashAlgorithm != other.HashAlgorithm
+                || (this.Hash == null) != (other.Hash == null))
             {
                 return false;
             }
@@ -112,6 +106,26 @@ namespace Library.Net.Amoeba
         }
 
         #region IKey
+
+        [DataMember(Name = "HashAlgorithm")]
+        public HashAlgorithm HashAlgorithm
+        {
+            get
+            {
+                return _hashAlgorithm;
+            }
+            private set
+            {
+                if (!Enum.IsDefined(typeof(HashAlgorithm), value))
+                {
+                    throw new ArgumentException();
+                }
+                else
+                {
+                    _hashAlgorithm = value;
+                }
+            }
+        }
 
         [DataMember(Name = "Hash")]
         public byte[] Hash
@@ -138,30 +152,6 @@ namespace Library.Net.Amoeba
                 else
                 {
                     _hashCode = 0;
-                }
-            }
-        }
-
-        #endregion
-
-        #region IHashAlgorithm
-
-        [DataMember(Name = "HashAlgorithm")]
-        public HashAlgorithm HashAlgorithm
-        {
-            get
-            {
-                return _hashAlgorithm;
-            }
-            private set
-            {
-                if (!Enum.IsDefined(typeof(HashAlgorithm), value))
-                {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _hashAlgorithm = value;
                 }
             }
         }

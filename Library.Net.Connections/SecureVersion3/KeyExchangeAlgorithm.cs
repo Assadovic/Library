@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Library.Net.Connections.SecureVersion3
 {
     [Flags]
-    [DataContract(Name = "KeyExchangeAlgorithm", Namespace = "http://Library/Net/Connection/SecureVersion3")]
+    [DataContract(Name = "KeyExchangeAlgorithm")]
     enum KeyExchangeAlgorithm
     {
         [EnumMember(Value = "Rsa2048")]

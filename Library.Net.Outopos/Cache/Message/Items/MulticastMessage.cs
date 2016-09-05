@@ -7,7 +7,7 @@ using Library.Utilities;
 
 namespace Library.Net.Outopos
 {
-    [DataContract(Name = "MulticastMessage", Namespace = "http://Library/Net/Outopos")]
+    [DataContract(Name = "MulticastMessage")]
     public sealed class MulticastMessage : ImmutableCertificateItemBase<MulticastMessage>, IMulticastHeader, IMulticastContent
     {
         private enum SerializeId

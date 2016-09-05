@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 
 namespace Library
 {
-    [DataContract(Name = "InformationContext", Namespace = "http://Library")]
+    [DataContract(Name = "InformationContext")]
     public struct InformationContext
     {
         private string _key;
@@ -48,7 +48,7 @@ namespace Library
         }
     }
 
-    [DataContract(Name = "Information", Namespace = "http://Library")]
+    [DataContract(Name = "Information")]
     public class Information : IEnumerable<InformationContext>
     {
         [DataMember(Name = "Contexts")]

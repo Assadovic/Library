@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "DownloadState", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "DownloadState")]
     public enum DownloadState
     {
         [EnumMember(Value = "Downloading")]
@@ -21,7 +21,7 @@ namespace Library.Net.Amoeba
         Error = 4,
     }
 
-    [DataContract(Name = "DownloadItem", Namespace = "http://Library/Net/Amoeba")]
+    [DataContract(Name = "DownloadItem")]
     sealed class DownloadItem
     {
         private DownloadState _state;
@@ -29,7 +29,7 @@ namespace Library.Net.Amoeba
 
         private Seed _seed;
 
-        private int _rank;
+        private int _depth;
         private Index _index;
         private string _path;
 
@@ -117,21 +117,21 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Rank")]
-        public int Rank
+        [DataMember(Name = "Depth")]
+        public int Depth
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _rank;
+                    return _depth;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _rank = value;
+                    _depth = value;
                 }
             }
         }
@@ -212,7 +212,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Indexs")]
+        [DataMember(Name = "Indexes")]
         public IndexCollection Indexes
         {
             get
