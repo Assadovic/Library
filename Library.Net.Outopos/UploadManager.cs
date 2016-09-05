@@ -138,7 +138,7 @@ namespace Library.Net.Outopos
                                 {
                                     if (_hashAlgorithm == HashAlgorithm.Sha256)
                                     {
-                                        key = new Key(Sha256.ComputeHash(buffer), _hashAlgorithm);
+                                        key = new Key(_hashAlgorithm, Sha256.ComputeHash(buffer));
                                     }
 
                                     this.Lock(key);

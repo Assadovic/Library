@@ -1,8 +1,9 @@
 ﻿
 namespace Library.Net.Outopos
 {
-    public interface IKey : IHashAlgorithm
+    public interface IKey
     {
+        HashAlgorithm HashAlgorithm { get; }
         byte[] Hash { get; }
     }
 }

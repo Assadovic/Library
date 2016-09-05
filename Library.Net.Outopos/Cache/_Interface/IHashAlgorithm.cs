@@ -8,9 +8,4 @@ namespace Library.Net.Outopos
         [EnumMember(Value = "Sha256")]
         Sha256 = 0,
     }
-
-    public interface IHashAlgorithm
-    {
-        HashAlgorithm HashAlgorithm { get; }
-    }
 }
