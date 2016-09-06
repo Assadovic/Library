@@ -247,6 +247,11 @@ namespace Library.Net.Amoeba
 
                             item.Keys.Clear();
 
+                            item.Seed = new Seed(metadata);
+                            item.Seed.Name = item.Name;
+                            item.Seed.Length = item.Length;
+                            item.Seed.CreationTime = item.CreationTime;
+
                             if (item.DigitalSignature != null)
                             {
                                 item.Seed.CreateCertificate(item.DigitalSignature);
