@@ -385,7 +385,7 @@ namespace Library.Net.Amoeba
                 try
                 {
                     if ((item.Depth == 1 && !_cacheManager.Contains(item.Seed.Metadata.Key))
-                        || !item.Index.Groups.All(n => _existManager.GetCount(n) >= n.InformationLength))
+                        || (item.Depth > 1 && !item.Index.Groups.All(n => _existManager.GetCount(n) >= n.InformationLength)))
                     {
                         item.State = BackgroundDownloadState.Downloading;
                     }
