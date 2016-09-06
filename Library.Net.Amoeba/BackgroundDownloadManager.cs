@@ -567,10 +567,7 @@ namespace Library.Net.Amoeba
                             {
                                 item.Value = value;
 
-                                if (item.Seed.Metadata.Key != null)
-                                {
-                                    _cacheManager.Unlock(item.Seed.Metadata.Key);
-                                }
+                                _cacheManager.Unlock(item.Seed.Metadata.Key);
 
                                 foreach (var index in item.Indexes)
                                 {
