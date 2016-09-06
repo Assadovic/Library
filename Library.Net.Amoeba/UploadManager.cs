@@ -565,6 +565,10 @@ namespace Library.Net.Amoeba
                             {
                                 item.UploadKeys.Add(key);
                                 item.LockedKeys.Add(key);
+                            }
+
+                            foreach (var key in group.Keys.Skip(group.Keys.Count - group.InformationLength))
+                            {
                                 item.RetainKeys.Add(key);
                             }
 
