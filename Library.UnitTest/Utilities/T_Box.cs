@@ -12,26 +12,18 @@ using Library.Utilities;
 namespace Library.UnitTest
 {
     [DataContract(Name = "T_Box", Namespace = "http://Library/Net/Amoeba")]
-    public sealed class T_Box : MutableCertificateItemBase<T_Box>, IThisLock
+    public sealed class T_Box : ItemBase<T_Box>, IThisLock
     {
         private enum SerializeId
         {
             Name = 0,
-            CreationTime = 1,
-            Comment = 2,
-            Seed = 3,
-            T_Box = 4,
-
-            Certificate = 5,
+            Seed = 1,
+            T_Box = 2,
         }
 
         private string _name;
-        private DateTime _creationTime;
-        private string _comment;
         private SeedCollection _seeds;
         private LockedList<T_Box> _boxes;
-
-        private Certificate _certificate;
 
         private int _hashCode;
 
@@ -59,38 +51,24 @@ namespace Library.UnitTest
 
             lock (this.ThisLock)
             {
-                for (;;)
+                using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    int type;
-
-                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                    for (;;)
                     {
-                        if (rangeStream == null) return;
+                        var id = reader.GetId();
+                        if (id < 0) return;
 
-                        if (type == (int)SerializeId.Name)
+                        if (id == (int)SerializeId.Name)
                         {
-                            this.Name = ItemUtils.GetString(rangeStream);
+                            this.Name = reader.GetString();
                         }
-                        else if (type == (int)SerializeId.CreationTime)
+                        else if (id == (int)SerializeId.Seed)
                         {
-                            this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                            this.Seeds.Add(Seed.Import(reader.GetStream(), bufferManager));
                         }
-                        else if (type == (int)SerializeId.Comment)
+                        else if (id == (int)SerializeId.T_Box)
                         {
-                            this.Comment = ItemUtils.GetString(rangeStream);
-                        }
-                        else if (type == (int)SerializeId.Seed)
-                        {
-                            this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
-                        }
-                        else if (type == (int)SerializeId.T_Box)
-                        {
-                            this.T_Boxes.Add(T_Box.Import(rangeStream, bufferManager, count + 1));
-                        }
-
-                        else if (type == (int)SerializeId.Certificate)
-                        {
-                            this.Certificate = Certificate.Import(rangeStream, bufferManager);
+                            this.T_Boxes.Add(T_Box.Import(reader.GetStream(), bufferManager, count + 1));
                         }
                     }
                 }
@@ -103,51 +81,26 @@ namespace Library.UnitTest
 
             lock (this.ThisLock)
             {
-                var bufferStream = new BufferStream(bufferManager);
-
-                // Name
-                if (this.Name != null)
+                using (var writer = new ItemStreamWriter(bufferManager))
                 {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Name, this.Name);
-                }
-                // CreationTime
-                if (this.CreationTime != DateTime.MinValue)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-                }
-                // Comment
-                if (this.Comment != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Comment, this.Comment);
-                }
-                // Seeds
-                foreach (var value in this.Seeds)
-                {
-                    using (var stream = value.Export(bufferManager))
+                    // Name
+                    if (this.Name != null)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Seed, stream);
+                        writer.Write((int)SerializeId.Name, this.Name);
                     }
-                }
-                // Boxes
-                foreach (var value in this.T_Boxes)
-                {
-                    using (var stream = value.Export(bufferManager, count + 1))
+                    // Seeds
+                    foreach (var value in this.Seeds)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.T_Box, stream);
+                        writer.Add((int)SerializeId.Seed, value.Export(bufferManager));
                     }
-                }
-
-                // Certificate
-                if (this.Certificate != null)
-                {
-                    using (var stream = this.Certificate.Export(bufferManager))
+                    // Boxes
+                    foreach (var value in this.T_Boxes)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                        writer.Add((int)SerializeId.T_Box, value.Export(bufferManager, count + 1));
                     }
-                }
 
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
+                    return writer.GetStream();
+                }
             }
         }
 
@@ -173,11 +126,6 @@ namespace Library.UnitTest
             if (this.GetHashCode() != other.GetHashCode()) return false;
 
             if (this.Name != other.Name
-                || this.CreationTime != other.CreationTime
-                || this.Comment != other.Comment
-
-                || this.Certificate != other.Certificate
-
                 || (this.Seeds == null) != (other.Seeds == null)
                 || (this.T_Boxes == null) != (other.T_Boxes == null))
             {
@@ -205,58 +153,6 @@ namespace Library.UnitTest
             }
         }
 
-        public override void CreateCertificate(DigitalSignature digitalSignature)
-        {
-            lock (this.ThisLock)
-            {
-                base.CreateCertificate(digitalSignature);
-            }
-        }
-
-        public override bool VerifyCertificate()
-        {
-            lock (this.ThisLock)
-            {
-                return base.VerifyCertificate();
-            }
-        }
-
-        protected override Stream GetCertificateStream()
-        {
-            lock (this.ThisLock)
-            {
-                var temp = this.Certificate;
-                this.Certificate = null;
-
-                try
-                {
-                    return this.Export(BufferManager.Instance);
-                }
-                finally
-                {
-                    this.Certificate = temp;
-                }
-            }
-        }
-
-        public override Certificate Certificate
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _certificate;
-                }
-            }
-            protected set
-            {
-                lock (this.ThisLock)
-                {
-                    _certificate = value;
-                }
-            }
-        }
-
         #region T_Box
 
         [DataMember(Name = "Name")]
@@ -281,52 +177,6 @@ namespace Library.UnitTest
                     {
                         _name = value;
                         _hashCode = _name.GetHashCode();
-                    }
-                }
-            }
-        }
-
-        [DataMember(Name = "CreationTime")]
-        public DateTime CreationTime
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _creationTime;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    var temp = value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo);
-                    _creationTime = DateTime.ParseExact(temp, "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
-                }
-            }
-        }
-
-        [DataMember(Name = "Comment")]
-        public string Comment
-        {
-            get
-            {
-                lock (this.ThisLock)
-                {
-                    return _comment;
-                }
-            }
-            set
-            {
-                lock (this.ThisLock)
-                {
-                    if (value != null && value.Length > T_Box.MaxCommentLength)
-                    {
-                        throw new ArgumentException();
-                    }
-                    else
-                    {
-                        _comment = value;
                     }
                 }
             }

@@ -60,10 +60,7 @@ namespace Library
 
         private static void LogEventHandler(LogEventArgs e)
         {
-            if (LogEvent != null)
-            {
-                LogEvent(null, e);
-            }
+            LogEvent?.Invoke(null, e);
         }
 
         private static string FromException(Exception exception)

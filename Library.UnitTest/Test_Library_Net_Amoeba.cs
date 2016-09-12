@@ -613,12 +613,12 @@ namespace Library.UnitTest
                 connectionManagers.Randomize();
 
                 {
-                    var queue = new WaitQueue<PullSeedsRequestEventArgs>();
+                    var queue = new WaitQueue<PullBroadcastMetadatasRequestEventArgs>();
 
                     var receiverConnection = connectionManagers[0];
                     var senderConnection = connectionManagers[1];
 
-                    receiverConnection.PullSeedsRequestEvent += (object sender, PullSeedsRequestEventArgs e) =>
+                    receiverConnection.PullBroadcastMetadatasRequestEvent += (object sender, PullBroadcastMetadatasRequestEventArgs e) =>
                     {
                         queue.Enqueue(e);
                     };
@@ -632,49 +632,165 @@ namespace Library.UnitTest
                         signatures.Add(digitalSignature.ToString());
                     }
 
-                    senderConnection.PushSeedsRequest(signatures);
+                    senderConnection.PushBroadcastMetadatasRequest(signatures);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtils.Equals(signatures, item.Signatures), "ConnectionManager #5");
+                    Assert.IsTrue(CollectionUtils.Equals(signatures, item.Signatures), "ConnectionManager #5.1");
                 }
 
                 connectionManagers.Randomize();
 
                 {
-                    var queue = new WaitQueue<PullSeedsEventArgs>();
+                    var queue = new WaitQueue<PullBroadcastMetadatasEventArgs>();
 
                     var receiverConnection = connectionManagers[0];
                     var senderConnection = connectionManagers[1];
 
-                    receiverConnection.PullSeedsEvent += (object sender, PullSeedsEventArgs e) =>
+                    receiverConnection.PullBroadcastMetadatasEvent += (object sender, PullBroadcastMetadatasEventArgs e) =>
                     {
                         queue.Enqueue(e);
                     };
 
-                    List<Seed> seeds = new List<Seed>();
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
-                    for (int j = 0; j < 32; j++)
+                    var metadatas1 = new List<BroadcastMetadata>();
+
+                    for (int j = 0; j < 4; j++)
                     {
                         var key = new Key(HashAlgorithm.Sha256, new byte[32]);
                         var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
-                        var seed = new Seed(metadata);
-                        seed.Name = "aaaa.zip";
-                        seed.Keywords.AddRange(new KeywordCollection
-                        {
-                            "bbbb",
-                            "cccc",
-                            "dddd",
-                        });
-                        seed.CreationTime = DateTime.Now;
-                        seed.Length = 10000;
+                        var broadcastMetadata = new BroadcastMetadata("Type", DateTime.UtcNow, metadata, digitalSignature);
 
-                        seeds.Add(seed);
+                        metadatas1.Add(broadcastMetadata);
                     }
 
-                    senderConnection.PushSeeds(seeds);
+                    senderConnection.PushBroadcastMetadatas(metadatas1);
 
                     var item = queue.Dequeue();
-                    Assert.IsTrue(CollectionUtils.Equals(seeds, item.Seeds), "ConnectionManager #6");
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.BroadcastMetadatas), "ConnectionManager #6.1");
+                }
+
+                connectionManagers.Randomize();
+
+                {
+                    var queue = new WaitQueue<PullUnicastMetadatasRequestEventArgs>();
+
+                    var receiverConnection = connectionManagers[0];
+                    var senderConnection = connectionManagers[1];
+
+                    receiverConnection.PullUnicastMetadatasRequestEvent += (object sender, PullUnicastMetadatasRequestEventArgs e) =>
+                    {
+                        queue.Enqueue(e);
+                    };
+
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
+
+                    var signatures = new SignatureCollection();
+
+                    for (int j = 0; j < 32; j++)
+                    {
+                        signatures.Add(digitalSignature.ToString());
+                    }
+
+                    senderConnection.PushUnicastMetadatasRequest(signatures);
+
+                    var item = queue.Dequeue();
+                    Assert.IsTrue(CollectionUtils.Equals(signatures, item.Signatures), "ConnectionManager #7.1");
+                }
+
+                connectionManagers.Randomize();
+
+                {
+                    var queue = new WaitQueue<PullUnicastMetadatasEventArgs>();
+
+                    var receiverConnection = connectionManagers[0];
+                    var senderConnection = connectionManagers[1];
+
+                    receiverConnection.PullUnicastMetadatasEvent += (object sender, PullUnicastMetadatasEventArgs e) =>
+                    {
+                        queue.Enqueue(e);
+                    };
+
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
+
+                    var metadatas1 = new List<UnicastMetadata>();
+
+                    for (int j = 0; j < 4; j++)
+                    {
+                        var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+                        var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+                        var unicastMetadata = new UnicastMetadata("Type", digitalSignature.ToString(), DateTime.UtcNow, metadata, digitalSignature);
+
+                        metadatas1.Add(unicastMetadata);
+                    }
+
+                    senderConnection.PushUnicastMetadatas(metadatas1);
+
+                    var item = queue.Dequeue();
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.UnicastMetadatas), "ConnectionManager #8.1");
+                }
+
+                connectionManagers.Randomize();
+
+                {
+                    var queue = new WaitQueue<PullMulticastMetadatasRequestEventArgs>();
+
+                    var receiverConnection = connectionManagers[0];
+                    var senderConnection = connectionManagers[1];
+
+                    receiverConnection.PullMulticastMetadatasRequestEvent += (object sender, PullMulticastMetadatasRequestEventArgs e) =>
+                    {
+                        queue.Enqueue(e);
+                    };
+
+                    var tags = new TagCollection();
+
+                    for (int j = 0; j < 32; j++)
+                    {
+                        var id = new byte[32];
+                        _random.NextBytes(id);
+
+                        tags.Add(new Tag(RandomString.GetValue(256), id));
+                    }
+
+                    senderConnection.PushMulticastMetadatasRequest(tags);
+
+                    var item = queue.Dequeue();
+                    Assert.IsTrue(CollectionUtils.Equals(tags, item.Tags), "ConnectionManager #9.1");
+                }
+
+                connectionManagers.Randomize();
+
+                {
+                    var queue = new WaitQueue<PullMulticastMetadatasEventArgs>();
+
+                    var receiverConnection = connectionManagers[0];
+                    var senderConnection = connectionManagers[1];
+
+                    receiverConnection.PullMulticastMetadatasEvent += (object sender, PullMulticastMetadatasEventArgs e) =>
+                    {
+                        queue.Enqueue(e);
+                    };
+
+                    var digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
+
+                    var metadatas1 = new List<MulticastMetadata>();
+
+                    for (int j = 0; j < 4; j++)
+                    {
+                        var key = new Key(HashAlgorithm.Sha256, new byte[32]);
+                        var metadata = new Metadata(1, key, CompressionAlgorithm.Xz, CryptoAlgorithm.Aes256, new byte[32 + 32]);
+                        var tag = new Tag("oooo", new byte[32]);
+                        var miner = new Miner(CashAlgorithm.Version1, -1, TimeSpan.Zero);
+                        var multicastMetadata = new MulticastMetadata("Type", tag, DateTime.UtcNow, metadata, miner, digitalSignature);
+
+                        metadatas1.Add(multicastMetadata);
+                    }
+
+                    senderConnection.PushMulticastMetadatas(metadatas1);
+
+                    var item = queue.Dequeue();
+                    Assert.IsTrue(CollectionUtils.Equals(metadatas1, item.MulticastMetadatas), "ConnectionManager #10.1");
                 }
 
                 foreach (var connectionManager in connectionManagers)

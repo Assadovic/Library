@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
@@ -206,6 +207,9 @@ namespace Library.UnitTest
                 var y = new byte[length];
                 var z = new byte[length];
 
+                _random.NextBytes(x);
+                _random.NextBytes(y);
+
                 Unsafe.And(x, y, z);
 
                 for (int j = 0; j < length; j++)
@@ -225,6 +229,9 @@ namespace Library.UnitTest
                 var x = new byte[length];
                 var y = new byte[length];
                 var z = new byte[length];
+
+                _random.NextBytes(x);
+                _random.NextBytes(y);
 
                 Unsafe.Or(x, y, z);
 
@@ -246,11 +253,34 @@ namespace Library.UnitTest
                 var y = new byte[length];
                 var z = new byte[length];
 
+                _random.NextBytes(x);
+                _random.NextBytes(y);
+
                 Unsafe.Xor(x, y, z);
 
                 for (int j = 0; j < length; j++)
                 {
                     Assert.IsTrue(z[j] == (x[j] ^ y[j]));
+                }
+            }
+        }
+
+        [Test]
+        public void Test_VIntUtils()
+        {
+            using (var stream = new MemoryStream())
+            {
+                for (int i = 0; i < 1024 * 1024; i++)
+                {
+                    var v = (long)_random.Next() << 32 | (uint)_random.Next();
+                    v >>= _random.Next(0, 64);
+
+                    VintUtils.WriteVint(stream, v);
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    Assert.AreEqual(v, VintUtils.GetVint(stream), "VintUtilities");
+
+                    stream.Seek(0, SeekOrigin.Begin);
                 }
             }
         }

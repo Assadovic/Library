@@ -40,21 +40,20 @@ namespace Library.Security
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            for (;;)
+            using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                int type;
-
-                using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                for (;;)
                 {
-                    if (rangeStream == null) return;
+                    var id = reader.GetId();
+                    if (id < 0) return;
 
-                    if (type == (int)SerializeId.CashAlgorithm)
+                    if (id == (int)SerializeId.CashAlgorithm)
                     {
-                        this.CashAlgorithm = (CashAlgorithm)Enum.Parse(typeof(CashAlgorithm), ItemUtils.GetString(rangeStream));
+                        this.CashAlgorithm = reader.GetEnum<CashAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.Key)
+                    else if (id == (int)SerializeId.Key)
                     {
-                        this.Key = ItemUtils.GetByteArray(rangeStream);
+                        this.Key = reader.GetBytes();
                     }
                 }
             }
@@ -62,21 +61,21 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            var bufferStream = new BufferStream(bufferManager);
-
-            // CashAlgorithm
-            if (this.CashAlgorithm != 0)
+            using (var writer = new ItemStreamWriter(bufferManager))
             {
-                ItemUtils.Write(bufferStream, (int)SerializeId.CashAlgorithm, this.CashAlgorithm.ToString());
-            }
-            // Key
-            if (this.Key != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.Key, this.Key);
-            }
+                // CashAlgorithm
+                if (this.CashAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.CashAlgorithm, this.CashAlgorithm);
+                }
+                // Key
+                if (this.Key != null)
+                {
+                    writer.Write((int)SerializeId.Key, this.Key);
+                }
 
-            bufferStream.Seek(0, SeekOrigin.Begin);
-            return bufferStream;
+                return writer.GetStream();
+            }
         }
 
         public override int GetHashCode()

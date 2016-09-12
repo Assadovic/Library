@@ -82,6 +82,7 @@
     <Compile Include="NativeLibraryManager.cs" />
     <Compile Include="Unsafe.cs" />
     <Compile Include="Utilities\SimpleLinkedList.cs" />
+    <Compile Include="VintUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assemblies\Library_x64.dll">

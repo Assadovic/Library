@@ -4,7 +4,6 @@ using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
 using Library.Security;
-using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
@@ -46,25 +45,30 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                for (;;)
+                using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    int type;
-
-                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                    for (;;)
                     {
-                        if (rangeStream == null) return;
+                        var id = reader.GetId();
+                        if (id < 0) return;
 
-                        if (type == (int)SerializeId.Name)
+                        if (id == (int)SerializeId.Name)
                         {
-                            this.Name = ItemUtils.GetString(rangeStream);
+                            this.Name = reader.GetString();
                         }
-                        else if (type == (int)SerializeId.Seed)
+                        else if (id == (int)SerializeId.Seed)
                         {
-                            this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
+                            using (var rangeStream = reader.GetStream())
+                            {
+                                this.Seeds.Add(Seed.Import(rangeStream, bufferManager));
+                            }
                         }
-                        else if (type == (int)SerializeId.Box)
+                        else if (id == (int)SerializeId.Box)
                         {
-                            this.Boxes.Add(Box.Import(rangeStream, bufferManager, count + 1));
+                            using (var rangeStream = reader.GetStream())
+                            {
+                                this.Boxes.Add(Box.Import(rangeStream, bufferManager, count + 1));
+                            }
                         }
                     }
                 }
@@ -77,32 +81,26 @@ namespace Library.Net.Amoeba
 
             lock (this.ThisLock)
             {
-                var bufferStream = new BufferStream(bufferManager);
-
-                // Name
-                if (this.Name != null)
+                using (var writer = new ItemStreamWriter(bufferManager))
                 {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.Name, this.Name);
-                }
-                // Seeds
-                foreach (var value in this.Seeds)
-                {
-                    using (var stream = value.Export(bufferManager))
+                    // Name
+                    if (this.Name != null)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Seed, stream);
+                        writer.Write((int)SerializeId.Name, this.Name);
                     }
-                }
-                // Boxes
-                foreach (var value in this.Boxes)
-                {
-                    using (var stream = value.Export(bufferManager, count + 1))
+                    // Seeds
+                    foreach (var value in this.Seeds)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Box, stream);
+                        writer.Add((int)SerializeId.Seed, value.Export(bufferManager));
                     }
-                }
+                    // Boxes
+                    foreach (var value in this.Boxes)
+                    {
+                        writer.Add((int)SerializeId.Box, value.Export(bufferManager, count + 1));
+                    }
 
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
+                    return writer.GetStream();
+                }
             }
         }
 

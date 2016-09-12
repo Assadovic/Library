@@ -48,33 +48,32 @@ namespace Library.Net.Connections.SecureVersion3
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            for (;;)
+            using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                int type;
-
-                using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                for (;;)
                 {
-                    if (rangeStream == null) return;
+                    var id = reader.GetId();
+                    if (id < 0) return;
 
-                    if (type == (int)SerializeId.KeyExchangeAlgorithm)
+                    if (id == (int)SerializeId.KeyExchangeAlgorithm)
                     {
-                        this.KeyExchangeAlgorithm = EnumEx<KeyExchangeAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
+                        this.KeyExchangeAlgorithm = reader.GetEnum<KeyExchangeAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.KeyDerivationAlgorithm)
+                    else if (id == (int)SerializeId.KeyDerivationAlgorithm)
                     {
-                        this.KeyDerivationAlgorithm = EnumEx<KeyDerivationAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
+                        this.KeyDerivationAlgorithm = reader.GetEnum<KeyDerivationAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.CryptoAlgorithm)
+                    else if (id == (int)SerializeId.CryptoAlgorithm)
                     {
-                        this.CryptoAlgorithm = EnumEx<CryptoAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
+                        this.CryptoAlgorithm = reader.GetEnum<CryptoAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.HashAlgorithm)
+                    else if (id == (int)SerializeId.HashAlgorithm)
                     {
-                        this.HashAlgorithm = EnumEx<HashAlgorithm>.Parse(ItemUtils.GetString(rangeStream));
+                        this.HashAlgorithm = reader.GetEnum<HashAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.SessionId)
+                    else if (id == (int)SerializeId.SessionId)
                     {
-                        this.SessionId = ItemUtils.GetByteArray(rangeStream);
+                        this.SessionId = reader.GetBytes();
                     }
                 }
             }
@@ -82,36 +81,36 @@ namespace Library.Net.Connections.SecureVersion3
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            var bufferStream = new BufferStream(bufferManager);
+            using (var writer = new ItemStreamWriter(bufferManager))
+            {
+                // KeyExchangeAlgorithm
+                if (this.KeyExchangeAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm);
+                }
+                // KeyDerivationAlgorithm
+                if (this.KeyDerivationAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm);
+                }
+                // CryptoAlgorithm
+                if (this.CryptoAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm);
+                }
+                // HashAlgorithm
+                if (this.HashAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.HashAlgorithm, this.HashAlgorithm);
+                }
+                // SessionId
+                if (this.SessionId != null)
+                {
+                    writer.Write((int)SerializeId.SessionId, this.SessionId);
+                }
 
-            // KeyExchangeAlgorithm
-            if (this.KeyExchangeAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.KeyExchangeAlgorithm, this.KeyExchangeAlgorithm.ToString());
+                return writer.GetStream();
             }
-            // KeyDerivationAlgorithm
-            if (this.KeyDerivationAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.KeyDerivationAlgorithm, this.KeyDerivationAlgorithm.ToString());
-            }
-            // CryptoAlgorithm
-            if (this.CryptoAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.CryptoAlgorithm, this.CryptoAlgorithm.ToString());
-            }
-            // HashAlgorithm
-            if (this.HashAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.HashAlgorithm, this.HashAlgorithm.ToString());
-            }
-            // SessionId
-            if (this.SessionId != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.SessionId, this.SessionId);
-            }
-
-            bufferStream.Seek(0, SeekOrigin.Begin);
-            return bufferStream;
         }
 
         public override int GetHashCode()

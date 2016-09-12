@@ -62,16 +62,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AmoebaConverter.cs" />
-    <Compile Include="AmoebaManager.cs" />
+    <Compile Include="Manager\AmoebaConverter.cs" />
+    <Compile Include="Manager\AmoebaManager.cs" />
     <Compile Include="Cache\BitmapManager.cs" />
-    <Compile Include="Cache\Seed\Key.cs" />
-    <Compile Include="Cache\Seed\KeyCollection.cs" />
-    <Compile Include="Cache\Seed\KeywordCollection.cs" />
-    <Compile Include="Cache\_Interface\Seed\IKey.cs" />
-    <Compile Include="Cache\Seed\Metadata.cs" />
-    <Compile Include="Cache\Seed\MetadataCollection.cs" />
-    <Compile Include="Cache\_Interface\Seed\IMetadata.cs" />
+    <Compile Include="Cache\Message\Items\Tag.cs" />
+    <Compile Include="Cache\Message\Items\TagCollection.cs" />
+    <Compile Include="Cache\Message\BroadcastMetadata.cs" />
+    <Compile Include="Cache\Message\BroadcastMetadataCollection.cs" />
+    <Compile Include="Cache\Message\UnicastMetadataCollection.cs" />
+    <Compile Include="Cache\Message\MulticastMetadataCollection.cs" />
+    <Compile Include="Cache\Message\MulticastMetadata.cs" />
+    <Compile Include="Cache\Message\UnicastMetadata.cs" />
+    <Compile Include="Cache\Message\_Interface\IBroadcastMetadata.cs" />
+    <Compile Include="Cache\Message\_Interface\Items\ITag.cs" />
+    <Compile Include="Cache\Message\_Interface\IMulticastMetadata.cs" />
+    <Compile Include="Cache\Message\_Interface\IUnicastMetadata.cs" />
+    <Compile Include="Cache\Message\_Interface\Common\IComputeHash.cs" />
+    <Compile Include="Cache\Metadata\Key.cs" />
+    <Compile Include="Cache\Metadata\KeyCollection.cs" />
+    <Compile Include="Cache\Content\Items\KeywordCollection.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IKey.cs" />
+    <Compile Include="Cache\Metadata\Metadata.cs" />
+    <Compile Include="Cache\Metadata\MetadataCollection.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IMetadata.cs" />
+    <Compile Include="Manager\Connection\ConnectionManager.cs" />
+    <Compile Include="Manager\Connection\ConnectionsManager.cs" />
+    <Compile Include="Information\Message\MessageCollection.cs" />
+    <Compile Include="Information\Profile\ProfileCollection.cs" />
+    <Compile Include="Information\Profile\Prfolie.cs" />
+    <Compile Include="Information\Message\Message.cs" />
+    <Compile Include="Information\_Interface\Profile\IProfile.cs" />
+    <Compile Include="Information\_Interface\Message\IMessage.cs" />
     <Compile Include="Information\Link\Link.cs" />
     <Compile Include="Information\Link\LinkCollection.cs" />
     <Compile Include="Information\Store\Box.cs" />
@@ -81,42 +102,41 @@
     <Compile Include="Information\_Interface\Link\ILink.cs" />
     <Compile Include="Information\_Interface\Store\IStore.cs" />
     <Compile Include="Information\_Interface\Store\IBox.cs" />
-    <Compile Include="BackgroundDownloadItem.cs" />
-    <Compile Include="BackgroundDownloadManager.cs" />
-    <Compile Include="BackgroundUploadItem.cs" />
-    <Compile Include="BackgroundUploadManager.cs" />
-    <Compile Include="ClientManager.cs" />
-    <Compile Include="ConnectionManager.cs" />
-    <Compile Include="ConnectionFilterCollection.cs" />
-    <Compile Include="ConnectionFilter.cs" />
-    <Compile Include="ConnectionsManager.cs" />
-    <Compile Include="Utilities\ExistManager.cs" />
-    <Compile Include="DownloadItem.cs" />
-    <Compile Include="DownloadManager.cs" />
-    <Compile Include="MessagesManager.cs" />
+    <Compile Include="Manager\Message\ContentConverter.cs" />
+    <Compile Include="Manager\Message\BackgroundDownloadManager.cs" />
+    <Compile Include="Manager\Message\BackgroundUploadItem.cs" />
+    <Compile Include="Manager\Message\BackgroundUploadManager.cs" />
+    <Compile Include="Manager\Connection\ClientManager.cs" />
+    <Compile Include="Manager\Connection\ConnectionFilterCollection.cs" />
+    <Compile Include="Manager\Connection\ConnectionFilter.cs" />
+    <Compile Include="Manager\Connection\PacketsManager.cs" />
+    <Compile Include="Manager\Content\Utilities\ExistManager.cs" />
+    <Compile Include="Manager\Content\DownloadItem.cs" />
+    <Compile Include="Manager\Content\DownloadManager.cs" />
+    <Compile Include="Manager\Message\BackgroundDownloadItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServerManager.cs" />
-    <Compile Include="Cache\Seed\Group.cs" />
-    <Compile Include="Cache\Seed\GroupCollection.cs" />
-    <Compile Include="Cache\_Interface\ICompressionAlgorithm.cs" />
-    <Compile Include="Cache\_Interface\ICorrectionAlgorithm.cs" />
-    <Compile Include="Cache\_Interface\ICryptoAlgorithm.cs" />
-    <Compile Include="Cache\_Interface\Seed\IGroup.cs" />
-    <Compile Include="Cache\_Interface\IHashAlgorithm.cs" />
-    <Compile Include="Cache\_Interface\Seed\IIndex.cs" />
-    <Compile Include="Cache\_Interface\Seed\ISeed.cs" />
-    <Compile Include="Cache\Seed\Index.cs" />
-    <Compile Include="Cache\Seed\IndexCollection.cs" />
-    <Compile Include="Cache\Seed\Seed.cs" />
-    <Compile Include="Cache\Seed\SeedCollection.cs" />
+    <Compile Include="Manager\Connection\ServerManager.cs" />
+    <Compile Include="Cache\Metadata\Group.cs" />
+    <Compile Include="Cache\Metadata\GroupCollection.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\ICompressionAlgorithm.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\ICorrectionAlgorithm.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\ICryptoAlgorithm.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IGroup.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\IHashAlgorithm.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IIndex.cs" />
+    <Compile Include="Cache\Content\_Interface\ISeed.cs" />
+    <Compile Include="Cache\Metadata\Index.cs" />
+    <Compile Include="Cache\Metadata\IndexCollection.cs" />
+    <Compile Include="Cache\Content\Seed.cs" />
+    <Compile Include="Cache\Content\SeedCollection.cs" />
     <Compile Include="Cache\CacheManager.cs" />
     <Compile Include="Cache\CacheManager_StreamReader.cs" />
     <Compile Include="Cache\CacheManager_StreamWriter.cs" />
-    <Compile Include="NodeCollection.cs" />
-    <Compile Include="Node.cs" />
-    <Compile Include="UploadItem.cs" />
-    <Compile Include="UploadManager.cs" />
-    <Compile Include="UriCollection.cs" />
+    <Compile Include="Manager\Connection\NodeCollection.cs" />
+    <Compile Include="Manager\Connection\Node.cs" />
+    <Compile Include="Manager\Content\UploadItem.cs" />
+    <Compile Include="Manager\Content\UploadManager.cs" />
+    <Compile Include="Manager\Connection\UriCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library.Net.Connections\Library.Net.Connections.csproj">
@@ -168,6 +188,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="..\Library.Utilities\Library.Utilities.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

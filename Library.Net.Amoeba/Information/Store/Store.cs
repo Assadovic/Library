@@ -2,7 +2,6 @@
 using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
-using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
@@ -34,17 +33,19 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                for (;;)
+                using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    int type;
-
-                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                    for (;;)
                     {
-                        if (rangeStream == null) return;
+                        var id = reader.GetId();
+                        if (id < 0) return;
 
-                        if (type == (int)SerializeId.Box)
+                        if (id == (int)SerializeId.Box)
                         {
-                            this.Boxes.Add(Box.Import(rangeStream, bufferManager));
+                            using (var rangeStream = reader.GetStream())
+                            {
+                                this.Boxes.Add(Box.Import(rangeStream, bufferManager));
+                            }
                         }
                     }
                 }
@@ -55,19 +56,16 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                var bufferStream = new BufferStream(bufferManager);
-
-                // Boxes
-                foreach (var value in this.Boxes)
+                using (var writer = new ItemStreamWriter(bufferManager))
                 {
-                    using (var stream = value.Export(bufferManager))
+                    // Boxes
+                    foreach (var value in this.Boxes)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Box, stream);
+                        writer.Add((int)SerializeId.Box, value.Export(bufferManager));
                     }
-                }
 
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
+                    return writer.GetStream();
+                }
             }
         }
 

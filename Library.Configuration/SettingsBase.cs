@@ -132,216 +132,31 @@ namespace Library.Configuration
             }
         }
 
-        #region ISettings
-
-        public virtual void Load(string directoryPath)
+        private static object Load(string directoryPath, string name, Type type, object defaultValue)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-
-            if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-
-            // Tempファイルを削除する。
-            {
-                foreach (var path in Directory.GetFiles(directoryPath, "*", SearchOption.TopDirectoryOnly))
-                {
-                    var ext = Path.GetExtension(path);
-
-                    if (ext == ".tmp")
-                    {
-                        try
-                        {
-                            File.Delete(path);
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                    }
-                }
-            }
-
-            var successNames = new LockedHashSet<string>();
-
-            // Json
             foreach (var extension in new string[] { ".config.gz", ".config.gz.bak" })
-            {
-                Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
-                {
-                    if (!configPath.EndsWith(extension)) return;
-
-                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
-                    if (successNames.Contains(name)) return;
-
-                    Content content = null;
-                    if (!_dic.TryGetValue(name, out content)) return;
-
-                    try
-                    {
-                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
-                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
-                        {
-                            using (var streamReader = new StreamReader(decompressStream, new UTF8Encoding(false)))
-                            using (var jsonTextReader = new JsonTextReader(streamReader))
-                            {
-                                var serializer = new JsonSerializer();
-                                serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
-
-                                serializer.TypeNameHandling = TypeNameHandling.None;
-                                serializer.Converters.Add(new Newtonsoft.Json.Converters.IsoDateTimeConverter());
-                                serializer.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
-                                serializer.ContractResolver = new CustomContractResolver();
-
-                                content.Value = serializer.Deserialize(jsonTextReader, content.Type);
-                            }
-                        }
-
-                        successNames.Add(name);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e);
-                    }
-                });
-            }
-
-            // DataContractSerializer Text
-            foreach (var extension in new string[] { ".gz", ".gz.bak" })
-            {
-                Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
-                {
-                    if (!configPath.EndsWith(extension)) return;
-
-                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
-                    if (successNames.Contains(name)) return;
-
-                    Content content = null;
-                    if (!_dic.TryGetValue(name, out content)) return;
-
-                    try
-                    {
-                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
-                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
-                        {
-                            using (var xml = XmlReader.Create(decompressStream))
-                            {
-                                var deserializer = new DataContractSerializer(content.Type);
-                                content.Value = deserializer.ReadObject(xml);
-                            }
-                        }
-
-                        successNames.Add(name);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e);
-                    }
-                });
-            }
-
-            // DataContractSerializer Binary
-            foreach (var extension in new string[] { ".v2", ".v2.bak" })
-            {
-                Parallel.ForEach(Directory.GetFiles(directoryPath), new ParallelOptions() { MaxDegreeOfParallelism = 8 }, configPath =>
-                {
-                    if (!configPath.EndsWith(extension)) return;
-
-                    var name = Path.GetFileName(configPath.Substring(0, configPath.Length - extension.Length));
-                    if (successNames.Contains(name)) return;
-
-                    Content content = null;
-                    if (!_dic.TryGetValue(name, out content)) return;
-
-                    try
-                    {
-                        using (FileStream stream = new FileStream(configPath, FileMode.Open))
-                        using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                        using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
-                        {
-                            using (var xml = XmlDictionaryReader.CreateBinaryReader(decompressStream, XmlDictionaryReaderQuotas.Max))
-                            {
-                                var deserializer = new DataContractSerializer(content.Type);
-                                content.Value = deserializer.ReadObject(xml);
-                            }
-                        }
-
-                        successNames.Add(name);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e);
-                    }
-                });
-            }
-
-            sw.Stop();
-            Debug.WriteLine("Settings Load {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
-        }
-
-        public virtual void Save(string directoryPath)
-        {
-            var sw = new Stopwatch();
-            sw.Start();
-
-            if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-
-            Parallel.ForEach(_dic, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, item =>
             {
                 try
                 {
-                    var name = item.Key;
-                    var type = item.Value.Type;
-                    var value = item.Value.Value;
+                    var configPath = Path.Combine(directoryPath, name + extension);
+                    if (!File.Exists(configPath)) continue;
 
-                    string uniquePath = null;
-
-                    using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
+                    using (FileStream stream = new FileStream(configPath, FileMode.Open))
                     using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
-                    using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
+                    using (GZipStream decompressStream = new GZipStream(cacheStream, CompressionMode.Decompress))
                     {
-                        uniquePath = stream.Name;
-
-                        using (var streamWriter = new StreamWriter(compressStream, new UTF8Encoding(false)))
-                        using (var jsonTextWriter = new JsonTextWriter(streamWriter))
+                        using (var streamReader = new StreamReader(decompressStream, new UTF8Encoding(false)))
+                        using (var jsonTextReader = new JsonTextReader(streamReader))
                         {
                             var serializer = new JsonSerializer();
-                            serializer.Formatting = Newtonsoft.Json.Formatting.None;
+                            serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
 
                             serializer.TypeNameHandling = TypeNameHandling.None;
                             serializer.Converters.Add(new Newtonsoft.Json.Converters.IsoDateTimeConverter());
                             serializer.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                             serializer.ContractResolver = new CustomContractResolver();
 
-                            serializer.Serialize(jsonTextWriter, value);
-                        }
-                    }
-
-                    string newPath = Path.Combine(directoryPath, name + ".config.gz");
-                    string bakPath = Path.Combine(directoryPath, name + ".config.gz.bak");
-
-                    if (File.Exists(newPath))
-                    {
-                        if (File.Exists(bakPath))
-                        {
-                            File.Delete(bakPath);
-                        }
-
-                        File.Move(newPath, bakPath);
-                    }
-
-                    File.Move(uniquePath, newPath);
-
-                    {
-                        foreach (var extension in new string[] { ".v2", ".v2.bak", ".gz", ".gz.bak" })
-                        {
-                            string deleteFilePath = Path.Combine(directoryPath, name + extension);
-
-                            if (File.Exists(deleteFilePath))
-                            {
-                                File.Delete(deleteFilePath);
-                            }
+                            return serializer.Deserialize(jsonTextReader, type);
                         }
                     }
                 }
@@ -349,10 +164,55 @@ namespace Library.Configuration
                 {
                     Log.Warning(e);
                 }
-            });
+            }
 
-            sw.Stop();
-            Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
+            return defaultValue;
+        }
+
+        public static T Load<T>(string directoryPath, string name)
+        {
+            return (T)SettingsBase.Load(directoryPath, name, typeof(T), default(T));
+        }
+
+        public static void Save(string directoryPath, string name, object value)
+        {
+            string uniquePath = null;
+
+            using (FileStream stream = SettingsBase.GetUniqueFileStream(Path.Combine(directoryPath, name + ".tmp")))
+            using (CacheStream cacheStream = new CacheStream(stream, _cacheSize, BufferManager.Instance))
+            using (GZipStream compressStream = new GZipStream(cacheStream, CompressionMode.Compress))
+            {
+                uniquePath = stream.Name;
+
+                using (var streamWriter = new StreamWriter(compressStream, new UTF8Encoding(false)))
+                using (var jsonTextWriter = new JsonTextWriter(streamWriter))
+                {
+                    var serializer = new JsonSerializer();
+                    serializer.Formatting = Newtonsoft.Json.Formatting.None;
+
+                    serializer.TypeNameHandling = TypeNameHandling.None;
+                    serializer.Converters.Add(new Newtonsoft.Json.Converters.IsoDateTimeConverter());
+                    serializer.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                    serializer.ContractResolver = new CustomContractResolver();
+
+                    serializer.Serialize(jsonTextWriter, value);
+                }
+            }
+
+            string newPath = Path.Combine(directoryPath, name + ".config.gz");
+            string bakPath = Path.Combine(directoryPath, name + ".config.gz.bak");
+
+            if (File.Exists(newPath))
+            {
+                if (File.Exists(bakPath))
+                {
+                    File.Delete(bakPath);
+                }
+
+                File.Move(newPath, bakPath);
+            }
+
+            File.Move(uniquePath, newPath);
         }
 
         class CustomContractResolver : DefaultContractResolver
@@ -375,6 +235,67 @@ namespace Library.Configuration
 
                 return base.CreateContract(objectType);
             }
+        }
+
+        #region ISettings
+
+        public virtual void Load(string directoryPath)
+        {
+#if DEBUG
+            var sw = new Stopwatch();
+            sw.Start();
+#endif
+
+            if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+
+            // Tempファイルを削除する。
+            foreach (var path in Directory.GetFiles(directoryPath, "*.tmp", SearchOption.TopDirectoryOnly))
+            {
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+
+            Parallel.ForEach(_dic, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, pair =>
+            {
+                var name = pair.Key;
+                var content = pair.Value;
+
+                content.Value = SettingsBase.Load(directoryPath, name, content.Type, content.Value);
+            });
+
+#if DEBUG
+            sw.Stop();
+            Debug.WriteLine("Settings Load {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
+#endif
+        }
+
+        public virtual void Save(string directoryPath)
+        {
+#if DEBUG
+            var sw = new Stopwatch();
+            sw.Start();
+#endif
+
+            if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+
+            Parallel.ForEach(_dic, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, pair =>
+            {
+                var name = pair.Key;
+                var content = pair.Value;
+
+                Save(directoryPath, name, content.Value);
+            });
+
+#if DEBUG
+            sw.Stop();
+            Debug.WriteLine("Settings Save {0} {1}", Path.GetFileName(directoryPath), sw.ElapsedMilliseconds);
+#endif
         }
 
         #endregion

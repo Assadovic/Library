@@ -13,7 +13,6 @@ call %TOOL% "Increment" Library.Net\Library.Net.csproj Properties\AssemblyInfo.c
 call %TOOL% "Increment" Library.Net.Amoeba\Library.Net.Amoeba.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.Connections\Library.Net.Connections.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.I2p\Library.Net.I2p.csproj Properties\AssemblyInfo.cs
-call %TOOL% "Increment" Library.Net.Outopos\Library.Net.Outopos.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.Proxy\Library.Net.Proxy.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.Upnp\Library.Net.Upnp.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Security\Library.Security.csproj Properties\AssemblyInfo.cs

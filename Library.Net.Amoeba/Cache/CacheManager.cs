@@ -17,10 +17,10 @@ namespace Library.Net.Amoeba
 {
     public delegate void CheckBlocksProgressEventHandler(int badBlockCount, int checkedBlockCount, int blockCount, out bool isStop);
 
-    delegate void SetKeyEventHandler(IEnumerable<Key> keys);
-    delegate void RemoveKeyEventHandler(IEnumerable<Key> keys);
+    delegate void BlockSetEventHandler(IEnumerable<Key> keys);
+    delegate void BlockRemoveEventHandler(IEnumerable<Key> keys);
 
-    delegate void RemoveShareEventHandler(string path);
+    delegate void ShareRemoveEventHandler(string path);
 
     interface ISetOperators<T>
     {
@@ -47,10 +47,10 @@ namespace Library.Net.Amoeba
 
         private Dictionary<Key, int> _lockedKeys = new Dictionary<Key, int>();
 
-        public event SetKeyEventHandler SetKeyEvent;
-        public event RemoveKeyEventHandler RemoveKeyEvent;
+        public event BlockSetEventHandler BlockSetEvent;
+        public event BlockRemoveEventHandler BlockRemoveEvent;
 
-        public event RemoveShareEventHandler RemoveShareEvent;
+        public event ShareRemoveEventHandler ShareRemoveEvent;
 
         private WatchTimer _watchTimer;
         private WatchTimer _checkTimer;
@@ -355,19 +355,19 @@ namespace Library.Net.Amoeba
             }
         }
 
-        protected virtual void OnSetKeyEvent(IEnumerable<Key> keys)
+        protected virtual void OnBlockSetEvent(IEnumerable<Key> keys)
         {
-            this.SetKeyEvent?.Invoke(keys);
+            this.BlockSetEvent?.Invoke(keys);
         }
 
-        protected virtual void OnRemoveKeyEvent(IEnumerable<Key> keys)
+        protected virtual void OnBlockRemoveEvent(IEnumerable<Key> keys)
         {
-            this.RemoveKeyEvent?.Invoke(keys);
+            this.BlockRemoveEvent?.Invoke(keys);
         }
 
-        protected virtual void OnRemoveShareEvent(string path)
+        protected virtual void OnShareRemoveEvent(string path)
         {
-            this.RemoveShareEvent?.Invoke(path);
+            this.ShareRemoveEvent?.Invoke(path);
         }
 
         public int GetLength(Key key)
@@ -466,7 +466,7 @@ namespace Library.Net.Amoeba
                         if (_spaceSectors.Count < CacheManager.SpaceSectorUnit) _spaceSectors.Add(sector);
                     }
 
-                    this.OnRemoveKeyEvent(new Key[] { key });
+                    this.OnBlockRemoveEvent(new Key[] { key });
                 }
             }
         }
@@ -569,7 +569,7 @@ namespace Library.Net.Amoeba
                 foreach (var key in keys)
                 {
                     _settings.ClusterIndex.Remove(key);
-                    this.OnRemoveKeyEvent(new Key[] { key });
+                    this.OnBlockRemoveEvent(new Key[] { key });
                 }
 
                 _spaceSectors.Clear();
@@ -754,7 +754,7 @@ namespace Library.Net.Amoeba
                 _shareIndexLink_Add(path, shareInfo);
             }
 
-            this.OnSetKeyEvent(keys);
+            this.OnBlockSetEvent(keys);
 
             return keys;
         }
@@ -769,8 +769,8 @@ namespace Library.Net.Amoeba
 
                 _shareIndexLink_Initialized = false;
 
-                this.OnRemoveShareEvent(path);
-                this.OnRemoveKeyEvent(keys);
+                this.OnShareRemoveEvent(path);
+                this.OnBlockRemoveEvent(keys);
             }
         }
 
@@ -1436,7 +1436,7 @@ namespace Library.Net.Amoeba
                     clusterInfo.UpdateTime = DateTime.UtcNow;
                     _settings.ClusterIndex[key] = clusterInfo;
 
-                    this.OnSetKeyEvent(new Key[] { key });
+                    this.OnBlockSetEvent(new Key[] { key });
                 }
             }
         }

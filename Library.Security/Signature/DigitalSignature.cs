@@ -70,29 +70,28 @@ namespace Library.Security
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            for (;;)
+            using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                int type;
-
-                using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                for (;;)
                 {
-                    if (rangeStream == null) return;
+                    var id = reader.GetId();
+                    if (id < 0) return;
 
-                    if (type == (int)SerializeId.Nickname)
+                    if (id == (int)SerializeId.Nickname)
                     {
-                        this.Nickname = ItemUtils.GetString(rangeStream);
+                        this.Nickname = reader.GetString();
                     }
-                    else if (type == (int)SerializeId.DigitalSignatureAlgorithm)
+                    else if (id == (int)SerializeId.DigitalSignatureAlgorithm)
                     {
-                        this.DigitalSignatureAlgorithm = (DigitalSignatureAlgorithm)Enum.Parse(typeof(DigitalSignatureAlgorithm), ItemUtils.GetString(rangeStream));
+                        this.DigitalSignatureAlgorithm = reader.GetEnum<DigitalSignatureAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.PublicKey)
+                    else if (id == (int)SerializeId.PublicKey)
                     {
-                        this.PublicKey = ItemUtils.GetByteArray(rangeStream);
+                        this.PublicKey = reader.GetBytes();
                     }
-                    else if (type == (int)SerializeId.PrivateKey)
+                    else if (id == (int)SerializeId.PrivateKey)
                     {
-                        this.PrivateKey = ItemUtils.GetByteArray(rangeStream);
+                        this.PrivateKey = reader.GetBytes();
                     }
                 }
             }
@@ -100,31 +99,31 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            var bufferStream = new BufferStream(bufferManager);
+            using (var writer = new ItemStreamWriter(bufferManager))
+            {
+                // Nickname
+                if (this.Nickname != null)
+                {
+                    writer.Write((int)SerializeId.Nickname, this.Nickname);
+                }
+                // DigitalSignatureAlgorithm
+                if (this.DigitalSignatureAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm);
+                }
+                // PublicKey
+                if (this.PublicKey != null)
+                {
+                    writer.Write((int)SerializeId.PublicKey, this.PublicKey);
+                }
+                // PrivateKey
+                if (this.PrivateKey != null)
+                {
+                    writer.Write((int)SerializeId.PrivateKey, this.PrivateKey);
+                }
 
-            // Nickname
-            if (this.Nickname != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.Nickname, this.Nickname);
+                return writer.GetStream();
             }
-            // DigitalSignatureAlgorithm
-            if (this.DigitalSignatureAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.DigitalSignatureAlgorithm, this.DigitalSignatureAlgorithm.ToString());
-            }
-            // PublicKey
-            if (this.PublicKey != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
-            }
-            // PrivateKey
-            if (this.PrivateKey != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.PrivateKey, this.PrivateKey);
-            }
-
-            bufferStream.Seek(0, SeekOrigin.Begin);
-            return bufferStream;
         }
 
         public override int GetHashCode()
@@ -180,30 +179,21 @@ namespace Library.Security
 
         public static Certificate CreateFileCertificate(DigitalSignature digitalSignature, string name, Stream stream)
         {
-            BufferManager bufferManager = BufferManager.Instance;
-            var streams = new List<Stream>();
-
-            // Name
+            using (var writer = new ItemStreamWriter(BufferManager.Instance))
             {
-                var bufferStream = new BufferStream(bufferManager);
-                ItemUtils.Write(bufferStream, (int)FileSerializeId.Name, Path.GetFileName(name));
+                // Name
+                {
+                    writer.Write((int)FileSerializeId.Name, Path.GetFileName(name));
+                }
+                // Stream
+                {
+                    writer.Add((int)FileSerializeId.Stream, new WrapperStream(stream, true));
+                }
 
-                streams.Add(bufferStream);
-            }
-            // Stream
-            {
-                Stream exportStream = new WrapperStream(stream, true);
-
-                var bufferStream = new BufferStream(bufferManager);
-                VintUtils.WriteVint(bufferStream, (int)FileSerializeId.Stream);
-                VintUtils.WriteVint(bufferStream, exportStream.Length);
-
-                streams.Add(new UniteStream(bufferStream, exportStream));
-            }
-
-            using (var uniteStream = new UniteStream(streams))
-            {
-                return new Certificate(digitalSignature, uniteStream);
+                using (var uniteStream = writer.GetStream())
+                {
+                    return new Certificate(digitalSignature, uniteStream);
+                }
             }
         }
 
@@ -214,30 +204,21 @@ namespace Library.Security
 
         public static bool VerifyFileCertificate(Certificate certificate, string name, Stream stream)
         {
-            BufferManager bufferManager = BufferManager.Instance;
-            var streams = new List<Stream>();
-
-            // Name
+            using (var writer = new ItemStreamWriter(BufferManager.Instance))
             {
-                var bufferStream = new BufferStream(bufferManager);
-                ItemUtils.Write(bufferStream, (int)FileSerializeId.Name, Path.GetFileName(name));
+                // Name
+                {
+                    writer.Write((int)FileSerializeId.Name, Path.GetFileName(name));
+                }
+                // Stream
+                {
+                    writer.Add((int)FileSerializeId.Stream, new WrapperStream(stream, true));
+                }
 
-                streams.Add(bufferStream);
-            }
-            // Stream
-            {
-                Stream exportStream = new WrapperStream(stream, true);
-
-                var bufferStream = new BufferStream(bufferManager);
-                VintUtils.WriteVint(bufferStream, (int)FileSerializeId.Stream);
-                VintUtils.WriteVint(bufferStream, exportStream.Length);
-
-                streams.Add(new UniteStream(bufferStream, exportStream));
-            }
-
-            using (var uniteStream = new UniteStream(streams))
-            {
-                return certificate.Verify(uniteStream);
+                using (var uniteStream = writer.GetStream())
+                {
+                    return certificate.Verify(uniteStream);
+                }
             }
         }
 

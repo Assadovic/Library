@@ -3,7 +3,6 @@ using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
 using Library.Security;
-using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
@@ -38,21 +37,20 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                for (;;)
+                using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    int type;
-
-                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                    for (;;)
                     {
-                        if (rangeStream == null) return;
+                        var id = reader.GetId();
+                        if (id < 0) return;
 
-                        if (type == (int)SerializeId.TrustSignature)
+                        if (id == (int)SerializeId.TrustSignature)
                         {
-                            this.TrustSignatures.Add(ItemUtils.GetString(rangeStream));
+                            this.TrustSignatures.Add(reader.GetString());
                         }
-                        else if (type == (int)SerializeId.DeleteSignature)
+                        else if (id == (int)SerializeId.DeleteSignature)
                         {
-                            this.DeleteSignatures.Add(ItemUtils.GetString(rangeStream));
+                            this.DeleteSignatures.Add(reader.GetString());
                         }
                     }
                 }
@@ -63,21 +61,21 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                var bufferStream = new BufferStream(bufferManager);
-
-                // TrustSignatures
-                foreach (var value in this.TrustSignatures)
+                using (var writer = new ItemStreamWriter(bufferManager))
                 {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.TrustSignature, value);
-                }
-                // DeleteSignatures
-                foreach (var value in this.DeleteSignatures)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.DeleteSignature, value);
-                }
+                    // TrustSignatures
+                    foreach (var value in this.TrustSignatures)
+                    {
+                        writer.Write((int)SerializeId.TrustSignature, value);
+                    }
+                    // DeleteSignatures
+                    foreach (var value in this.DeleteSignatures)
+                    {
+                        writer.Write((int)SerializeId.DeleteSignature, value);
+                    }
 
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
+                    return writer.GetStream();
+                }
             }
         }
 

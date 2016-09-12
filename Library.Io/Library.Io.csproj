@@ -54,7 +54,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Item\ItemStreamWriter.cs" />
+    <Compile Include="Item\ItemStreamReader.cs" />
     <Compile Include="QueueStream.cs" />
+    <Compile Include="Utilities\EnumUtils.cs" />
     <Compile Include="Utilities\StreamMode.cs" />
     <Compile Include="WrapperStream.cs" />
     <Compile Include="UniteStream.cs" />

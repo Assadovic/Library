@@ -5,7 +5,6 @@ using System.Runtime.Serialization;
 using System.Text;
 using Library.Io;
 using Library.Security;
-using Library.Utilities;
 
 namespace Library.Net.Connections.SecureVersion3
 {
@@ -46,30 +45,32 @@ namespace Library.Net.Connections.SecureVersion3
         {
             lock (this.ThisLock)
             {
-                for (;;)
+                using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    int type;
-
-                    using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                    for (;;)
                     {
-                        if (rangeStream == null) return;
+                        var id = reader.GetId();
+                        if (id < 0) return;
 
-                        if (type == (int)SerializeId.CreationTime)
+                        if (id == (int)SerializeId.CreationTime)
                         {
-                            this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                            this.CreationTime = reader.GetDateTime();
                         }
-                        if (type == (int)SerializeId.ExchangeKey)
+                        if (id == (int)SerializeId.ExchangeKey)
                         {
-                            this.ExchangeKey = ItemUtils.GetByteArray(rangeStream);
+                            this.ExchangeKey = reader.GetBytes();
                         }
-                        if (type == (int)SerializeId.ProtocolHash)
+                        if (id == (int)SerializeId.ProtocolHash)
                         {
-                            this.ProtocolHash = ItemUtils.GetByteArray(rangeStream);
+                            this.ProtocolHash = reader.GetBytes();
                         }
 
-                        else if (type == (int)SerializeId.Certificate)
+                        else if (id == (int)SerializeId.Certificate)
                         {
-                            this.Certificate = Certificate.Import(rangeStream, bufferManager);
+                            using (var rangeStream = reader.GetStream())
+                            {
+                                this.Certificate = Certificate.Import(rangeStream, bufferManager);
+                            }
                         }
                     }
                 }
@@ -80,35 +81,32 @@ namespace Library.Net.Connections.SecureVersion3
         {
             lock (this.ThisLock)
             {
-                var bufferStream = new BufferStream(bufferManager);
-
-                // CreationTime
-                if (this.CreationTime != DateTime.MinValue)
+                using (var writer = new ItemStreamWriter(bufferManager))
                 {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
-                }
-                // ExchangeKey
-                if (this.ExchangeKey != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.ExchangeKey, this.ExchangeKey);
-                }
-                // ProtocolHash
-                if (this.ProtocolHash != null)
-                {
-                    ItemUtils.Write(bufferStream, (int)SerializeId.ProtocolHash, this.ProtocolHash);
-                }
-
-                // Certificate
-                if (this.Certificate != null)
-                {
-                    using (var stream = this.Certificate.Export(bufferManager))
+                    // CreationTime
+                    if (this.CreationTime != DateTime.MinValue)
                     {
-                        ItemUtils.Write(bufferStream, (int)SerializeId.Certificate, stream);
+                        writer.Write((int)SerializeId.CreationTime, this.CreationTime);
                     }
-                }
+                    // ExchangeKey
+                    if (this.ExchangeKey != null)
+                    {
+                        writer.Write((int)SerializeId.ExchangeKey, this.ExchangeKey);
+                    }
+                    // ProtocolHash
+                    if (this.ProtocolHash != null)
+                    {
+                        writer.Write((int)SerializeId.ProtocolHash, this.ProtocolHash);
+                    }
 
-                bufferStream.Seek(0, SeekOrigin.Begin);
-                return bufferStream;
+                    // Certificate
+                    if (this.Certificate != null)
+                    {
+                        writer.Add((int)SerializeId.Certificate, this.Certificate.Export(bufferManager));
+                    }
+
+                    return writer.GetStream();
+                }
             }
         }
 

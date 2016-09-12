@@ -53,29 +53,28 @@ namespace Library.Security
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            for (;;)
+            using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                int type;
-
-                using (var rangeStream = ItemUtils.GetStream(out type, stream))
+                for (;;)
                 {
-                    if (rangeStream == null) return;
+                    var id = reader.GetId();
+                    if (id < 0) return;
 
-                    if (type == (int)SerializeId.CreationTime)
+                    if (id == (int)SerializeId.CreationTime)
                     {
-                        this.CreationTime = DateTime.ParseExact(ItemUtils.GetString(rangeStream), "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo).ToUniversalTime();
+                        this.CreationTime = reader.GetDateTime();
                     }
-                    else if (type == (int)SerializeId.ExchangeAlgorithm)
+                    else if (id == (int)SerializeId.ExchangeAlgorithm)
                     {
-                        this.ExchangeAlgorithm = (ExchangeAlgorithm)Enum.Parse(typeof(ExchangeAlgorithm), ItemUtils.GetString(rangeStream));
+                        this.ExchangeAlgorithm = reader.GetEnum<ExchangeAlgorithm>();
                     }
-                    else if (type == (int)SerializeId.PublicKey)
+                    else if (id == (int)SerializeId.PublicKey)
                     {
-                        this.PublicKey = ItemUtils.GetByteArray(rangeStream);
+                        this.PublicKey = reader.GetBytes();
                     }
-                    else if (type == (int)SerializeId.PrivateKey)
+                    else if (id == (int)SerializeId.PrivateKey)
                     {
-                        this.PrivateKey = ItemUtils.GetByteArray(rangeStream);
+                        this.PrivateKey = reader.GetBytes();
                     }
                 }
             }
@@ -83,31 +82,31 @@ namespace Library.Security
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            var bufferStream = new BufferStream(bufferManager);
+            using (var writer = new ItemStreamWriter(bufferManager))
+            {
+                // CreationTime
+                if (this.CreationTime != DateTime.MinValue)
+                {
+                    writer.Write((int)SerializeId.CreationTime, this.CreationTime);
+                }
+                // ExchangeAlgorithm
+                if (this.ExchangeAlgorithm != 0)
+                {
+                    writer.Write((int)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm);
+                }
+                // PublicKey
+                if (this.PublicKey != null)
+                {
+                    writer.Write((int)SerializeId.PublicKey, this.PublicKey);
+                }
+                // PrivateKey
+                if (this.PrivateKey != null)
+                {
+                    writer.Write((int)SerializeId.PrivateKey, this.PrivateKey);
+                }
 
-            // CreationTime
-            if (this.CreationTime != DateTime.MinValue)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.CreationTime, this.CreationTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.DateTimeFormatInfo.InvariantInfo));
+                return writer.GetStream();
             }
-            // ExchangeAlgorithm
-            if (this.ExchangeAlgorithm != 0)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.ExchangeAlgorithm, this.ExchangeAlgorithm.ToString());
-            }
-            // PublicKey
-            if (this.PublicKey != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.PublicKey, this.PublicKey);
-            }
-            // PrivateKey
-            if (this.PrivateKey != null)
-            {
-                ItemUtils.Write(bufferStream, (int)SerializeId.PrivateKey, this.PrivateKey);
-            }
-
-            bufferStream.Seek(0, SeekOrigin.Begin);
-            return bufferStream;
         }
 
         public override int GetHashCode()
