@@ -3084,7 +3084,7 @@ namespace Library.Net.Amoeba
                 {
                     var hashset = new HashSet<string>();
 
-                    hashset.UnionWith(_broadcastMetadatas.Keys);
+                    hashset.UnionWith(_broadcastMetadatas.Values.SelectMany(n => n.Keys));
 
                     return hashset;
                 }
@@ -3096,7 +3096,7 @@ namespace Library.Net.Amoeba
                 {
                     var hashset = new HashSet<string>();
 
-                    hashset.UnionWith(_unicastMetadatas.Keys);
+                    hashset.UnionWith(_unicastMetadatas.Values.SelectMany(n => n.Keys));
 
                     return hashset;
                 }
@@ -3108,7 +3108,7 @@ namespace Library.Net.Amoeba
                 {
                     var hashset = new HashSet<Tag>();
 
-                    hashset.UnionWith(_multicastMetadatas.SelectMany(n => n.Value.Keys));
+                    hashset.UnionWith(_multicastMetadatas.Values.SelectMany(n => n.Keys));
 
                     return hashset;
                 }
