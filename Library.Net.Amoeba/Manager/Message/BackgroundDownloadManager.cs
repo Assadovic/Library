@@ -23,6 +23,7 @@ namespace Library.Net.Amoeba
         private VolatileHashDictionary<BroadcastMetadata, Store> _cache_BroadcastStores;
         private VolatileHashDictionary<string, Dictionary<UnicastMetadata, Message>> _cache_UnicastMessages;
         private VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Message>> _cache_MulticastMessages;
+        private VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Website>> _cache_MulticastWebsites;
 
         private WatchTimer _watchTimer;
 
@@ -59,6 +60,7 @@ namespace Library.Net.Amoeba
             _cache_BroadcastStores = new VolatileHashDictionary<BroadcastMetadata, Store>(new TimeSpan(0, 30, 0));
             _cache_UnicastMessages = new VolatileHashDictionary<string, Dictionary<UnicastMetadata, Message>>(new TimeSpan(0, 30, 0));
             _cache_MulticastMessages = new VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Message>>(new TimeSpan(0, 30, 0));
+            _cache_MulticastWebsites = new VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Website>>(new TimeSpan(0, 30, 0));
 
             _watchTimer = new WatchTimer(this.WatchTimer, new TimeSpan(0, 0, 30));
 
@@ -142,6 +144,7 @@ namespace Library.Net.Amoeba
             {
                 var tags = new HashSet<Tag>();
                 tags.UnionWith(_cache_MulticastMessages.Keys);
+                tags.UnionWith(_cache_MulticastWebsites.Keys);
 
                 return tags;
             };
@@ -302,6 +305,7 @@ namespace Library.Net.Amoeba
                     _cache_BroadcastStores.TrimExcess();
                     _cache_UnicastMessages.TrimExcess();
                     _cache_MulticastMessages.TrimExcess();
+                    _cache_MulticastWebsites.TrimExcess();
                 }
 
                 lock (_thisLock)
@@ -796,7 +800,7 @@ namespace Library.Net.Amoeba
 
             lock (_thisLock)
             {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature).FirstOrDefault(n => n.Type == "Link");
+                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Link");
                 if (broadcastMetadata == null) return null;
 
                 Link result;
@@ -822,6 +826,7 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
+                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromLinkStream(item.Stream);
                             _cache_BroadcastLinks[broadcastMetadata] = result;
                         }
@@ -838,7 +843,7 @@ namespace Library.Net.Amoeba
 
             lock (_thisLock)
             {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature).FirstOrDefault(n => n.Type == "Profile");
+                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Profile");
                 if (broadcastMetadata == null) return null;
 
                 Profile result;
@@ -864,6 +869,7 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
+                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromProfileStream(item.Stream);
                             _cache_BroadcastProfiles[broadcastMetadata] = result;
                         }
@@ -880,7 +886,7 @@ namespace Library.Net.Amoeba
 
             lock (_thisLock)
             {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature).FirstOrDefault(n => n.Type == "Store");
+                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Store");
                 if (broadcastMetadata == null) return null;
 
                 Store result;
@@ -906,6 +912,7 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
+                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromStoreStream(item.Stream);
                             _cache_BroadcastStores[broadcastMetadata] = result;
                         }
@@ -931,7 +938,7 @@ namespace Library.Net.Amoeba
                     _cache_UnicastMessages[signature] = dic;
                 }
 
-                var unicastMetadatas = new HashSet<UnicastMetadata>(_connectionsManager.GetUnicastMetadatas(signature).Where(n => n.Type == "Message"));
+                var unicastMetadatas = new HashSet<UnicastMetadata>(_connectionsManager.GetUnicastMetadatas(signature, "Message"));
 
                 foreach (var unicastMetadata in dic.Keys.ToArray())
                 {
@@ -969,7 +976,8 @@ namespace Library.Net.Amoeba
 
                             if (item.Stream != null)
                             {
-                                result = ContentConverter.FromMulticastMessageStream(item.Stream);
+                                item.Stream.Seek(0, SeekOrigin.Begin);
+                                result = ContentConverter.FromUnicastMessageStream(item.Stream, exchangePrivateKey);
                                 dic[unicastMetadata] = result;
                             }
                         }
@@ -978,8 +986,9 @@ namespace Library.Net.Amoeba
                     if (result != null)
                     {
                         var contexts = new List<InformationContext>();
-                        contexts.Add(new InformationContext("Signature", signature));
+                        contexts.Add(new InformationContext("TargetSignature", signature));
                         contexts.Add(new InformationContext("CreationTime", unicastMetadata.CreationTime));
+                        contexts.Add(new InformationContext("Signature", unicastMetadata.Certificate.ToString()));
                         contexts.Add(new InformationContext("Value", result));
 
                         informationList.Add(new Information(contexts));
@@ -990,7 +999,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public IEnumerable<Information> GetMulticastMessages(Tag tag)
+        public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
         {
             if (tag == null) throw new ArgumentNullException(nameof(tag));
 
@@ -1004,7 +1013,7 @@ namespace Library.Net.Amoeba
                     _cache_MulticastMessages[tag] = dic;
                 }
 
-                var multicastMetadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag).Where(n => n.Type == "Message"));
+                var multicastMetadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag, "Message"));
 
                 foreach (var multicastMetadata in dic.Keys.ToArray())
                 {
@@ -1017,7 +1026,7 @@ namespace Library.Net.Amoeba
 
                 foreach (var multicastMetadata in multicastMetadatas)
                 {
-                    if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
+                    if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
 
                     Message result = null;
 
@@ -1042,6 +1051,7 @@ namespace Library.Net.Amoeba
 
                             if (item.Stream != null)
                             {
+                                item.Stream.Seek(0, SeekOrigin.Begin);
                                 result = ContentConverter.FromMulticastMessageStream(item.Stream);
                                 dic[multicastMetadata] = result;
                             }
@@ -1053,6 +1063,82 @@ namespace Library.Net.Amoeba
                         var contexts = new List<InformationContext>();
                         contexts.Add(new InformationContext("Tag", tag));
                         contexts.Add(new InformationContext("CreationTime", multicastMetadata.CreationTime));
+                        contexts.Add(new InformationContext("Signature", multicastMetadata.Certificate.ToString()));
+                        contexts.Add(new InformationContext("Value", result));
+
+                        informationList.Add(new Information(contexts));
+                    }
+                }
+
+                return informationList;
+            }
+        }
+
+        public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
+        {
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
+
+            lock (_thisLock)
+            {
+                Dictionary<MulticastMetadata, Website> dic;
+
+                if (!_cache_MulticastWebsites.TryGetValue(tag, out dic))
+                {
+                    dic = new Dictionary<MulticastMetadata, Website>();
+                    _cache_MulticastWebsites[tag] = dic;
+                }
+
+                var multicastMetadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag, "Website"));
+
+                foreach (var multicastMetadata in dic.Keys.ToArray())
+                {
+                    if (multicastMetadatas.Contains(multicastMetadata)) continue;
+
+                    dic.Remove(multicastMetadata);
+                }
+
+                var informationList = new List<Information>();
+
+                foreach (var multicastMetadata in multicastMetadatas)
+                {
+                    if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+
+                    Website result = null;
+
+                    if (!dic.TryGetValue(multicastMetadata, out result))
+                    {
+                        BackgroundDownloadItem item;
+
+                        if (!_downloadItems.TryGetValue(multicastMetadata.Metadata, out item))
+                        {
+                            item = new BackgroundDownloadItem();
+                            item.Depth = 1;
+                            item.State = BackgroundDownloadState.Downloading;
+                            item.UpdateTime = DateTime.UtcNow;
+
+                            _cacheManager.Lock(multicastMetadata.Metadata.Key);
+
+                            _downloadItems.Add(multicastMetadata.Metadata, item);
+                        }
+                        else
+                        {
+                            item.UpdateTime = DateTime.UtcNow;
+
+                            if (item.Stream != null)
+                            {
+                                item.Stream.Seek(0, SeekOrigin.Begin);
+                                result = ContentConverter.FromMulticastWebsiteStream(item.Stream);
+                                dic[multicastMetadata] = result;
+                            }
+                        }
+                    }
+
+                    if (result != null)
+                    {
+                        var contexts = new List<InformationContext>();
+                        contexts.Add(new InformationContext("Tag", tag));
+                        contexts.Add(new InformationContext("CreationTime", multicastMetadata.CreationTime));
+                        contexts.Add(new InformationContext("Signature", multicastMetadata.Certificate.ToString()));
                         contexts.Add(new InformationContext("Value", result));
 
                         informationList.Add(new Information(contexts));
@@ -1084,6 +1170,21 @@ namespace Library.Net.Amoeba
                 {
                     if (this.State == ManagerState.Start) return;
                     _state = ManagerState.Start;
+
+                    _downloadThread = new Thread(this.DownloadThread);
+                    _downloadThread.Priority = ThreadPriority.BelowNormal;
+                    _downloadThread.Name = "BackgroundDownloadManager_DownloadThread";
+                    _downloadThread.Start();
+
+                    for (int i = 0; i < _threadCount; i++)
+                    {
+                        var thread = new Thread(this.DecodeThread);
+                        thread.Priority = ThreadPriority.BelowNormal;
+                        thread.Name = "BackgroundDownloadManager_DecodeThread";
+                        thread.Start();
+
+                        _decodeThreads.Add(thread);
+                    }
                 }
             }
         }
@@ -1096,6 +1197,18 @@ namespace Library.Net.Amoeba
                 {
                     if (this.State == ManagerState.Stop) return;
                     _state = ManagerState.Stop;
+                }
+
+                _downloadThread.Join();
+                _downloadThread = null;
+
+                {
+                    foreach (var thread in _decodeThreads)
+                    {
+                        thread.Join();
+                    }
+
+                    _decodeThreads.Clear();
                 }
             }
         }

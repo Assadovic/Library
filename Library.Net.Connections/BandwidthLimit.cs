@@ -16,7 +16,7 @@ namespace Library.Net.Connections
     }
 
     [DataContract(Name = "BandwidthLimit")]
-    public sealed class BandwidthLimit : ManagerBase, IEquatable<BandwidthLimit>, ICloneable<BandwidthLimit>, IThisLock
+    public sealed class BandwidthLimit : ManagerBase, IEquatable<BandwidthLimit>, IThisLock
     {
         private Thread _watchThread;
 
@@ -256,34 +256,6 @@ namespace Library.Net.Connections
                 }
             }
         }
-
-        #region ICloneable<BandwidthLimit>
-
-        public BandwidthLimit Clone()
-        {
-            lock (this.ThisLock)
-            {
-                var ds = new DataContractSerializer(typeof(BandwidthLimit));
-
-                using (BufferStream stream = new BufferStream(BufferManager.Instance))
-                {
-                    using (WrapperStream wrapperStream = new WrapperStream(stream, true))
-                    using (XmlDictionaryWriter xmlDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(wrapperStream))
-                    {
-                        ds.WriteObject(xmlDictionaryWriter, this);
-                    }
-
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    using (XmlDictionaryReader xmlDictionaryReader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max))
-                    {
-                        return (BandwidthLimit)ds.ReadObject(xmlDictionaryReader);
-                    }
-                }
-            }
-        }
-
-        #endregion
 
         #region IThisLock
 

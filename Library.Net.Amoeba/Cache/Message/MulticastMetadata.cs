@@ -52,11 +52,10 @@ namespace Library.Net.Amoeba
         {
             using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                for (;;)
-                {
-                    var id = reader.GetId();
-                    if (id < 0) return;
+                int id;
 
+                while ((id = reader.GetId()) != -1)
+                {
                     if (id == (int)SerializeId.Type)
                     {
                         this.Type = reader.GetString();

@@ -702,14 +702,25 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public IEnumerable<Information> GetMulticastMessages(Tag tag)
+        public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
             if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
 
             lock (this.ThisLock)
             {
-                return _backgroundDownloadManager.GetMulticastMessages(tag);
+                return _backgroundDownloadManager.GetMulticastMessages(tag, limit);
+            }
+        }
+
+        public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                return _backgroundDownloadManager.GetMulticastWebsites(tag, limit);
             }
         }
 
@@ -774,6 +785,20 @@ namespace Library.Net.Amoeba
             lock (this.ThisLock)
             {
                 _backgroundUploadManager.MulticastUpload(tag, message, miningLimit, miningTime, digitalSignature);
+            }
+        }
+
+        public void MulticastUpload(Tag tag,
+            Website website,
+
+            DigitalSignature digitalSignature)
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+
+            lock (this.ThisLock)
+            {
+                _backgroundUploadManager.MulticastUpload(tag, website, digitalSignature);
             }
         }
 

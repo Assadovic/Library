@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
@@ -6,21 +8,19 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Message")]
-    public sealed class Message : ItemBase<Message>, IMessage
+    [DataContract(Name = "Profile")]
+    public sealed class Profile : ItemBase<Profile>, IProfile
     {
         private enum SerializeId
         {
-            Comment = 0,
+            ExchangePublicKey = 0,
         }
 
-        private volatile string _comment;
+        private volatile ExchangePublicKey _exchangePublicKey;
 
-        public static readonly int MaxCommentLength = 1024 * 8;
-
-        public Message(string comment)
+        public Profile(ExchangePublicKey exchangePublicKey)
         {
-            this.Comment = comment;
+            this.ExchangePublicKey = exchangePublicKey;
         }
 
         protected override void Initialize()
@@ -36,9 +36,12 @@ namespace Library.Net.Amoeba
 
                 while ((id = reader.GetId()) != -1)
                 {
-                    if (id == (int)SerializeId.Comment)
+                    if (id == (int)SerializeId.ExchangePublicKey)
                     {
-                        this.Comment = reader.GetString();
+                        using (var rangeStream = reader.GetStream())
+                        {
+                            this.ExchangePublicKey = ExchangePublicKey.Import(rangeStream, bufferManager);
+                        }
                     }
                 }
             }
@@ -48,10 +51,10 @@ namespace Library.Net.Amoeba
         {
             using (var writer = new ItemStreamWriter(bufferManager))
             {
-                // Comment
-                if (this.Comment != null)
+                // ExchangePublicKey
+                if (this.ExchangePublicKey != null)
                 {
-                    writer.Write((int)SerializeId.Comment, this.Comment);
+                    writer.Add((int)SerializeId.ExchangePublicKey, this.ExchangePublicKey.Export(bufferManager));
                 }
 
                 return writer.GetStream();
@@ -60,22 +63,23 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            return this.Comment.GetHashCode();
+            if (this.ExchangePublicKey == null) return 0;
+            else return this.ExchangePublicKey.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is Message)) return false;
+            if ((object)obj == null || !(obj is Profile)) return false;
 
-            return this.Equals((Message)obj);
+            return this.Equals((Profile)obj);
         }
 
-        public override bool Equals(Message other)
+        public override bool Equals(Profile other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Comment != other.Comment)
+            if (this.ExchangePublicKey != other.ExchangePublicKey)
             {
                 return false;
             }
@@ -83,25 +87,18 @@ namespace Library.Net.Amoeba
             return true;
         }
 
-        #region IMessage
+        #region IProfile
 
-        [DataMember(Name = "Comment")]
-        public string Comment
+        [DataMember(Name = "ExchangePublicKey")]
+        public ExchangePublicKey ExchangePublicKey
         {
             get
             {
-                return _comment;
+                return _exchangePublicKey;
             }
             private set
             {
-                if (value != null && value.Length > Message.MaxCommentLength)
-                {
-                    throw new ArgumentException();
-                }
-                else
-                {
-                    _comment = value;
-                }
+                _exchangePublicKey = value;
             }
         }
 

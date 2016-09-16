@@ -53,10 +53,9 @@ namespace Library.UnitTest
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
+
+                    while ((id = reader.GetId()) > 0)
 
                         if (id == (int)SerializeId.Name)
                         {

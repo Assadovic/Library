@@ -33,6 +33,7 @@ namespace Library.Net.Amoeba
         private Profile _profile;
         private Store _store;
         private Message _message;
+        private Website _website;
 
         private string _scheme;
         private string _type;
@@ -167,6 +168,25 @@ namespace Library.Net.Amoeba
                 lock (this.ThisLock)
                 {
                     _message = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Website")]
+        public Website Website
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _website;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _website = value;
                 }
             }
         }

@@ -62,6 +62,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Information\Website\WebpageCollection.cs" />
+    <Compile Include="Information\Website\WebsiteCollection.cs" />
+    <Compile Include="Information\Website\Webpage.cs" />
+    <Compile Include="Information\Website\Website.cs" />
+    <Compile Include="Information\_Interface\Website\IWebpage.cs" />
+    <Compile Include="Information\_Interface\Website\IWebsite.cs" />
     <Compile Include="Manager\AmoebaConverter.cs" />
     <Compile Include="Manager\AmoebaManager.cs" />
     <Compile Include="Cache\BitmapManager.cs" />
@@ -89,7 +95,7 @@
     <Compile Include="Manager\Connection\ConnectionsManager.cs" />
     <Compile Include="Information\Message\MessageCollection.cs" />
     <Compile Include="Information\Profile\ProfileCollection.cs" />
-    <Compile Include="Information\Profile\Prfolie.cs" />
+    <Compile Include="Information\Profile\Profile.cs" />
     <Compile Include="Information\Message\Message.cs" />
     <Compile Include="Information\_Interface\Profile\IProfile.cs" />
     <Compile Include="Information\_Interface\Message\IMessage.cs" />

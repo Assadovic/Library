@@ -1199,11 +1199,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Node)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1277,11 +1276,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Key)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1355,11 +1353,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Key)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1438,11 +1435,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Key)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1556,11 +1552,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Signature)
                         {
                             this.ProtectedSignatures.Add(reader.GetString());
@@ -1631,11 +1626,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.BroadcastMetadata)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1709,11 +1703,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Signature)
                         {
                             this.ProtectedSignatures.Add(reader.GetString());
@@ -1784,11 +1777,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.UnicastMetadata)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1862,11 +1854,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.Tag)
                         {
                             using (var rangeStream = reader.GetStream())
@@ -1941,11 +1932,10 @@ namespace Library.Net.Amoeba
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
                 {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                    int id;
 
+                    while ((id = reader.GetId()) != -1)
+                    {
                         if (id == (int)SerializeId.MulticastMetadata)
                         {
                             using (var rangeStream = reader.GetStream())

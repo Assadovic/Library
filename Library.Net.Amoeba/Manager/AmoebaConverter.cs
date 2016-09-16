@@ -228,6 +228,41 @@ namespace Library.Net.Amoeba
             }
         }
 
+        public static string ToTagString(Tag item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+
+            try
+            {
+                using (Stream stream = AmoebaConverter.ToStream<Tag>(0, item))
+                {
+                    return "Tag:" + AmoebaConverter.ToBase64String(stream);
+                }
+            }
+            catch (Exception)
+            {
+                throw new FormatException();
+            }
+        }
+
+        public static Tag FromTagString(string item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (!item.StartsWith("Tag:")) throw new ArgumentException("item");
+
+            try
+            {
+                using (Stream stream = AmoebaConverter.FromBase64String(item.Remove(0, "Tag:".Length)))
+                {
+                    return AmoebaConverter.FromStream<Tag>(0, stream);
+                }
+            }
+            catch (Exception)
+            {
+                throw new FormatException();
+            }
+        }
+
         public static string ToSeedString(Seed item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));

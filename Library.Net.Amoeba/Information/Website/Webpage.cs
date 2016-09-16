@@ -1,35 +1,33 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using Library.Io;
-using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    [DataContract(Name = "Tag")]
-    public sealed class Tag : ItemBase<Tag>, ITag
+    [DataContract(Name = "Webpage")]
+    public sealed class Webpage : ItemBase<Webpage>, IWebpage
     {
         private enum SerializeId
         {
             Name = 0,
-            Id = 1,
+            FormatType = 1,
+            Content = 2,
         }
 
-        private static Intern<string> _nameCache = new Intern<string>();
         private volatile string _name;
-        private static Intern<byte[]> _idCache = new Intern<byte[]>(new ByteArrayEqualityComparer());
-        private volatile byte[] _id;
-
-        private volatile int _hashCode;
+        private volatile HypertextFormatType _formatType;
+        private volatile string _content;
 
         public static readonly int MaxNameLength = 256;
-        public static readonly int MaxIdLength = 32;
+        public static readonly int MaxContentLength = 1024 * 256;
 
-        public Tag(string name, byte[] id)
+        public Webpage(string name, HypertextFormatType formatType, string content)
         {
             this.Name = name;
-            this.Id = id;
+            this.FormatType = formatType;
+            this.Content = content;
         }
 
         protected override void Initialize()
@@ -49,9 +47,13 @@ namespace Library.Net.Amoeba
                     {
                         this.Name = reader.GetString();
                     }
-                    else if (id == (int)SerializeId.Id)
+                    else if (id == (int)SerializeId.FormatType)
                     {
-                        this.Id = reader.GetBytes();
+                        this.FormatType = reader.GetEnum<HypertextFormatType>();
+                    }
+                    else if (id == (int)SerializeId.Content)
+                    {
+                        this.Content = reader.GetString();
                     }
                 }
             }
@@ -66,10 +68,15 @@ namespace Library.Net.Amoeba
                 {
                     writer.Write((int)SerializeId.Name, this.Name);
                 }
-                // Id
-                if (this.Id != null)
+                // FormatType
+                if (this.FormatType != 0)
                 {
-                    writer.Write((int)SerializeId.Id, this.Id);
+                    writer.Write((int)SerializeId.FormatType, this.FormatType);
+                }
+                // Content
+                if (this.Content != null)
+                {
+                    writer.Write((int)SerializeId.Content, this.Content);
                 }
 
                 return writer.GetStream();
@@ -78,36 +85,30 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return this.Content.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            if ((object)obj == null || !(obj is Tag)) return false;
+            if ((object)obj == null || !(obj is Webpage)) return false;
 
-            return this.Equals((Tag)obj);
+            return this.Equals((Webpage)obj);
         }
 
-        public override bool Equals(Tag other)
+        public override bool Equals(Webpage other)
         {
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (this.Name != other.Name
-                || (this.Id == null) != (other.Id == null))
+            if (this.Content != other.Content)
             {
                 return false;
-            }
-
-            if (this.Id != null && other.Id != null)
-            {
-                if (!Unsafe.Equals(this.Id, other.Id)) return false;
             }
 
             return true;
         }
 
-        #region ITag
+        #region IWebpage
 
         [DataMember(Name = "Name")]
         public string Name
@@ -118,42 +119,53 @@ namespace Library.Net.Amoeba
             }
             private set
             {
-                if (value != null && value.Length > Tag.MaxNameLength)
+                if (value != null && value.Length > Webpage.MaxNameLength)
                 {
                     throw new ArgumentException();
                 }
                 else
                 {
-                    _name = _nameCache.GetValue(value, this);
+                    _name = value;
                 }
             }
         }
 
-        [DataMember(Name = "Id")]
-        public byte[] Id
+        [DataMember(Name = "FormatType")]
+        public HypertextFormatType FormatType
         {
             get
             {
-                return _id;
+                return _formatType;
             }
             private set
             {
-                if (value != null && (value.Length > Tag.MaxIdLength))
+                if (!Enum.IsDefined(typeof(HypertextFormatType), value))
                 {
                     throw new ArgumentException();
                 }
                 else
                 {
-                    _id = _idCache.GetValue(value, this);
+                    _formatType = value;
                 }
+            }
+        }
 
-                if (value != null)
+        [DataMember(Name = "Content")]
+        public string Content
+        {
+            get
+            {
+                return _content;
+            }
+            private set
+            {
+                if (value != null && value.Length > Webpage.MaxContentLength)
                 {
-                    _hashCode = RuntimeHelpers.GetHashCode(_id);
+                    throw new ArgumentException();
                 }
                 else
                 {
-                    _hashCode = 0;
+                    _content = value;
                 }
             }
         }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
 using Library.Io;
@@ -7,7 +8,7 @@ using Library.Security;
 namespace Library.Net.Amoeba
 {
     [DataContract(Name = "Link")]
-    public sealed class Link : ItemBase<Link>, ILink, ICloneable<Link>, IThisLock
+    public sealed class Link : ItemBase<Link>, ILink
     {
         private enum SerializeId
         {
@@ -23,9 +24,10 @@ namespace Library.Net.Amoeba
         public static readonly int MaxTrustSignatureCount = 1024;
         public static readonly int MaxDeleteSignatureCount = 1024;
 
-        public Link()
+        public Link(IEnumerable<string> trustSignatures, IEnumerable<string> deleteSignatures)
         {
-
+            if (trustSignatures != null) this.ProtectedTrustSignatures.AddRange(trustSignatures);
+            if (deleteSignatures != null) this.ProtectedDeleteSignatures.AddRange(deleteSignatures);
         }
 
         protected override void Initialize()
@@ -35,23 +37,19 @@ namespace Library.Net.Amoeba
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
-            lock (this.ThisLock)
+            using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                using (var reader = new ItemStreamReader(stream, bufferManager))
-                {
-                    for (;;)
-                    {
-                        var id = reader.GetId();
-                        if (id < 0) return;
+                int id;
 
-                        if (id == (int)SerializeId.TrustSignature)
-                        {
-                            this.TrustSignatures.Add(reader.GetString());
-                        }
-                        else if (id == (int)SerializeId.DeleteSignature)
-                        {
-                            this.DeleteSignatures.Add(reader.GetString());
-                        }
+                while ((id = reader.GetId()) != -1)
+                {
+                    if (id == (int)SerializeId.TrustSignature)
+                    {
+                        this.ProtectedTrustSignatures.Add(reader.GetString());
+                    }
+                    else if (id == (int)SerializeId.DeleteSignature)
+                    {
+                        this.ProtectedTrustSignatures.Add(reader.GetString());
                     }
                 }
             }
@@ -59,33 +57,27 @@ namespace Library.Net.Amoeba
 
         protected override Stream Export(BufferManager bufferManager, int count)
         {
-            lock (this.ThisLock)
+            using (var writer = new ItemStreamWriter(bufferManager))
             {
-                using (var writer = new ItemStreamWriter(bufferManager))
+                // TrustSignatures
+                foreach (var value in this.TrustSignatures)
                 {
-                    // TrustSignatures
-                    foreach (var value in this.TrustSignatures)
-                    {
-                        writer.Write((int)SerializeId.TrustSignature, value);
-                    }
-                    // DeleteSignatures
-                    foreach (var value in this.DeleteSignatures)
-                    {
-                        writer.Write((int)SerializeId.DeleteSignature, value);
-                    }
-
-                    return writer.GetStream();
+                    writer.Write((int)SerializeId.TrustSignature, value);
                 }
+                // DeleteSignatures
+                foreach (var value in this.DeleteSignatures)
+                {
+                    writer.Write((int)SerializeId.DeleteSignature, value);
+                }
+
+                return writer.GetStream();
             }
         }
 
         public override int GetHashCode()
         {
-            lock (this.ThisLock)
-            {
-                if (this.TrustSignatures.Count == 0) return 0;
-                else return this.TrustSignatures[0].GetHashCode();
-            }
+            if (this.ProtectedTrustSignatures.Count == 0) return 0;
+            else return this.ProtectedTrustSignatures[0].GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -111,82 +103,53 @@ namespace Library.Net.Amoeba
 
         #region ILink
 
-        ICollection<string> ILink.TrustSignatures
+        private volatile ReadOnlyCollection<string> _readOnlyTrustSignatures;
+
+        public IEnumerable<string> TrustSignatures
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return this.TrustSignatures;
-                }
+                if (_readOnlyTrustSignatures == null)
+                    _readOnlyTrustSignatures = new ReadOnlyCollection<string>(this.ProtectedTrustSignatures.ToArray());
+
+                return _readOnlyTrustSignatures;
             }
         }
 
         [DataMember(Name = "TrustSignatures")]
-        public SignatureCollection TrustSignatures
+        private SignatureCollection ProtectedTrustSignatures
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    if (_trustSignatures == null)
-                        _trustSignatures = new SignatureCollection(Link.MaxTrustSignatureCount);
+                if (_trustSignatures == null)
+                    _trustSignatures = new SignatureCollection(Link.MaxTrustSignatureCount);
 
-                    return _trustSignatures;
-                }
+                return _trustSignatures;
             }
         }
 
-        ICollection<string> ILink.DeleteSignatures
+        private volatile ReadOnlyCollection<string> _readOnlyDeleteSignatures;
+
+        public IEnumerable<string> DeleteSignatures
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    return this.DeleteSignatures;
-                }
+                if (_readOnlyDeleteSignatures == null)
+                    _readOnlyDeleteSignatures = new ReadOnlyCollection<string>(this.ProtectedDeleteSignatures.ToArray());
+
+                return _readOnlyDeleteSignatures;
             }
         }
 
         [DataMember(Name = "DeleteSignatures")]
-        public SignatureCollection DeleteSignatures
+        private SignatureCollection ProtectedDeleteSignatures
         {
             get
             {
-                lock (this.ThisLock)
-                {
-                    if (_deleteSignatures == null)
-                        _deleteSignatures = new SignatureCollection(Link.MaxDeleteSignatureCount);
+                if (_deleteSignatures == null)
+                    _deleteSignatures = new SignatureCollection(Link.MaxDeleteSignatureCount);
 
-                    return _deleteSignatures;
-                }
-            }
-        }
-
-        #endregion
-
-        #region ICloneable<Link>
-
-        public Link Clone()
-        {
-            lock (this.ThisLock)
-            {
-                using (var stream = this.Export(BufferManager.Instance))
-                {
-                    return Link.Import(stream, BufferManager.Instance);
-                }
-            }
-        }
-
-        #endregion
-
-        #region IThisLock
-
-        public object ThisLock
-        {
-            get
-            {
-                return _thisLock;
+                return _deleteSignatures;
             }
         }
 

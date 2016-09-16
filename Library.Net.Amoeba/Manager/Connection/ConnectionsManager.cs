@@ -2492,7 +2492,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public IEnumerable<BroadcastMetadata> GetBroadcastMetadatas(string signature)
+        public BroadcastMetadata GetBroadcastMetadatas(string signature, string type)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -2500,11 +2500,11 @@ namespace Library.Net.Amoeba
             {
                 _pushBroadcastMetadatasRequestList.Add(signature);
 
-                return _settings.MetadataManager.GetBroadcastMetadatas(signature);
+                return _settings.MetadataManager.GetBroadcastMetadatas(signature, type);
             }
         }
 
-        public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature)
+        public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature, string type)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -2512,11 +2512,11 @@ namespace Library.Net.Amoeba
             {
                 _pushUnicastMetadatasRequestList.Add(signature);
 
-                return _settings.MetadataManager.GetUnicastMetadatas(signature);
+                return _settings.MetadataManager.GetUnicastMetadatas(signature, type);
             }
         }
 
-        public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag)
+        public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag, string type)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -2524,7 +2524,7 @@ namespace Library.Net.Amoeba
             {
                 _pushMulticastMetadatasRequestList.Add(tag);
 
-                return _settings.MetadataManager.GetMulticastMetadatas(tag);
+                return _settings.MetadataManager.GetMulticastMetadatas(tag, type);
             }
         }
 
@@ -2912,12 +2912,17 @@ namespace Library.Net.Amoeba
 
         public class MetadataManager
         {
-            // CreatorSignature, Type
+            // Type, CreatorSignature
             private Dictionary<string, Dictionary<string, BroadcastMetadata>> _broadcastMetadatas = new Dictionary<string, Dictionary<string, BroadcastMetadata>>();
-            // TargetSignature, CreatorSignature
-            private Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>> _unicastMetadatas = new Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>>();
-            // Tag, CreatorSignature
-            private Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>> _multicastMetadatas = new Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>();
+            // Type, TargetSignature, CreatorSignature
+            private Dictionary<string, Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>>> _unicastMetadatas = new Dictionary<string, Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>>>();
+            // Type, Tag, CreatorSignature
+            private Dictionary<string, Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>> _multicastMetadatas = new Dictionary<string, Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>>();
+
+            // UpdateTime
+            private Dictionary<string, DateTime> _broadcastTypes = new Dictionary<string, DateTime>();
+            private Dictionary<string, DateTime> _unicastTypes = new Dictionary<string, DateTime>();
+            private Dictionary<string, DateTime> _multicastTypes = new Dictionary<string, DateTime>();
 
             private readonly object _thisLock = new object();
 
@@ -2936,28 +2941,24 @@ namespace Library.Net.Amoeba
                     // Broadcast
                     {
                         {
-                            var removeSignatures = new HashSet<string>();
-                            removeSignatures.UnionWith(_broadcastMetadatas.Keys.ToArray());
-                            removeSignatures.ExceptWith(lockSignatures);
+                            var hashset = new HashSet<string>(_broadcastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
 
-                            foreach (var signature in removeSignatures.Randomize().Take(removeSignatures.Count - 1024))
+                            foreach (var key in _broadcastMetadatas.Keys.ToArray())
                             {
-                                _broadcastMetadatas.Remove(signature);
+                                if (!hashset.Contains(key))
+                                {
+                                    _broadcastMetadatas.Remove(key);
+                                }
                             }
                         }
 
+                        foreach (var dic in _broadcastMetadatas.Values)
                         {
-                            foreach (var dic in _broadcastMetadatas.Values.ToArray())
+                            var keys = dic.Keys.Where(n => !lockSignatures.Contains(n)).ToList();
+
+                            foreach (var key in keys.Randomize().Take(keys.Count - 1024))
                             {
-                                if (dic.Count <= 32) continue;
-
-                                var pairs = dic.ToList();
-                                pairs.Sort((x, y) => x.Value.CreationTime.CompareTo(y.Value.CreationTime));
-
-                                foreach (var key in pairs.Select(n => n.Key).Take(pairs.Count - 32))
-                                {
-                                    dic.Remove(key);
-                                }
+                                dic.Remove(key);
                             }
                         }
                     }
@@ -2965,79 +2966,95 @@ namespace Library.Net.Amoeba
                     // Unicast
                     {
                         {
-                            var removeSignatures = new HashSet<string>();
-                            removeSignatures.UnionWith(_unicastMetadatas.Keys.ToArray());
-                            removeSignatures.ExceptWith(lockSignatures);
+                            var hashset = new HashSet<string>(_unicastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
 
-                            foreach (var signature in removeSignatures.Randomize().Take(removeSignatures.Count - 1024))
+                            foreach (var key in _unicastMetadatas.Keys.ToArray())
                             {
-                                _unicastMetadatas.Remove(signature);
-                            }
-                        }
-
-                        {
-                            foreach (var dic in _unicastMetadatas.Values.ToArray())
-                            {
-                                var keys = dic.Where(n => !lockSignatures.Contains(n.Key)).Select(n => n.Key).ToList();
-
-                                foreach (var key in keys.Randomize().Take(keys.Count - 32))
+                                if (!hashset.Contains(key))
                                 {
-                                    dic.Remove(key);
+                                    _unicastMetadatas.Remove(key);
                                 }
                             }
                         }
 
+                        foreach (var dic in _unicastMetadatas.Values)
                         {
-                            foreach (var hashset in _unicastMetadatas.Values.SelectMany(n => n.Values).ToArray())
+                            var keys = dic.Keys.Where(n => !lockSignatures.Contains(n)).ToList();
+
+                            foreach (var key in keys.Randomize().Take(keys.Count - 1024))
                             {
-                                if (hashset.Count <= 32) continue;
+                                dic.Remove(key);
+                            }
+                        }
 
-                                var list = hashset.ToList();
-                                list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+                        foreach (var dic in _unicastMetadatas.Values.SelectMany(n => n.Values))
+                        {
+                            var keys = dic.Keys.Where(n => !lockSignatures.Contains(n)).ToList();
 
-                                foreach (var value in list.Take(list.Count - 32))
-                                {
-                                    hashset.Remove(value);
-                                }
+                            foreach (var key in keys.Randomize().Take(keys.Count - 32))
+                            {
+                                dic.Remove(key);
+                            }
+                        }
+
+                        foreach (var hashset in _unicastMetadatas.Values.SelectMany(n => n.Values.SelectMany(m => m.Values)).ToArray())
+                        {
+                            if (hashset.Count <= 32) continue;
+
+                            var list = hashset.ToList();
+                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+
+                            foreach (var value in list.Take(list.Count - 32))
+                            {
+                                hashset.Remove(value);
                             }
                         }
                     }
 
                     // Multicast
                     {
-                        var removeTags = new HashSet<Tag>();
-                        removeTags.UnionWith(_multicastMetadatas.Keys.ToArray());
-                        removeTags.ExceptWith(lockTags);
-
-                        foreach (var tag in removeTags.Randomize().Take(removeTags.Count - 1024))
                         {
-                            _multicastMetadatas.Remove(tag);
-                        }
+                            var hashset = new HashSet<string>(_multicastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
 
-                        {
-                            foreach (var dic in _multicastMetadatas.Values.ToArray())
+                            foreach (var key in _multicastMetadatas.Keys.ToArray())
                             {
-                                var keys = dic.Where(n => !lockSignatures.Contains(n.Key)).Select(n => n.Key).ToList();
-
-                                foreach (var key in keys.Randomize().Take(keys.Count - 32))
+                                if (!hashset.Contains(key))
                                 {
-                                    dic.Remove(key);
+                                    _multicastMetadatas.Remove(key);
                                 }
                             }
                         }
 
+                        foreach (var dic in _multicastMetadatas.Values)
                         {
-                            foreach (var hashset in _multicastMetadatas.Values.SelectMany(n => n.Values).ToArray())
+                            var keys = dic.Keys.Where(n => !lockTags.Contains(n)).ToList();
+
+                            foreach (var key in keys.Randomize().Take(keys.Count - 1024))
                             {
-                                if (hashset.Count <= 32) continue;
+                                dic.Remove(key);
+                            }
+                        }
 
-                                var list = hashset.ToList();
-                                list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+                        foreach (var dic in _multicastMetadatas.Values.SelectMany(n => n.Values))
+                        {
+                            var keys = dic.Keys.Where(n => !lockSignatures.Contains(n)).ToList();
 
-                                foreach (var value in list.Take(list.Count - 32))
-                                {
-                                    hashset.Remove(value);
-                                }
+                            foreach (var key in keys.Randomize().Take(keys.Count - 32))
+                            {
+                                dic.Remove(key);
+                            }
+                        }
+
+                        foreach (var hashset in _multicastMetadatas.Values.SelectMany(n => n.Values.SelectMany(m => m.Values)).ToArray())
+                        {
+                            if (hashset.Count <= 32) continue;
+
+                            var list = hashset.ToList();
+                            list.Sort((x, y) => x.CreationTime.CompareTo(y.CreationTime));
+
+                            foreach (var value in list.Take(list.Count - 32))
+                            {
+                                hashset.Remove(value);
                             }
                         }
                     }
@@ -3053,8 +3070,8 @@ namespace Library.Net.Amoeba
                         int count = 0;
 
                         count += _broadcastMetadatas.Values.Sum(n => n.Count);
-                        count += _unicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
-                        count += _multicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Count));
+                        count += _unicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Values.Sum(o => o.Count)));
+                        count += _multicastMetadatas.Values.Sum(n => n.Values.Sum(m => m.Values.Sum(o => o.Count)));
 
                         return count;
                     }
@@ -3091,7 +3108,7 @@ namespace Library.Net.Amoeba
                 {
                     var hashset = new HashSet<Tag>();
 
-                    hashset.UnionWith(_multicastMetadatas.Keys);
+                    hashset.UnionWith(_multicastMetadatas.SelectMany(n => n.Value.Keys));
 
                     return hashset;
                 }
@@ -3109,14 +3126,41 @@ namespace Library.Net.Amoeba
             {
                 lock (_thisLock)
                 {
-                    Dictionary<string, BroadcastMetadata> dic;
+                    var list = new List<BroadcastMetadata>();
 
-                    if (_broadcastMetadatas.TryGetValue(signature, out dic))
+                    foreach (var dic in _broadcastMetadatas.Values)
                     {
-                        return dic.Values.ToArray();
+                        BroadcastMetadata metadata;
+
+                        if (dic.TryGetValue(signature, out metadata))
+                        {
+                            list.Add(metadata);
+                        }
                     }
 
-                    return new BroadcastMetadata[0];
+                    return list;
+                }
+            }
+
+            public BroadcastMetadata GetBroadcastMetadatas(string signature, string type)
+            {
+                lock (_thisLock)
+                {
+                    _broadcastTypes[type] = DateTime.UtcNow;
+
+                    Dictionary<string, BroadcastMetadata> dic;
+
+                    if (_broadcastMetadatas.TryGetValue(type, out dic))
+                    {
+                        BroadcastMetadata metadata;
+
+                        if (dic.TryGetValue(signature, out metadata))
+                        {
+                            return metadata;
+                        }
+                    }
+
+                    return null;
                 }
             }
 
@@ -3124,7 +3168,7 @@ namespace Library.Net.Amoeba
             {
                 lock (_thisLock)
                 {
-                    return _unicastMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
+                    return _unicastMetadatas.Values.SelectMany(n => n.Values.SelectMany(m => m.Values.Extract())).ToArray();
                 }
             }
 
@@ -3132,11 +3176,38 @@ namespace Library.Net.Amoeba
             {
                 lock (_thisLock)
                 {
-                    Dictionary<string, HashSet<UnicastMetadata>> dic = null;
+                    var list = new List<UnicastMetadata>();
 
-                    if (_unicastMetadatas.TryGetValue(signature, out dic))
+                    foreach (var dic in _unicastMetadatas.Values)
                     {
-                        return dic.Values.Extract().ToArray();
+                        Dictionary<string, HashSet<UnicastMetadata>> dic2;
+
+                        if (dic.TryGetValue(signature, out dic2))
+                        {
+                            list.AddRange(dic2.Values.Extract());
+                        }
+                    }
+
+                    return list;
+                }
+            }
+
+            public IEnumerable<UnicastMetadata> GetUnicastMetadatas(string signature, string type)
+            {
+                lock (_thisLock)
+                {
+                    _unicastTypes[type] = DateTime.UtcNow;
+
+                    Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>> dic1;
+
+                    if (_unicastMetadatas.TryGetValue(type, out dic1))
+                    {
+                        Dictionary<string, HashSet<UnicastMetadata>> dic2;
+
+                        if (dic1.TryGetValue(signature, out dic2))
+                        {
+                            return dic2.Values.Extract();
+                        }
                     }
 
                     return new UnicastMetadata[0];
@@ -3147,7 +3218,7 @@ namespace Library.Net.Amoeba
             {
                 lock (_thisLock)
                 {
-                    return _multicastMetadatas.Values.SelectMany(n => n.Values.Extract()).ToArray();
+                    return _multicastMetadatas.Values.SelectMany(n => n.Values.SelectMany(m => m.Values.Extract())).ToArray();
                 }
             }
 
@@ -3155,11 +3226,38 @@ namespace Library.Net.Amoeba
             {
                 lock (_thisLock)
                 {
-                    Dictionary<string, HashSet<MulticastMetadata>> dic = null;
+                    var list = new List<MulticastMetadata>();
 
-                    if (_multicastMetadatas.TryGetValue(tag, out dic))
+                    foreach (var dic in _multicastMetadatas.Values)
                     {
-                        return dic.Values.Extract().ToArray();
+                        Dictionary<string, HashSet<MulticastMetadata>> dic2;
+
+                        if (dic.TryGetValue(tag, out dic2))
+                        {
+                            list.AddRange(dic2.Values.Extract());
+                        }
+                    }
+
+                    return list;
+                }
+            }
+
+            public IEnumerable<MulticastMetadata> GetMulticastMetadatas(Tag tag, string type)
+            {
+                lock (_thisLock)
+                {
+                    _multicastTypes[type] = DateTime.UtcNow;
+
+                    Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>> dic1;
+
+                    if (_multicastMetadatas.TryGetValue(type, out dic1))
+                    {
+                        Dictionary<string, HashSet<MulticastMetadata>> dic2;
+
+                        if (dic1.TryGetValue(tag, out dic2))
+                        {
+                            return dic2.Values.Extract();
+                        }
                     }
 
                     return new MulticastMetadata[0];
@@ -3177,24 +3275,24 @@ namespace Library.Net.Amoeba
                         || (metadata.CreationTime - now).TotalMinutes > 30
                         || metadata.Certificate == null) return false;
 
-                    var signature = metadata.Certificate.ToString();
-
                     Dictionary<string, BroadcastMetadata> dic;
 
-                    if (!_broadcastMetadatas.TryGetValue(signature, out dic))
+                    if (!_broadcastMetadatas.TryGetValue(metadata.Type, out dic))
                     {
                         dic = new Dictionary<string, BroadcastMetadata>();
-                        _broadcastMetadatas[signature] = dic;
+                        _broadcastMetadatas[metadata.Type] = dic;
                     }
+
+                    var signature = metadata.Certificate.ToString();
 
                     BroadcastMetadata tempMetadata;
 
-                    if (!dic.TryGetValue(metadata.Type, out tempMetadata)
+                    if (!dic.TryGetValue(signature, out tempMetadata)
                         || metadata.CreationTime > tempMetadata.CreationTime)
                     {
                         if (!metadata.VerifyCertificate()) throw new CertificateException();
 
-                        dic[metadata.Type] = metadata;
+                        dic[signature] = metadata;
                     }
 
                     return true;
@@ -3213,22 +3311,30 @@ namespace Library.Net.Amoeba
                         || (metadata.CreationTime - now).TotalMinutes > 30
                         || metadata.Certificate == null) return false;
 
-                    Dictionary<string, HashSet<UnicastMetadata>> dic;
+                    Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>> dic1;
 
-                    if (!_unicastMetadatas.TryGetValue(metadata.Signature, out dic))
+                    if (!_unicastMetadatas.TryGetValue(metadata.Type, out dic1))
                     {
-                        dic = new Dictionary<string, HashSet<UnicastMetadata>>();
-                        _unicastMetadatas[metadata.Signature] = dic;
+                        dic1 = new Dictionary<string, Dictionary<string, HashSet<UnicastMetadata>>>();
+                        _unicastMetadatas[metadata.Type] = dic1;
+                    }
+
+                    Dictionary<string, HashSet<UnicastMetadata>> dic2;
+
+                    if (!dic1.TryGetValue(metadata.Signature, out dic2))
+                    {
+                        dic2 = new Dictionary<string, HashSet<UnicastMetadata>>();
+                        dic1[metadata.Signature] = dic2;
                     }
 
                     var signature = metadata.Certificate.ToString();
 
                     HashSet<UnicastMetadata> hashset;
 
-                    if (!dic.TryGetValue(signature, out hashset))
+                    if (!dic2.TryGetValue(signature, out hashset))
                     {
                         hashset = new HashSet<UnicastMetadata>();
-                        dic[signature] = hashset;
+                        dic2[signature] = hashset;
                     }
 
                     if (!hashset.Contains(metadata))
@@ -3256,22 +3362,30 @@ namespace Library.Net.Amoeba
                         || (metadata.CreationTime - now).TotalMinutes > 30
                         || metadata.Certificate == null) return false;
 
-                    Dictionary<string, HashSet<MulticastMetadata>> dic;
+                    Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>> dic1;
 
-                    if (!_multicastMetadatas.TryGetValue(metadata.Tag, out dic))
+                    if (!_multicastMetadatas.TryGetValue(metadata.Type, out dic1))
                     {
-                        dic = new Dictionary<string, HashSet<MulticastMetadata>>();
-                        _multicastMetadatas[metadata.Tag] = dic;
+                        dic1 = new Dictionary<Tag, Dictionary<string, HashSet<MulticastMetadata>>>();
+                        _multicastMetadatas[metadata.Type] = dic1;
+                    }
+
+                    Dictionary<string, HashSet<MulticastMetadata>> dic2;
+
+                    if (!dic1.TryGetValue(metadata.Tag, out dic2))
+                    {
+                        dic2 = new Dictionary<string, HashSet<MulticastMetadata>>();
+                        dic1[metadata.Tag] = dic2;
                     }
 
                     var signature = metadata.Certificate.ToString();
 
                     HashSet<MulticastMetadata> hashset;
 
-                    if (!dic.TryGetValue(signature, out hashset))
+                    if (!dic2.TryGetValue(signature, out hashset))
                     {
                         hashset = new HashSet<MulticastMetadata>();
-                        dic[signature] = hashset;
+                        dic2[signature] = hashset;
                     }
 
                     if (!hashset.Contains(metadata))

@@ -4,7 +4,7 @@ namespace Library.Net.Amoeba
 {
     interface ILink
     {
-        ICollection<string> TrustSignatures { get; }
-        ICollection<string> DeleteSignatures { get; }
+        IEnumerable<string> TrustSignatures { get; }
+        IEnumerable<string> DeleteSignatures { get; }
     }
 }

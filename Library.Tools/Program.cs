@@ -247,23 +247,7 @@ namespace Library.Tools
                             }
 
                             builder.AppendLine(attributeBuilder.ToString() + string.Format(
-                                "        public {0} {1}\r\n" +
-                                "        {{\r\n" +
-                                "            get\r\n" +
-                                "            {{\r\n" +
-                                "                lock (this.ThisLock)\r\n" +
-                                "                {{\r\n" +
-                                "                    return ({0})this[\"{1}\"];\r\n" +
-                                "                }}\r\n" +
-                                "            }}\r\n" +
-                                "            set\r\n" +
-                                "            {{\r\n" +
-                                "                lock (this.ThisLock)\r\n" +
-                                "                {{\r\n" +
-                                "                    this[\"{1}\"] = value;\r\n" +
-                                "                }}\r\n" +
-                                "            }}\r\n" +
-                                "        }}\r\n",
+                                "        public {0} {1} {{ get {{ lock (this.ThisLock) {{ return ({0})this[\"{1}\"]; }} }} set {{ lock (this.ThisLock) {{ this[\"{1}\"] = value; }} }} }}",
                                 match.Groups[1].Value,
                                 match.Groups[2].Value));
                         }
@@ -327,17 +311,8 @@ namespace Library.Tools
                                     if (xml.LocalName == "Translate")
                                     {
                                         builder.AppendLine(string.Format(
-                                            "        public string {0}\r\n" +
-                                            "        {{\r\n" +
-                                            "            get\r\n" +
-                                            "            {{\r\n" +
-                                            "                lock (this.ThisLock)\r\n" +
-                                            "                {{\r\n" +
-                                            "                    return this.Translate(\"{0}\");\r\n" +
-                                            "                }}\r\n" +
-                                            "            }}\r\n" +
-                                            "        }}\r\n",
-                                        xml.GetAttribute("Key")));
+                                            "        public string {0} {{ get {{ lock (this.ThisLock) {{ return this.Translate(\"{0}\"); }} }} }}",
+                                            xml.GetAttribute("Key")));
                                     }
                                 }
                                 else if (xml.NodeType == XmlNodeType.Whitespace)

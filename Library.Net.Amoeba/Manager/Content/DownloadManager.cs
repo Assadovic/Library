@@ -989,7 +989,7 @@ namespace Library.Net.Amoeba
                     {
                         var thread = new Thread(this.DecodeThread);
                         thread.Priority = ThreadPriority.BelowNormal;
-                        thread.Name = "UploadManager_DecodeThread";
+                        thread.Name = "DownloadManager_DecodeThread";
                         thread.Start();
 
                         _decodeThreads.Add(thread);

@@ -563,7 +563,7 @@ namespace Library.Net.Amoeba
             return bufferStream;
         }
 
-        public static Message FromUnicastMessageBlock(Stream stream, IExchangeDecrypt privateKey)
+        public static Message FromUnicastMessageStream(Stream stream, IExchangeDecrypt privateKey)
         {
             if (stream == null) throw new ArgumentException("stream", nameof(stream));
             if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
@@ -620,6 +620,49 @@ namespace Library.Net.Amoeba
                 using (Stream messageStream = ContentConverter.Decompress(compressStream))
                 {
                     return Message.Import(messageStream, _bufferManager);
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static Stream ToMulticastWebsiteStream(Website message)
+        {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
+            var bufferStream = new BufferStream(_bufferManager);
+
+            using (Stream messageStream = message.Export(_bufferManager))
+            using (Stream compressStream = ContentConverter.Compress(messageStream))
+            using (Stream versionStream = ContentConverter.AddVersion(compressStream, 0))
+            {
+                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
+                {
+                    int length;
+
+                    while ((length = versionStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
+                    {
+                        bufferStream.Write(safeBuffer.Value, 0, length);
+                    }
+                }
+            }
+
+            return bufferStream;
+        }
+
+        public static Website FromMulticastWebsiteStream(Stream stream)
+        {
+            if (stream == null) throw new ArgumentException("stream", nameof(stream));
+
+            try
+            {
+                using (Stream versionStream = new WrapperStream(stream, true))
+                using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
+                using (Stream messageStream = ContentConverter.Decompress(compressStream))
+                {
+                    return Website.Import(messageStream, _bufferManager);
                 }
             }
             catch (Exception)

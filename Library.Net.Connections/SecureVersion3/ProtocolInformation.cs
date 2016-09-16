@@ -50,11 +50,10 @@ namespace Library.Net.Connections.SecureVersion3
         {
             using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                for (;;)
-                {
-                    var id = reader.GetId();
-                    if (id < 0) return;
+                int id;
 
+                while ((id = reader.GetId()) != -1)
+                {
                     if (id == (int)SerializeId.KeyExchangeAlgorithm)
                     {
                         this.KeyExchangeAlgorithm = reader.GetEnum<KeyExchangeAlgorithm>();

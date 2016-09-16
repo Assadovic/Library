@@ -195,44 +195,51 @@ namespace Library.Net.Amoeba
                             {
                                 if (item.Type == "Link")
                                 {
-                                    var value = item.Link as Link;
+                                    var value = item.Link;
                                     if (value == null) throw new FormatException();
 
-                                    stream = value.Export(_bufferManager);
+                                    stream = ContentConverter.ToLinkStream(value);
                                 }
                                 else if (item.Type == "Profile")
                                 {
-                                    var value = item.Profile as Profile;
+                                    var value = item.Profile;
                                     if (value == null) throw new FormatException();
 
-                                    stream = value.Export(_bufferManager);
+                                    stream = ContentConverter.ToProfileStream(value);
                                 }
                                 else if (item.Type == "Store")
                                 {
-                                    var value = item.Store as Store;
+                                    var value = item.Store;
                                     if (value == null) throw new FormatException();
 
-                                    stream = value.Export(_bufferManager);
+                                    stream = ContentConverter.ToStoreStream(value);
                                 }
                             }
                             else if (item.Scheme == "Unicast")
                             {
                                 if (item.Type == "Message")
                                 {
-                                    var value = item.Message as Message;
+                                    var value = item.Message;
                                     if (value == null) throw new FormatException();
 
-                                    stream = value.Export(_bufferManager);
+                                    stream = ContentConverter.ToUnicastMessageStream(value, item.ExchangePublicKey);
                                 }
                             }
                             else if (item.Scheme == "Multicast")
                             {
                                 if (item.Type == "Message")
                                 {
-                                    var value = item.Message as Message;
+                                    var value = item.Message;
                                     if (value == null) throw new FormatException();
 
-                                    stream = value.Export(_bufferManager);
+                                    stream = ContentConverter.ToMulticastMessageStream(value);
+                                }
+                                else if (item.Type == "Website")
+                                {
+                                    var value = item.Website;
+                                    if (value == null) throw new FormatException();
+
+                                    stream = ContentConverter.ToMulticastWebsiteStream(value);
                                 }
                             }
                             else
@@ -303,19 +310,20 @@ namespace Library.Net.Amoeba
                     }
                     else if (item.Groups.Count == 0 && item.Keys.Count == 1)
                     {
-                        lock (_thisLock)
+                        BroadcastMetadata broadcastMetadata = null;
+                        UnicastMetadata unicastMetadata = null;
+                        MulticastMetadata multicastMetadata = null;
+
                         {
                             var metadata = new Metadata(item.Depth, item.Keys[0], CompressionAlgorithm.None, CryptoAlgorithm.None, null);
 
-                            item.Keys.Clear();
-
                             if (item.Scheme == "Broadcast")
                             {
-                                _connectionsManager.Upload(new BroadcastMetadata(item.Type, item.CreationTime, metadata, item.DigitalSignature));
+                                broadcastMetadata = new BroadcastMetadata(item.Type, item.CreationTime, metadata, item.DigitalSignature);
                             }
                             else if (item.Scheme == "Unicast")
                             {
-                                _connectionsManager.Upload(new UnicastMetadata(item.Type, item.Signature, item.CreationTime, metadata, item.DigitalSignature));
+                                unicastMetadata = new UnicastMetadata(item.Type, item.Signature, item.CreationTime, metadata, item.DigitalSignature);
                             }
                             else if (item.Scheme == "Multicast")
                             {
@@ -323,7 +331,7 @@ namespace Library.Net.Amoeba
 
                                 var task = Task.Run(() =>
                                 {
-                                    _connectionsManager.Upload(new MulticastMetadata(item.Type, item.Tag, item.CreationTime, metadata, miner, item.DigitalSignature));
+                                    multicastMetadata = new MulticastMetadata(item.Type, item.Tag, item.CreationTime, metadata, miner, item.DigitalSignature);
                                 });
 
                                 while (!task.IsCompleted)
@@ -343,6 +351,24 @@ namespace Library.Net.Amoeba
 
                                 if (task.Exception != null) throw task.Exception;
                             }
+                        }
+
+                        lock (_thisLock)
+                        {
+                            if (item.Scheme == "Broadcast")
+                            {
+                                _connectionsManager.Upload(broadcastMetadata);
+                            }
+                            else if (item.Scheme == "Unicast")
+                            {
+                                _connectionsManager.Upload(unicastMetadata);
+                            }
+                            else if (item.Scheme == "Multicast")
+                            {
+                                _connectionsManager.Upload(multicastMetadata);
+                            }
+
+                            item.Keys.Clear();
 
                             foreach (var key in item.UploadKeys)
                             {
@@ -600,6 +626,43 @@ namespace Library.Net.Amoeba
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.MiningLimit = miningLimit;
                 item.MiningTime = miningTime;
+                item.DigitalSignature = digitalSignature;
+
+                _settings.UploadItems.RemoveAll((target) =>
+                {
+                    return target.Scheme == item.Scheme && target.Type == item.Type
+                        && target.DigitalSignature == digitalSignature;
+                });
+
+                _settings.UploadItems.Add(item);
+            }
+        }
+
+        public void MulticastUpload(Tag tag,
+            Website website,
+
+            DigitalSignature digitalSignature)
+        {
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
+            if (website == null) throw new ArgumentNullException(nameof(website));
+            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
+
+            lock (_thisLock)
+            {
+                var item = new BackgroundUploadItem();
+
+                item.State = BackgroundUploadState.Encoding;
+                item.Tag = tag;
+                item.Website = website;
+                item.Scheme = "Multicast";
+                item.Type = "Website";
+                item.CreationTime = DateTime.UtcNow;
+                item.Depth = 1;
+                item.BlockLength = 1024 * 1024 * 1;
+                item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
+                item.HashAlgorithm = HashAlgorithm.Sha256;
+                item.MiningLimit = 0;
+                item.MiningTime = TimeSpan.Zero;
                 item.DigitalSignature = digitalSignature;
 
                 _settings.UploadItems.RemoveAll((target) =>
