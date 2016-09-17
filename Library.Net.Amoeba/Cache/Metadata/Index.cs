@@ -87,7 +87,10 @@ namespace Library.Net.Amoeba
                     // Groups
                     foreach (var value in this.Groups)
                     {
-                        writer.Add((int)SerializeId.Group, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Group, exportStream);
+                        }
                     }
 
                     // CompressionAlgorithm

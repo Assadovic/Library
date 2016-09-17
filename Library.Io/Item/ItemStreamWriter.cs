@@ -13,7 +13,6 @@ namespace Library.Io
 
         private BufferManager _bufferManager;
 
-        private List<Stream> _streamList;
         private Stream _stream;
 
         private bool _disposed;
@@ -22,20 +21,23 @@ namespace Library.Io
         {
             _bufferManager = bufferManager;
 
-            _streamList = new List<Stream>();
             _stream = new BufferStream(_bufferManager);
-            _streamList.Add(_stream);
         }
 
-        public void Add(int id, Stream targetStream)
+        public void Write(int id, Stream targetStream)
         {
             VintUtils.WriteVint(_stream, id);
             VintUtils.WriteVint(_stream, targetStream.Length);
 
-            _streamList.Add(targetStream);
+            using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
+            {
+                int length;
 
-            _stream = new BufferStream(_bufferManager);
-            _streamList.Add(_stream);
+                while ((length = targetStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
+                {
+                    _stream.Write(safeBuffer.Value, 0, length);
+                }
+            }
         }
 
         public void Write(int id, string value)
@@ -106,7 +108,8 @@ namespace Library.Io
 
         public Stream GetStream()
         {
-            return new UniteStream(_streamList);
+            _stream.Seek(0, SeekOrigin.Begin);
+            return _stream;
         }
 
         protected override void Dispose(bool disposing)

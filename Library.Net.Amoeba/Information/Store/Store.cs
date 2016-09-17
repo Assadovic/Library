@@ -62,7 +62,10 @@ namespace Library.Net.Amoeba
                     // Boxes
                     foreach (var value in this.Boxes)
                     {
-                        writer.Add((int)SerializeId.Box, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Box, exportStream);
+                        }
                     }
 
                     return writer.GetStream();

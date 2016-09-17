@@ -58,7 +58,10 @@ namespace Library.Net.Amoeba
                 // Webpages
                 foreach (var value in this.Webpages)
                 {
-                    writer.Add((int)SerializeId.Webpage, value.Export(bufferManager));
+                    using (var exportStream = value.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Webpage, exportStream);
+                    }
                 }
 
                 return writer.GetStream();
