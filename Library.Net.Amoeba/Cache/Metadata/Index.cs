@@ -21,9 +21,9 @@ namespace Library.Net.Amoeba
 
         private GroupCollection _groups;
 
-        private CompressionAlgorithm _compressionAlgorithm = 0;
+        private CompressionAlgorithm _compressionAlgorithm;
 
-        private CryptoAlgorithm _cryptoAlgorithm = 0;
+        private CryptoAlgorithm _cryptoAlgorithm;
         private byte[] _cryptoKey;
 
         private volatile object _thisLock;
@@ -37,6 +37,8 @@ namespace Library.Net.Amoeba
 
         protected override void Initialize()
         {
+            base.Initialize();
+
             _thisLock = new object();
         }
 

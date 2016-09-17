@@ -24,9 +24,9 @@ namespace Library.Net.Amoeba
         private int _depth;
         private Key _key;
 
-        private CompressionAlgorithm _compressionAlgorithm = 0;
+        private CompressionAlgorithm _compressionAlgorithm;
 
-        private CryptoAlgorithm _cryptoAlgorithm = 0;
+        private CryptoAlgorithm _cryptoAlgorithm;
         private byte[] _cryptoKey;
 
         public static readonly int MaxCryptoKeyLength = 256;
@@ -38,11 +38,6 @@ namespace Library.Net.Amoeba
             this.CompressionAlgorithm = compressionAlgorithm;
             this.CryptoAlgorithm = cryptoAlgorithm;
             this.CryptoKey = cryptoKey;
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

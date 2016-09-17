@@ -38,6 +38,8 @@ namespace Library.Net.Connections.SecureVersion3
 
         protected override void Initialize()
         {
+            base.Initialize();
+
             _thisLock = new object();
         }
 

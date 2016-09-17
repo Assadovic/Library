@@ -21,7 +21,7 @@ namespace Library.Net.Amoeba
 
         private KeyCollection _keys;
 
-        private CorrectionAlgorithm _correctionAlgorithm = 0;
+        private CorrectionAlgorithm _correctionAlgorithm;
         private int _informationLength;
         private int _blockLength;
         private long _length;
@@ -35,6 +35,8 @@ namespace Library.Net.Amoeba
 
         protected override void Initialize()
         {
+            base.Initialize();
+
             _thisLock = new object();
         }
 

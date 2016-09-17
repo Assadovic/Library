@@ -27,6 +27,8 @@ namespace Library.Net.Amoeba
 
         protected override void Initialize()
         {
+            base.Initialize();
+
             _thisLock = new object();
         }
 

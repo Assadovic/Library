@@ -15,7 +15,10 @@ namespace Library
             this.Initialize();
         }
 
-        protected abstract void Initialize();
+        protected virtual void Initialize()
+        {
+
+        }
 
         [OnDeserializing]
         private void OnDeserializingMethod(StreamingContext context)

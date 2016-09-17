@@ -27,7 +27,7 @@ namespace Library.Security
         }
 
         private volatile string _nickname;
-        private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm = 0;
+        private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm;
         private volatile byte[] _publicKey;
         private volatile byte[] _privateKey;
 
@@ -61,11 +61,6 @@ namespace Library.Security
                 this.PublicKey = publicKey;
                 this.PrivateKey = privateKey;
             }
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

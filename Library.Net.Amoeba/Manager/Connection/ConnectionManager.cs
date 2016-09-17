@@ -1190,11 +1190,6 @@ namespace Library.Net.Amoeba
                 if (nodes != null) this.ProtectedNodes.AddRange(nodes);
             }
 
-            protected override void Initialize()
-            {
-
-            }
-
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
@@ -1267,11 +1262,6 @@ namespace Library.Net.Amoeba
                 if (keys != null) this.ProtectedKeys.AddRange(keys);
             }
 
-            protected override void Initialize()
-            {
-
-            }
-
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
@@ -1342,11 +1332,6 @@ namespace Library.Net.Amoeba
             public BlocksRequestMessage(IEnumerable<Key> keys)
             {
                 if (keys != null) this.ProtectedKeys.AddRange(keys);
-            }
-
-            protected override void Initialize()
-            {
-
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -1428,6 +1413,8 @@ namespace Library.Net.Amoeba
 
             protected override void Initialize()
             {
+                base.Initialize();
+
                 _thisLock = new object();
             }
 
@@ -1543,11 +1530,6 @@ namespace Library.Net.Amoeba
                 if (signatures != null) this.ProtectedSignatures.AddRange(signatures);
             }
 
-            protected override void Initialize()
-            {
-
-            }
-
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
@@ -1615,11 +1597,6 @@ namespace Library.Net.Amoeba
             public BroadcastMetadatasMessage(IEnumerable<BroadcastMetadata> broadcastMetadatas)
             {
                 if (broadcastMetadatas != null) this.ProtectedBroadcastMetadatas.AddRange(broadcastMetadatas);
-            }
-
-            protected override void Initialize()
-            {
-
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -1694,11 +1671,6 @@ namespace Library.Net.Amoeba
                 if (signatures != null) this.ProtectedSignatures.AddRange(signatures);
             }
 
-            protected override void Initialize()
-            {
-
-            }
-
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
@@ -1766,11 +1738,6 @@ namespace Library.Net.Amoeba
             public UnicastMetadatasMessage(IEnumerable<UnicastMetadata> unicastMetadatas)
             {
                 if (unicastMetadatas != null) this.ProtectedUnicastMetadatas.AddRange(unicastMetadatas);
-            }
-
-            protected override void Initialize()
-            {
-
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
@@ -1845,11 +1812,6 @@ namespace Library.Net.Amoeba
                 if (tags != null) this.ProtectedTags.AddRange(tags);
             }
 
-            protected override void Initialize()
-            {
-
-            }
-
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
             {
                 using (var reader = new ItemStreamReader(stream, bufferManager))
@@ -1921,11 +1883,6 @@ namespace Library.Net.Amoeba
             public MulticastMetadatasMessage(IEnumerable<MulticastMetadata> multicastMetadatas)
             {
                 if (multicastMetadatas != null) this.ProtectedMulticastMetadatas.AddRange(multicastMetadatas);
-            }
-
-            protected override void Initialize()
-            {
-
             }
 
             protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

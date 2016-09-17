@@ -21,7 +21,7 @@ namespace Library.Security
         }
 
         private DateTime _creationTime;
-        private volatile ExchangeAlgorithm _exchangeAlgorithm = 0;
+        private volatile ExchangeAlgorithm _exchangeAlgorithm;
         private volatile byte[] _publicKey;
         private volatile byte[] _privateKey;
 
@@ -44,11 +44,6 @@ namespace Library.Security
                 this.PublicKey = publicKey;
                 this.PrivateKey = privateKey;
             }
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

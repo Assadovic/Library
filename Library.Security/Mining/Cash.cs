@@ -19,7 +19,7 @@ namespace Library.Security
             Key = 1,
         }
 
-        private volatile CashAlgorithm _cashAlgorithm = 0;
+        private volatile CashAlgorithm _cashAlgorithm;
         private volatile byte[] _key;
 
         private volatile int _hashCode;
@@ -31,11 +31,6 @@ namespace Library.Security
         {
             this.CashAlgorithm = cashAlgorithm;
             this.Key = key;
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

@@ -32,11 +32,6 @@ namespace Library.Net.Amoeba
             this.Id = id;
         }
 
-        protected override void Initialize()
-        {
-
-        }
-
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
         {
             using (var reader = new ItemStreamReader(stream, bufferManager))

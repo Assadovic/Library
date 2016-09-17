@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.Serialization;
 
 namespace Library.Security
@@ -7,6 +8,13 @@ namespace Library.Security
     public abstract class ImmutableCashItemBase<T> : ImmutableCertificateItemBase<T>, ICash
         where T : ImmutableCashItemBase<T>
     {
+        protected override void Initialize()
+        {
+            base.Initialize();
+
+            _cost = -1;
+        }
+
         protected virtual void CreateCash(Miner miner, string signature)
         {
             if (miner == null)
@@ -42,7 +50,7 @@ namespace Library.Security
         [DataMember(Name = "Cash")]
         protected abstract Cash Cash { get; set; }
 
-        private volatile int _cost = -1;
+        private volatile int _cost;
 
         public virtual int Cost
         {

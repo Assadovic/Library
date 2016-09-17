@@ -9,7 +9,7 @@ namespace Library.Net.Amoeba
     [DataContract(Name = "Key")]
     public sealed class Key : ItemBase<Key>, IKey
     {
-        private volatile HashAlgorithm _hashAlgorithm = 0;
+        private volatile HashAlgorithm _hashAlgorithm;
         private volatile byte[] _hash;
 
         private volatile int _hashCode;
@@ -20,11 +20,6 @@ namespace Library.Net.Amoeba
         {
             this.HashAlgorithm = hashAlgorithm;
             this.Hash = hash;
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)

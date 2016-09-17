@@ -23,7 +23,7 @@ namespace Library.Security
 
         private static Intern<string> _nicknameCache = new Intern<string>();
         private volatile string _nickname;
-        private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm = 0;
+        private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm;
         private static Intern<byte[]> _publicKeyCache = new Intern<byte[]>(new ByteArrayEqualityComparer());
         private volatile byte[] _publicKey;
         private volatile byte[] _signature;
@@ -58,11 +58,6 @@ namespace Library.Security
             this.DigitalSignatureAlgorithm = digitalSignature.DigitalSignatureAlgorithm;
             this.PublicKey = digitalSignature.PublicKey;
             this.Signature = signature;
-        }
-
-        protected override void Initialize()
-        {
-
         }
 
         protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
