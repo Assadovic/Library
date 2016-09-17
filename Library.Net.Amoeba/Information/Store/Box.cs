@@ -92,12 +92,15 @@ namespace Library.Net.Amoeba
                     // Seeds
                     foreach (var value in this.Seeds)
                     {
-                        writer.Add((int)SerializeId.Seed, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Seed, exportStream);
+                        }
                     }
                     // Boxes
                     foreach (var value in this.Boxes)
                     {
-                        writer.Add((int)SerializeId.Box, value.Export(bufferManager, count + 1));
+                        writer.Write((int)SerializeId.Box, value.Export(bufferManager, count + 1));
                     }
 
                     return writer.GetStream();

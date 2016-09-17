@@ -103,7 +103,10 @@ namespace Library.Net.Connections.SecureVersion3
                     // Certificate
                     if (this.Certificate != null)
                     {
-                        writer.Add((int)SerializeId.Certificate, this.Certificate.Export(bufferManager));
+                        using (var exportStream = this.Certificate.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Certificate, exportStream);
+                        }
                     }
 
                     return writer.GetStream();

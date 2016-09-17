@@ -181,7 +181,7 @@ namespace Library.Security
                 }
                 // Stream
                 {
-                    writer.Add((int)FileSerializeId.Stream, new WrapperStream(stream, true));
+                    writer.Write((int)FileSerializeId.Stream, new WrapperStream(stream, true));
                 }
 
                 using (var uniteStream = writer.GetStream())
@@ -206,7 +206,7 @@ namespace Library.Security
                 }
                 // Stream
                 {
-                    writer.Add((int)FileSerializeId.Stream, new WrapperStream(stream, true));
+                    writer.Write((int)FileSerializeId.Stream, new WrapperStream(stream, true));
                 }
 
                 using (var uniteStream = writer.GetStream())

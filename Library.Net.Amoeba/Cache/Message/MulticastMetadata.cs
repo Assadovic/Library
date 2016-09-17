@@ -105,7 +105,10 @@ namespace Library.Net.Amoeba
                 // Tag
                 if (this.Tag != null)
                 {
-                    writer.Add((int)SerializeId.Tag, this.Tag.Export(bufferManager));
+                    using (var exportStream = this.Tag.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Tag, exportStream);
+                    }
                 }
                 // CreationTime
                 if (this.CreationTime != DateTime.MinValue)
@@ -116,18 +119,27 @@ namespace Library.Net.Amoeba
                 // Metadata
                 if (this.Metadata != null)
                 {
-                    writer.Add((int)SerializeId.Metadata, this.Metadata.Export(bufferManager));
+                    using (var exportStream = this.Metadata.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Metadata, exportStream);
+                    }
                 }
 
                 // Cash
                 if (this.Cash != null)
                 {
-                    writer.Add((int)SerializeId.Cash, this.Cash.Export(bufferManager));
+                    using (var exportStream = this.Cash.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Cash, exportStream);
+                    }
                 }
                 // Certificate
                 if (this.Certificate != null)
                 {
-                    writer.Add((int)SerializeId.Certificate, this.Certificate.Export(bufferManager));
+                    using (var exportStream = this.Certificate.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Certificate, exportStream);
+                    }
                 }
 
                 return writer.GetStream();

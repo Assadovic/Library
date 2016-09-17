@@ -87,13 +87,19 @@ namespace Library.Net.Amoeba
                 // Metadata
                 if (this.Metadata != null)
                 {
-                    writer.Add((int)SerializeId.Metadata, this.Metadata.Export(bufferManager));
+                    using (var exportStream = this.Metadata.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Metadata, exportStream);
+                    }
                 }
 
                 // Certificate
                 if (this.Certificate != null)
                 {
-                    writer.Add((int)SerializeId.Certificate, this.Certificate.Export(bufferManager));
+                    using (var exportStream = this.Certificate.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Certificate, exportStream);
+                    }
                 }
 
                 return writer.GetStream();

@@ -88,7 +88,10 @@ namespace Library.Net.Amoeba
                     // Keys
                     foreach (var value in this.Keys)
                     {
-                        writer.Add((int)SerializeId.Key, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Key, exportStream);
+                        }
                     }
 
                     // CorrectionAlgorithm

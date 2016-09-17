@@ -49,7 +49,10 @@ namespace Library.Net.Amoeba
                 // ExchangePublicKey
                 if (this.ExchangePublicKey != null)
                 {
-                    writer.Add((int)SerializeId.ExchangePublicKey, this.ExchangePublicKey.Export(bufferManager));
+                    using (var exportStream = this.ExchangePublicKey.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.ExchangePublicKey, exportStream);
+                    }
                 }
 
                 return writer.GetStream();

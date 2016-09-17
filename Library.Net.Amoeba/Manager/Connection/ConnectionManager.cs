@@ -1216,7 +1216,10 @@ namespace Library.Net.Amoeba
                     // Nodes
                     foreach (var value in this.Nodes)
                     {
-                        writer.Add((int)SerializeId.Node, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Node, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1288,7 +1291,10 @@ namespace Library.Net.Amoeba
                     // Keys
                     foreach (var value in this.Keys)
                     {
-                        writer.Add((int)SerializeId.Key, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Key, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1360,7 +1366,10 @@ namespace Library.Net.Amoeba
                     // Keys
                     foreach (var value in this.Keys)
                     {
-                        writer.Add((int)SerializeId.Key, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Key, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1473,7 +1482,10 @@ namespace Library.Net.Amoeba
                     // Key
                     if (this.Key != null)
                     {
-                        writer.Add((int)SerializeId.Key, this.Key.Export(bufferManager));
+                        using (var exportStream = this.Key.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Key, exportStream);
+                        }
                     }
                     // Value
                     if (this.Value.Array != null)
@@ -1625,7 +1637,10 @@ namespace Library.Net.Amoeba
                     // BroadcastMetadatas
                     foreach (var value in this.BroadcastMetadatas)
                     {
-                        writer.Add((int)SerializeId.BroadcastMetadata, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.BroadcastMetadata, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1766,7 +1781,10 @@ namespace Library.Net.Amoeba
                     // UnicastMetadatas
                     foreach (var value in this.UnicastMetadatas)
                     {
-                        writer.Add((int)SerializeId.UnicastMetadata, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.UnicastMetadata, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1838,7 +1856,10 @@ namespace Library.Net.Amoeba
                     // Tags
                     foreach (var value in this.Tags)
                     {
-                        writer.Add((int)SerializeId.Tag, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.Tag, exportStream);
+                        }
                     }
 
                     return writer.GetStream();
@@ -1911,7 +1932,10 @@ namespace Library.Net.Amoeba
                     // MulticastMetadatas
                     foreach (var value in this.MulticastMetadatas)
                     {
-                        writer.Add((int)SerializeId.MulticastMetadata, value.Export(bufferManager));
+                        using (var exportStream = value.Export(bufferManager))
+                        {
+                            writer.Write((int)SerializeId.MulticastMetadata, exportStream);
+                        }
                     }
 
                     return writer.GetStream();

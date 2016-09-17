@@ -89,7 +89,10 @@ namespace Library.Net.Amoeba
                 // Key
                 if (this.Key != null)
                 {
-                    writer.Add((int)SerializeId.Key, this.Key.Export(bufferManager));
+                    using (var exportStream = this.Key.Export(bufferManager))
+                    {
+                        writer.Write((int)SerializeId.Key, exportStream);
+                    }
                 }
 
                 // CompressionAlgorithm
