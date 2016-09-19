@@ -1026,7 +1026,14 @@ namespace Library.Net.Amoeba
 
                 foreach (var multicastMetadata in multicastMetadatas)
                 {
-                    if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                    }
 
                     Message result = null;
 
@@ -1064,6 +1071,7 @@ namespace Library.Net.Amoeba
                         contexts.Add(new InformationContext("Tag", tag));
                         contexts.Add(new InformationContext("CreationTime", multicastMetadata.CreationTime));
                         contexts.Add(new InformationContext("Signature", multicastMetadata.Certificate.ToString()));
+                        contexts.Add(new InformationContext("Cost", multicastMetadata.Cost));
                         contexts.Add(new InformationContext("Value", result));
 
                         informationList.Add(new Information(contexts));
@@ -1101,7 +1109,14 @@ namespace Library.Net.Amoeba
 
                 foreach (var multicastMetadata in multicastMetadatas)
                 {
-                    if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                    if (limit < 0)
+                    {
+                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
+                    }
+                    else
+                    {
+                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                    }
 
                     Website result = null;
 
@@ -1139,6 +1154,7 @@ namespace Library.Net.Amoeba
                         contexts.Add(new InformationContext("Tag", tag));
                         contexts.Add(new InformationContext("CreationTime", multicastMetadata.CreationTime));
                         contexts.Add(new InformationContext("Signature", multicastMetadata.Certificate.ToString()));
+                        contexts.Add(new InformationContext("Cost", multicastMetadata.Cost));
                         contexts.Add(new InformationContext("Value", result));
 
                         informationList.Add(new Information(contexts));

@@ -20,12 +20,6 @@ namespace Library.Security
             PrivateKey = 3,
         }
 
-        private enum FileSerializeId
-        {
-            Name = 0,
-            Stream = 1,
-        }
-
         private volatile string _nickname;
         private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm;
         private volatile byte[] _publicKey;
@@ -171,49 +165,9 @@ namespace Library.Security
             return new Certificate(digitalSignature, stream);
         }
 
-        public static Certificate CreateFileCertificate(DigitalSignature digitalSignature, string name, Stream stream)
-        {
-            using (var writer = new ItemStreamWriter(BufferManager.Instance))
-            {
-                // Name
-                {
-                    writer.Write((int)FileSerializeId.Name, Path.GetFileName(name));
-                }
-                // Stream
-                {
-                    writer.Write((int)FileSerializeId.Stream, new WrapperStream(stream, true));
-                }
-
-                using (var uniteStream = writer.GetStream())
-                {
-                    return new Certificate(digitalSignature, uniteStream);
-                }
-            }
-        }
-
         public static bool VerifyCertificate(Certificate certificate, Stream stream)
         {
             return certificate.Verify(stream);
-        }
-
-        public static bool VerifyFileCertificate(Certificate certificate, string name, Stream stream)
-        {
-            using (var writer = new ItemStreamWriter(BufferManager.Instance))
-            {
-                // Name
-                {
-                    writer.Write((int)FileSerializeId.Name, Path.GetFileName(name));
-                }
-                // Stream
-                {
-                    writer.Write((int)FileSerializeId.Stream, new WrapperStream(stream, true));
-                }
-
-                using (var uniteStream = writer.GetStream())
-                {
-                    return certificate.Verify(uniteStream);
-                }
-            }
         }
 
         [DataMember(Name = "Nickname")]

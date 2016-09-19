@@ -248,43 +248,6 @@ namespace Library.UnitTest
                     }
                 });
             }
-
-            {
-                var parentBox = new T_Box();
-                var childBox = parentBox;
-
-                for (int i = 0; i < 256; i++)
-                {
-                    var tempBox = new T_Box();
-                    childBox.T_Boxes.Add(tempBox);
-                    childBox = tempBox;
-                }
-
-                using (var binaryBox = parentBox.Export(_bufferManager))
-                {
-                    Box.Import(binaryBox, _bufferManager);
-                }
-            }
-
-            {
-                var parentBox = new T_Box();
-                var childBox = parentBox;
-
-                for (int i = 0; i < 256 + 1; i++)
-                {
-                    var tempBox = new T_Box();
-                    childBox.T_Boxes.Add(tempBox);
-                    childBox = tempBox;
-                }
-
-                Assert.Throws<ArgumentException>(() =>
-                {
-                    using (var binaryBox = parentBox.Export(_bufferManager))
-                    {
-                        Box.Import(binaryBox, _bufferManager);
-                    }
-                });
-            }
         }
 
         [Test]
@@ -292,23 +255,21 @@ namespace Library.UnitTest
         {
             DigitalSignature digitalSignature = new DigitalSignature("123", DigitalSignatureAlgorithm.Rsa2048_Sha256);
 
-            var link = new Link();
-            link.TrustSignatures.Add(digitalSignature.ToString());
-            link.TrustSignatures.Add(digitalSignature.ToString());
-            link.TrustSignatures.Add(digitalSignature.ToString());
+            var signatures = new List<string>();
+            signatures.Add(digitalSignature.ToString());
+            signatures.Add(digitalSignature.ToString());
+            signatures.Add(digitalSignature.ToString());
 
-            var link2 = link.Clone();
+            var link = new Link(signatures, signatures);
 
-            Assert.AreEqual(link, link2, "Link #1");
-
-            Link link3;
+            Link link2;
 
             using (var linkStream = link.Export(_bufferManager))
             {
-                link3 = Link.Import(linkStream, _bufferManager);
+                link2 = Link.Import(linkStream, _bufferManager);
             }
 
-            Assert.AreEqual(link, link3, "Link #2");
+            Assert.AreEqual(link, link2, "Link #1");
         }
 
         [Test]

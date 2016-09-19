@@ -51,7 +51,7 @@ namespace Library.Net.Amoeba
                     }
                     else if (id == (int)SerializeId.DeleteSignature)
                     {
-                        this.ProtectedTrustSignatures.Add(reader.GetString());
+                        this.ProtectedDeleteSignatures.Add(reader.GetString());
                     }
                 }
             }

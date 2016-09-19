@@ -43,53 +43,6 @@ namespace Library.Tools
                         Program.Define(item, flag, args[2]);
                     }
                 }
-                else if (args.Length >= 2 && args[0] == "DigitalSignature_Create")
-                {
-                    var path = args[2];
-                    var signPath = args[1];
-
-                    DigitalSignature digitalSignature;
-
-                    using (FileStream inStream = new FileStream(signPath, FileMode.Open))
-                    {
-                        digitalSignature = DigitalSignatureConverter.FromDigitalSignatureStream(inStream);
-                    }
-
-                    using (FileStream inStream = new FileStream(path, FileMode.Open))
-                    using (FileStream outStream = new FileStream(path + ".certificate", FileMode.Create))
-                    {
-                        var certificate = DigitalSignature.CreateFileCertificate(digitalSignature, inStream.Name, inStream);
-
-                        using (var certificateStream = CertificateConverter.ToCertificateStream(certificate))
-                        {
-                            var buffer = new byte[1024 * 4];
-
-                            int i = -1;
-
-                            while ((i = certificateStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                outStream.Write(buffer, 0, i);
-                            }
-                        }
-                    }
-                }
-                else if (args.Length >= 2 && args[0] == "DigitalSignature_Verify")
-                {
-                    var path = args[2];
-                    var signPath = args[1];
-
-                    Certificate certificate;
-
-                    using (FileStream inStream = new FileStream(signPath, FileMode.Open))
-                    {
-                        certificate = CertificateConverter.FromCertificateStream(inStream);
-                    }
-
-                    using (FileStream inStream = new FileStream(path, FileMode.Open))
-                    {
-                        MessageBox.Show(DigitalSignature.VerifyFileCertificate(certificate, inStream.Name, inStream).ToString());
-                    }
-                }
                 else if (args.Length >= 3 && args[0] == "Increment")
                 {
                     string projectFilePath = args[1];

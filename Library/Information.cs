@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Runtime.Serialization;
 
 namespace Library
 {
-    [DataContract(Name = "InformationContext")]
     public struct InformationContext
     {
         private string _key;
@@ -16,7 +16,6 @@ namespace Library
             _value = value;
         }
 
-        [DataMember(Name = "Key")]
         public string Key
         {
             get
@@ -29,7 +28,6 @@ namespace Library
             }
         }
 
-        [DataMember(Name = "Value")]
         public object Value
         {
             get
@@ -48,19 +46,17 @@ namespace Library
         }
     }
 
-    [DataContract(Name = "Information")]
     public class Information : IEnumerable<InformationContext>
     {
-        [DataMember(Name = "Contexts")]
-        private List<InformationContext> _contexts;
+        private Dictionary<string, object> _contexts;
 
         public Information(IEnumerable<InformationContext> contexts)
         {
-            _contexts = new List<InformationContext>();
+            _contexts = new Dictionary<string, object>();
 
             foreach (var item in contexts)
             {
-                _contexts.Add(item);
+                _contexts.Add(item.Key, item.Value);
             }
         }
 
@@ -68,20 +64,20 @@ namespace Library
         {
             get
             {
-                return _contexts.First(n => n.Key == propertyName).Value;
+                return _contexts[propertyName];
             }
         }
 
         public bool Contains(string propertyName)
         {
-            return _contexts.Any(n => n.Key == propertyName);
+            return _contexts.ContainsKey(propertyName);
         }
 
         public IEnumerator<InformationContext> GetEnumerator()
         {
-            foreach (var item in _contexts)
+            foreach (var pair in _contexts)
             {
-                yield return item;
+                yield return new InformationContext(pair.Key, pair.Value);
             }
         }
 
