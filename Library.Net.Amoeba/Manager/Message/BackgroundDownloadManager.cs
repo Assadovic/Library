@@ -53,7 +53,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _cache_BroadcastLinks = new VolatileHashDictionary<BroadcastMetadata, Link>(new TimeSpan(0, 30, 0));
             _cache_BroadcastProfiles = new VolatileHashDictionary<BroadcastMetadata, Profile>(new TimeSpan(0, 30, 0));
@@ -131,7 +131,7 @@ namespace Library.Net.Amoeba
             _connectionsManager.GetLockSignaturesEvent = () =>
             {
                 var signatures = new HashSet<string>();
-                signatures.UnionWith(_settings.SearchSignatures);
+                signatures.UnionWith(_settings.TrustSignatures);
                 signatures.UnionWith(_cache_BroadcastLinks.Keys.Select(n => n.Certificate.ToString()));
                 signatures.UnionWith(_cache_BroadcastProfiles.Keys.Select(n => n.Certificate.ToString()));
                 signatures.UnionWith(_cache_BroadcastStores.Keys.Select(n => n.Certificate.ToString()));
@@ -150,25 +150,25 @@ namespace Library.Net.Amoeba
             };
         }
 
-        public IEnumerable<string> SearchSignatures
+        public IEnumerable<string> TrustSignatures
         {
             get
             {
                 lock (_thisLock)
                 {
-                    return _settings.SearchSignatures.ToArray();
+                    return _settings.TrustSignatures.ToArray();
                 }
             }
         }
 
-        public void SetSearchSignatures(IEnumerable<string> signatures)
+        public void SetTrustSignatures(IEnumerable<string> signatures)
         {
             lock (_thisLock)
             {
-                lock (_settings.SearchSignatures.ThisLock)
+                lock (_settings.TrustSignatures.ThisLock)
                 {
-                    _settings.SearchSignatures.Clear();
-                    _settings.SearchSignatures.UnionWith(new SignatureCollection(signatures));
+                    _settings.TrustSignatures.Clear();
+                    _settings.TrustSignatures.UnionWith(new SignatureCollection(signatures));
                 }
             }
         }
@@ -715,6 +715,8 @@ namespace Library.Net.Amoeba
                                     throw;
                                 }
 
+                                stream.Seek(0, SeekOrigin.Begin);
+
                                 lock (_thisLock)
                                 {
                                     item.Stream = stream;
@@ -826,9 +828,10 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
-                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromLinkStream(item.Stream);
                             _cache_BroadcastLinks[broadcastMetadata] = result;
+
+                            this.Remove(broadcastMetadata.Metadata);
                         }
                     }
                 }
@@ -869,9 +872,10 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
-                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromProfileStream(item.Stream);
                             _cache_BroadcastProfiles[broadcastMetadata] = result;
+
+                            this.Remove(broadcastMetadata.Metadata);
                         }
                     }
                 }
@@ -912,9 +916,10 @@ namespace Library.Net.Amoeba
 
                         if (item.Stream != null)
                         {
-                            item.Stream.Seek(0, SeekOrigin.Begin);
                             result = ContentConverter.FromStoreStream(item.Stream);
                             _cache_BroadcastStores[broadcastMetadata] = result;
+
+                            this.Remove(broadcastMetadata.Metadata);
                         }
                     }
                 }
@@ -951,7 +956,7 @@ namespace Library.Net.Amoeba
 
                 foreach (var unicastMetadata in unicastMetadatas)
                 {
-                    if (!_settings.SearchSignatures.Contains(unicastMetadata.Certificate.ToString())) continue;
+                    if (!_settings.TrustSignatures.Contains(unicastMetadata.Certificate.ToString())) continue;
 
                     Message result = null;
 
@@ -976,9 +981,10 @@ namespace Library.Net.Amoeba
 
                             if (item.Stream != null)
                             {
-                                item.Stream.Seek(0, SeekOrigin.Begin);
                                 result = ContentConverter.FromUnicastMessageStream(item.Stream, exchangePrivateKey);
                                 dic[unicastMetadata] = result;
+
+                                this.Remove(unicastMetadata.Metadata);
                             }
                         }
                     }
@@ -1028,11 +1034,11 @@ namespace Library.Net.Amoeba
                 {
                     if (limit < 0)
                     {
-                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
+                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
                     }
                     else
                     {
-                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
                     }
 
                     Message result = null;
@@ -1058,9 +1064,10 @@ namespace Library.Net.Amoeba
 
                             if (item.Stream != null)
                             {
-                                item.Stream.Seek(0, SeekOrigin.Begin);
                                 result = ContentConverter.FromMulticastMessageStream(item.Stream);
                                 dic[multicastMetadata] = result;
+
+                                this.Remove(multicastMetadata.Metadata);
                             }
                         }
                     }
@@ -1111,11 +1118,11 @@ namespace Library.Net.Amoeba
                 {
                     if (limit < 0)
                     {
-                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
+                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
                     }
                     else
                     {
-                        if (!_settings.SearchSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
+                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
                     }
 
                     Website result = null;
@@ -1141,9 +1148,10 @@ namespace Library.Net.Amoeba
 
                             if (item.Stream != null)
                             {
-                                item.Stream.Seek(0, SeekOrigin.Begin);
                                 result = ContentConverter.FromMulticastWebsiteStream(item.Stream);
                                 dic[multicastMetadata] = result;
+
+                                this.Remove(multicastMetadata.Metadata);
                             }
                         }
                     }
@@ -1251,40 +1259,19 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedHashSet<string>>() { Name = "TrustSignatures", Value = new LockedHashSet<string>() },
                 })
             {
-                _thisLock = lockObject;
+
             }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
-            }
-
-            public LockedHashSet<string> SearchSignatures
+            public LockedHashSet<string> TrustSignatures
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashSet<string>)this["TrustSignatures"];
-                    }
+                    return (LockedHashSet<string>)this["TrustSignatures"];
                 }
             }
         }

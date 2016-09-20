@@ -42,7 +42,7 @@ namespace Library.Net.Amoeba
         {
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
         }
@@ -311,40 +311,19 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<UriCollection>() { Name = "ListenUris", Value = new UriCollection() },
                 })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public UriCollection ListenUris
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (UriCollection)this["ListenUris"];
-                    }
+                    return (UriCollection)this["ListenUris"];
                 }
             }
         }

@@ -44,7 +44,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
@@ -960,41 +960,20 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedList<UploadItem>>() { Name = "UploadItems", Value = new LockedList<UploadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "UploadedSeeds", Value = new SeedCollection() },
                 })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public LockedList<UploadItem> UploadItems
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedList<UploadItem>)this["UploadItems"];
-                    }
+                    return (LockedList<UploadItem>)this["UploadItems"];
                 }
             }
 
@@ -1002,10 +981,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (SeedCollection)this["UploadedSeeds"];
-                    }
+                    return (SeedCollection)this["UploadedSeeds"];
                 }
             }
         }

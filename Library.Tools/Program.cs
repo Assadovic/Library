@@ -200,7 +200,7 @@ namespace Library.Tools
                             }
 
                             builder.AppendLine(attributeBuilder.ToString() + string.Format(
-                                "        public {0} {1} {{ get {{ lock (this.ThisLock) {{ return ({0})this[\"{1}\"]; }} }} set {{ lock (this.ThisLock) {{ this[\"{1}\"] = value; }} }} }}",
+                                "        public {0} {1} {{ get {{ return ({0})this[\"{1}\"]; }} set {{ this[\"{1}\"] = value; }} }}",
                                 match.Groups[1].Value,
                                 match.Groups[2].Value));
                         }

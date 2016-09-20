@@ -30,7 +30,7 @@ namespace Library.Net.Amoeba
 
             _cacheBuffer = _bufferManager.TakeBuffer(BitmapManager.SectorSize);
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
         }
 
         private static long Roundup(long value, long unit)
@@ -178,47 +178,23 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<long>() { Name = "Length", Value = 0 },
                 })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public long Length
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (long)this["Length"];
-                    }
+                    return (long)this["Length"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["Length"] = value;
-                    }
+                    this["Length"] = value;
                 }
             }
         }

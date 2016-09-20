@@ -32,7 +32,7 @@ namespace Library.Net.Amoeba
         {
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
         }
 
         public CreateCapEventHandler CreateCapEvent
@@ -507,40 +507,19 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<ConnectionFilterCollection>() { Name = "ConnectionFilters", Value = new ConnectionFilterCollection() },
                  })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public ConnectionFilterCollection ConnectionFilters
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (ConnectionFilterCollection)this["ConnectionFilters"];
-                    }
+                    return (ConnectionFilterCollection)this["ConnectionFilters"];
                 }
             }
         }

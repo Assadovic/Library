@@ -47,7 +47,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
@@ -1079,49 +1079,25 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<string>() { Name = "BaseDirectory", Value = "" },
                     new Library.Configuration.SettingContent<LockedList<DownloadItem>>() { Name = "DownloadItems", Value = new LockedList<DownloadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "DownloadedSeeds", Value = new SeedCollection() },
                 })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public string BaseDirectory
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (string)this["BaseDirectory"];
-                    }
+                    return (string)this["BaseDirectory"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["BaseDirectory"] = value;
-                    }
+                    this["BaseDirectory"] = value;
                 }
             }
 
@@ -1129,10 +1105,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedList<DownloadItem>)this["DownloadItems"];
-                    }
+                    return (LockedList<DownloadItem>)this["DownloadItems"];
                 }
             }
 
@@ -1140,10 +1113,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (SeedCollection)this["DownloadedSeeds"];
-                    }
+                    return (SeedCollection)this["DownloadedSeeds"];
                 }
             }
         }

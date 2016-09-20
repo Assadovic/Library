@@ -38,7 +38,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
 
@@ -763,40 +763,19 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem>>() { Name = "UploadItems", Value = new LockedList<BackgroundUploadItem>() },
                 })
             {
-                _thisLock = lockObject;
-            }
 
-            public override void Load(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
-            }
-
-            public override void Save(string directoryPath)
-            {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
             }
 
             public LockedList<BackgroundUploadItem> UploadItems
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedList<BackgroundUploadItem>)this["UploadItems"];
-                    }
+                    return (LockedList<BackgroundUploadItem>)this["UploadItems"];
                 }
             }
         }

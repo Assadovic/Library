@@ -131,7 +131,7 @@ namespace Library.Net.Amoeba
             _cacheManager = cacheManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(_thisLock);
+            _settings = new Settings();
 
             _routeTable = new Kademlia<Node>(512, 20);
 
@@ -2709,11 +2709,9 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
             private MetadataManager _metadataManager = new MetadataManager();
 
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<Node>() { Name = "BaseNode", Value = null},
                     new Library.Configuration.SettingContent<NodeCollection>() { Name = "OtherNodes", Value = new NodeCollection() },
@@ -2723,76 +2721,73 @@ namespace Library.Net.Amoeba
                     new Library.Configuration.SettingContent<LockedHashSet<Key>>() { Name = "UploadBlocksRequest", Value = new LockedHashSet<Key>() },
                 })
             {
-                _thisLock = lockObject;
+
             }
 
             public override void Load(string directoryPath)
             {
-                lock (_thisLock)
+                base.Load(directoryPath);
+
+                if (this.BaseNode == null)
                 {
-                    base.Load(directoryPath);
-
-                    if (this.BaseNode == null)
+                    byte[] id = new byte[32];
                     {
-                        byte[] id = new byte[32];
+                        using (var random = RandomNumberGenerator.Create())
                         {
-                            using (var random = RandomNumberGenerator.Create())
-                            {
-                                random.GetBytes(id);
-                            }
+                            random.GetBytes(id);
                         }
-
-                        this.BaseNode = new Node(id, null);
                     }
 
-                    // MetadataManager
+                    this.BaseNode = new Node(id, null);
+                }
+
+                // MetadataManager
+                {
+                    var broadcastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "BroadcastMetadatas");
+                    var unicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "UnicastMetadatas");
+                    var multicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "MulticastMetadatas");
+
+                    if (broadcastMetadatas != null)
                     {
-                        var broadcastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "BroadcastMetadatas");
-                        var unicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "UnicastMetadatas");
-                        var multicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "MulticastMetadatas");
-
-                        if (broadcastMetadatas != null)
+                        foreach (var metadata in broadcastMetadatas)
                         {
-                            foreach (var metadata in broadcastMetadatas)
+                            try
                             {
-                                try
-                                {
-                                    _metadataManager.SetMetadata(metadata);
-                                }
-                                catch (Exception)
-                                {
+                                _metadataManager.SetMetadata(metadata);
+                            }
+                            catch (Exception)
+                            {
 
-                                }
                             }
                         }
+                    }
 
-                        if (unicastMetadatas != null)
+                    if (unicastMetadatas != null)
+                    {
+                        foreach (var metadata in multicastMetadatas)
                         {
-                            foreach (var metadata in multicastMetadatas)
+                            try
                             {
-                                try
-                                {
-                                    _metadataManager.SetMetadata(metadata);
-                                }
-                                catch (Exception)
-                                {
+                                _metadataManager.SetMetadata(metadata);
+                            }
+                            catch (Exception)
+                            {
 
-                                }
                             }
                         }
+                    }
 
-                        if (multicastMetadatas != null)
+                    if (multicastMetadatas != null)
+                    {
+                        foreach (var metadata in multicastMetadatas)
                         {
-                            foreach (var metadata in multicastMetadatas)
+                            try
                             {
-                                try
-                                {
-                                    _metadataManager.SetMetadata(metadata);
-                                }
-                                catch (Exception)
-                                {
+                                _metadataManager.SetMetadata(metadata);
+                            }
+                            catch (Exception)
+                            {
 
-                                }
                             }
                         }
                     }
@@ -2801,31 +2796,22 @@ namespace Library.Net.Amoeba
 
             public override void Save(string directoryPath)
             {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
+                base.Save(directoryPath);
 
-                    Settings.Save(directoryPath, "BroadcastMetadatas", _metadataManager.GetBroadcastMetadatas());
-                    Settings.Save(directoryPath, "UnicastMetadatas", _metadataManager.GetUnicastMetadatas());
-                    Settings.Save(directoryPath, "MulticastMetadatas", _metadataManager.GetMulticastMetadatas());
-                }
+                Settings.Save(directoryPath, "BroadcastMetadatas", _metadataManager.GetBroadcastMetadatas());
+                Settings.Save(directoryPath, "UnicastMetadatas", _metadataManager.GetUnicastMetadatas());
+                Settings.Save(directoryPath, "MulticastMetadatas", _metadataManager.GetMulticastMetadatas());
             }
 
             public Node BaseNode
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (Node)this["BaseNode"];
-                    }
+                    return (Node)this["BaseNode"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["BaseNode"] = value;
-                    }
+                    this["BaseNode"] = value;
                 }
             }
 
@@ -2833,10 +2819,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (NodeCollection)this["OtherNodes"];
-                    }
+                    return (NodeCollection)this["OtherNodes"];
                 }
             }
 
@@ -2844,17 +2827,11 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (int)this["ConnectionCountLimit"];
-                    }
+                    return (int)this["ConnectionCountLimit"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["ConnectionCountLimit"] = value;
-                    }
+                    this["ConnectionCountLimit"] = value;
                 }
             }
 
@@ -2862,17 +2839,11 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (int)this["BandwidthLimit"];
-                    }
+                    return (int)this["BandwidthLimit"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["BandwidthLimit"] = value;
-                    }
+                    this["BandwidthLimit"] = value;
                 }
             }
 
@@ -2880,10 +2851,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashSet<Key>)this["DiffusionBlocksRequest"];
-                    }
+                    return (LockedHashSet<Key>)this["DiffusionBlocksRequest"];
                 }
             }
 
@@ -2891,10 +2859,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashSet<Key>)this["UploadBlocksRequest"];
-                    }
+                    return (LockedHashSet<Key>)this["UploadBlocksRequest"];
                 }
             }
 
@@ -2902,10 +2867,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return _metadataManager;
-                    }
+                    return _metadataManager;
                 }
             }
         }
