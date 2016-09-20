@@ -397,33 +397,15 @@ namespace Library.Net.Amoeba
                                 {
                                     var tempKeys = keys.GetRange(i * 256, Math.Min(remain, 256));
 
-                                    Group group = null;
-
-                                    try
-                                    {
-                                        using (var tokenSource = new CancellationTokenSource())
-                                        {
-                                            var task = _cacheManager.ParityEncoding(new KeyCollection(tempKeys), item.HashAlgorithm, item.BlockLength, CorrectionAlgorithm.None, tokenSource.Token);
-
-                                            while (!task.IsCompleted)
-                                            {
-                                                if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) tokenSource.Cancel();
-
-                                                Thread.Sleep(1000);
-                                            }
-
-                                            group = task.Result;
-                                        }
-                                    }
-                                    catch (Exception)
-                                    {
-                                        break;
-                                    }
+                                    var group = new Group();
+                                    group.CorrectionAlgorithm = CorrectionAlgorithm.None;
+                                    group.InformationLength = tempKeys.Count;
+                                    group.BlockLength = item.BlockLength;
+                                    group.Length = tempKeys.Sum(n => (long)_cacheManager.GetLength(n));
+                                    group.Keys.AddRange(tempKeys);
 
                                     groups.Add(group);
                                 }
-
-                                if ((this.EncodeState == ManagerState.Stop || !_settings.UploadItems.Contains(item))) continue;
 
                                 lock (_thisLock)
                                 {
