@@ -11,7 +11,7 @@ namespace Library
     {
         private Dictionary<T, int> _objectMap = new Dictionary<T, int>();
         private Dictionary<int, T> _idMap = new Dictionary<int, T>();
-        private Random _random = new Random();
+        private int _current;
 
         private readonly object _thisLock = new object();
 
@@ -21,7 +21,7 @@ namespace Library
 
             for (;;)
             {
-                id = _random.Next(0, int.MaxValue);
+                id = _current++;
                 if (!_idMap.ContainsKey(id)) break;
             }
 

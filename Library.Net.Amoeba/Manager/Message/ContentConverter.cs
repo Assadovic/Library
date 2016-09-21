@@ -407,7 +407,8 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public static Stream ToLinkStream(Link message)
+        public static Stream ToStream<T>(T message)
+            where T : ItemBase<T>
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
@@ -431,7 +432,8 @@ namespace Library.Net.Amoeba
             return bufferStream;
         }
 
-        public static Link FromLinkStream(Stream stream)
+        public static T FromStream<T>(Stream stream)
+            where T : ItemBase<T>
         {
             if (stream == null) throw new ArgumentException("stream", nameof(stream));
 
@@ -441,7 +443,7 @@ namespace Library.Net.Amoeba
                 using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
                 using (Stream messageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return Link.Import(messageStream, _bufferManager);
+                    return ItemBase<T>.Import(messageStream, _bufferManager);
                 }
             }
             catch (Exception)
@@ -450,93 +452,8 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public static Stream ToProfileStream(Profile message)
-        {
-            if (message == null) throw new ArgumentNullException(nameof(message));
-
-            var bufferStream = new BufferStream(_bufferManager);
-
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
-            using (Stream versionStream = ContentConverter.AddVersion(compressStream, 0))
-            {
-                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
-                {
-                    int length;
-
-                    while ((length = versionStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
-                    {
-                        bufferStream.Write(safeBuffer.Value, 0, length);
-                    }
-                }
-            }
-
-            return bufferStream;
-        }
-
-        public static Profile FromProfileStream(Stream stream)
-        {
-            if (stream == null) throw new ArgumentException("stream", nameof(stream));
-
-            try
-            {
-                using (Stream versionStream = new WrapperStream(stream, true))
-                using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
-                {
-                    return Profile.Import(messageStream, _bufferManager);
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public static Stream ToStoreStream(Store message)
-        {
-            if (message == null) throw new ArgumentNullException(nameof(message));
-
-            var bufferStream = new BufferStream(_bufferManager);
-
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
-            using (Stream versionStream = ContentConverter.AddVersion(compressStream, 0))
-            {
-                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
-                {
-                    int length;
-
-                    while ((length = versionStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
-                    {
-                        bufferStream.Write(safeBuffer.Value, 0, length);
-                    }
-                }
-            }
-
-            return bufferStream;
-        }
-
-        public static Store FromStoreStream(Stream stream)
-        {
-            if (stream == null) throw new ArgumentException("stream", nameof(stream));
-
-            try
-            {
-                using (Stream versionStream = new WrapperStream(stream, true))
-                using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
-                {
-                    return Store.Import(messageStream, _bufferManager);
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public static Stream ToUnicastMessageStream(Message message, IExchangeEncrypt publicKey)
+        public static Stream ToCryptoStream<T>(T message, IExchangeEncrypt publicKey)
+            where T : ItemBase<T>
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
@@ -563,7 +480,8 @@ namespace Library.Net.Amoeba
             return bufferStream;
         }
 
-        public static Message FromUnicastMessageStream(Stream stream, IExchangeDecrypt privateKey)
+        public static T FromCryptoStream<T>(Stream stream, IExchangeDecrypt privateKey)
+            where T : ItemBase<T>
         {
             if (stream == null) throw new ArgumentException("stream", nameof(stream));
             if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
@@ -576,93 +494,7 @@ namespace Library.Net.Amoeba
                 using (Stream compressStream = ContentConverter.RemovePadding(paddingStream))
                 using (Stream messageStream = ContentConverter.Decompress(compressStream))
                 {
-                    return Message.Import(messageStream, _bufferManager);
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public static Stream ToMulticastMessageStream(Message message)
-        {
-            if (message == null) throw new ArgumentNullException(nameof(message));
-
-            var bufferStream = new BufferStream(_bufferManager);
-
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
-            using (Stream versionStream = ContentConverter.AddVersion(compressStream, 0))
-            {
-                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
-                {
-                    int length;
-
-                    while ((length = versionStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
-                    {
-                        bufferStream.Write(safeBuffer.Value, 0, length);
-                    }
-                }
-            }
-
-            return bufferStream;
-        }
-
-        public static Message FromMulticastMessageStream(Stream stream)
-        {
-            if (stream == null) throw new ArgumentException("stream", nameof(stream));
-
-            try
-            {
-                using (Stream versionStream = new WrapperStream(stream, true))
-                using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
-                {
-                    return Message.Import(messageStream, _bufferManager);
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public static Stream ToMulticastWebsiteStream(Website message)
-        {
-            if (message == null) throw new ArgumentNullException(nameof(message));
-
-            var bufferStream = new BufferStream(_bufferManager);
-
-            using (Stream messageStream = message.Export(_bufferManager))
-            using (Stream compressStream = ContentConverter.Compress(messageStream))
-            using (Stream versionStream = ContentConverter.AddVersion(compressStream, 0))
-            {
-                using (var safeBuffer = _bufferManager.CreateSafeBuffer(1024 * 4))
-                {
-                    int length;
-
-                    while ((length = versionStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
-                    {
-                        bufferStream.Write(safeBuffer.Value, 0, length);
-                    }
-                }
-            }
-
-            return bufferStream;
-        }
-
-        public static Website FromMulticastWebsiteStream(Stream stream)
-        {
-            if (stream == null) throw new ArgumentException("stream", nameof(stream));
-
-            try
-            {
-                using (Stream versionStream = new WrapperStream(stream, true))
-                using (Stream compressStream = ContentConverter.RemoveVersion(versionStream, 0))
-                using (Stream messageStream = ContentConverter.Decompress(compressStream))
-                {
-                    return Website.Import(messageStream, _bufferManager);
+                    return ItemBase<T>.Import(messageStream, _bufferManager);
                 }
             }
             catch (Exception)

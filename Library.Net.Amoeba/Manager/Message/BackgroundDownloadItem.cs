@@ -27,7 +27,7 @@ namespace Library.Net.Amoeba
     {
         private BackgroundDownloadState _state;
 
-        private int _rank;
+        private int _depth;
         private Index _index;
         private Stream _stream;
 
@@ -83,14 +83,14 @@ namespace Library.Net.Amoeba
             {
                 lock (this.ThisLock)
                 {
-                    return _rank;
+                    return _depth;
                 }
             }
             set
             {
                 lock (this.ThisLock)
                 {
-                    _rank = value;
+                    _depth = value;
                 }
             }
         }

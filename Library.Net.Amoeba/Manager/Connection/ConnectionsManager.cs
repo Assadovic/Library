@@ -2903,7 +2903,7 @@ namespace Library.Net.Amoeba
                     // Broadcast
                     {
                         {
-                            var hashset = new HashSet<string>(_broadcastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
+                            var hashset = new HashSet<string>(_broadcastTypes.OrderByDescending(n => n.Value).Select(n => n.Key).Take(32));
 
                             foreach (var key in _broadcastMetadatas.Keys.ToArray())
                             {
@@ -2928,7 +2928,7 @@ namespace Library.Net.Amoeba
                     // Unicast
                     {
                         {
-                            var hashset = new HashSet<string>(_unicastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
+                            var hashset = new HashSet<string>(_unicastTypes.OrderByDescending(n => n.Value).Select(n => n.Key).Take(32));
 
                             foreach (var key in _unicastMetadatas.Keys.ToArray())
                             {
@@ -2976,7 +2976,7 @@ namespace Library.Net.Amoeba
                     // Multicast
                     {
                         {
-                            var hashset = new HashSet<string>(_multicastTypes.OrderBy(n => n.Value).Select(n => n.Key).Take(32));
+                            var hashset = new HashSet<string>(_multicastTypes.OrderByDescending(n => n.Value).Select(n => n.Key).Take(32));
 
                             foreach (var key in _multicastMetadatas.Keys.ToArray())
                             {

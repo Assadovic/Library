@@ -198,21 +198,21 @@ namespace Library.Net.Amoeba
                                     var value = item.Link;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToLinkStream(value);
+                                    stream = ContentConverter.ToStream(value);
                                 }
                                 else if (item.Type == "Profile")
                                 {
                                     var value = item.Profile;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToProfileStream(value);
+                                    stream = ContentConverter.ToStream(value);
                                 }
                                 else if (item.Type == "Store")
                                 {
                                     var value = item.Store;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToStoreStream(value);
+                                    stream = ContentConverter.ToStream(value);
                                 }
                             }
                             else if (item.Scheme == "Unicast")
@@ -222,7 +222,7 @@ namespace Library.Net.Amoeba
                                     var value = item.Message;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToUnicastMessageStream(value, item.ExchangePublicKey);
+                                    stream = ContentConverter.ToCryptoStream(value, item.ExchangePublicKey);
                                 }
                             }
                             else if (item.Scheme == "Multicast")
@@ -232,14 +232,14 @@ namespace Library.Net.Amoeba
                                     var value = item.Message;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToMulticastMessageStream(value);
+                                    stream = ContentConverter.ToStream(value);
                                 }
                                 else if (item.Type == "Website")
                                 {
                                     var value = item.Website;
                                     if (value == null) throw new FormatException();
 
-                                    stream = ContentConverter.ToMulticastWebsiteStream(value);
+                                    stream = ContentConverter.ToStream(value);
                                 }
                             }
                             else

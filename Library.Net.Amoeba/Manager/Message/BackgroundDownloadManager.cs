@@ -18,19 +18,17 @@ namespace Library.Net.Amoeba
 
         private Settings _settings;
 
-        private VolatileHashDictionary<BroadcastMetadata, Link> _cache_BroadcastLinks;
-        private VolatileHashDictionary<BroadcastMetadata, Profile> _cache_BroadcastProfiles;
-        private VolatileHashDictionary<BroadcastMetadata, Store> _cache_BroadcastStores;
-        private VolatileHashDictionary<string, Dictionary<UnicastMetadata, Message>> _cache_UnicastMessages;
-        private VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Message>> _cache_MulticastMessages;
-        private VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Website>> _cache_MulticastWebsites;
-
         private WatchTimer _watchTimer;
 
         private Thread _downloadThread;
         private List<Thread> _decodeThreads = new List<Thread>();
 
+        private VolatileHashSet<string> _lockSignatures;
+        private VolatileHashSet<Tag> _lockTags;
+
         private Dictionary<Metadata, BackgroundDownloadItem> _downloadItems = new Dictionary<Metadata, BackgroundDownloadItem>();
+        private Dictionary<Metadata, object> _cache_Results;
+
         private string _workDirectory = Path.GetTempPath();
         private ExistManager _existManager = new ExistManager();
 
@@ -55,14 +53,12 @@ namespace Library.Net.Amoeba
 
             _settings = new Settings();
 
-            _cache_BroadcastLinks = new VolatileHashDictionary<BroadcastMetadata, Link>(new TimeSpan(0, 30, 0));
-            _cache_BroadcastProfiles = new VolatileHashDictionary<BroadcastMetadata, Profile>(new TimeSpan(0, 30, 0));
-            _cache_BroadcastStores = new VolatileHashDictionary<BroadcastMetadata, Store>(new TimeSpan(0, 30, 0));
-            _cache_UnicastMessages = new VolatileHashDictionary<string, Dictionary<UnicastMetadata, Message>>(new TimeSpan(0, 30, 0));
-            _cache_MulticastMessages = new VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Message>>(new TimeSpan(0, 30, 0));
-            _cache_MulticastWebsites = new VolatileHashDictionary<Tag, Dictionary<MulticastMetadata, Website>>(new TimeSpan(0, 30, 0));
-
             _watchTimer = new WatchTimer(this.WatchTimer, new TimeSpan(0, 0, 30));
+
+            _lockSignatures = new VolatileHashSet<string>(new TimeSpan(0, 10, 0));
+            _lockTags = new VolatileHashSet<Tag>(new TimeSpan(0, 10, 0));
+
+            _cache_Results = new Dictionary<Metadata, object>();
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
@@ -132,10 +128,7 @@ namespace Library.Net.Amoeba
             {
                 var signatures = new HashSet<string>();
                 signatures.UnionWith(_settings.TrustSignatures);
-                signatures.UnionWith(_cache_BroadcastLinks.Keys.Select(n => n.Certificate.ToString()));
-                signatures.UnionWith(_cache_BroadcastProfiles.Keys.Select(n => n.Certificate.ToString()));
-                signatures.UnionWith(_cache_BroadcastStores.Keys.Select(n => n.Certificate.ToString()));
-                signatures.UnionWith(_cache_UnicastMessages.Keys);
+                signatures.UnionWith(_lockSignatures);
 
                 return signatures;
             };
@@ -143,8 +136,7 @@ namespace Library.Net.Amoeba
             _connectionsManager.GetLockTagsEvent = () =>
             {
                 var tags = new HashSet<Tag>();
-                tags.UnionWith(_cache_MulticastMessages.Keys);
-                tags.UnionWith(_cache_MulticastWebsites.Keys);
+                tags.UnionWith(_lockTags);
 
                 return tags;
             };
@@ -255,6 +247,78 @@ namespace Library.Net.Amoeba
             return filePath;
         }
 
+        private void WatchTimer()
+        {
+            try
+            {
+                if (this.State == ManagerState.Stop) return;
+
+                {
+                    _lockSignatures.TrimExcess();
+                    _lockTags.TrimExcess();
+                }
+
+                lock (_thisLock)
+                {
+                    {
+                        var now = DateTime.UtcNow;
+
+                        foreach (var pair in _downloadItems.ToArray())
+                        {
+                            if ((now - pair.Value.UpdateTime).TotalMinutes > 10)
+                            {
+                                this.Remove(pair.Key);
+                            }
+                        }
+                    }
+
+                    foreach (var metadata in _cache_Results.Keys.ToArray())
+                    {
+                        if (_downloadItems.ContainsKey(metadata)) continue;
+                        _cache_Results.Remove(metadata);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+        }
+
+        public void Remove(Metadata metadata)
+        {
+            lock (_thisLock)
+            {
+                BackgroundDownloadItem item;
+                if (!_downloadItems.TryGetValue(metadata, out item)) return;
+
+                if (item.State != BackgroundDownloadState.Completed)
+                {
+                    _cacheManager.Unlock(metadata.Key);
+
+                    foreach (var index in item.Indexes)
+                    {
+                        foreach (var group in index.Groups)
+                        {
+                            foreach (var key in group.Keys)
+                            {
+                                _cacheManager.Unlock(key);
+                            }
+                        }
+                    }
+
+                    this.UncheckState(item.Index);
+                }
+
+                if (item.Stream != null)
+                {
+                    item.Stream.Dispose();
+                }
+
+                _downloadItems.Remove(metadata);
+            }
+        }
+
         private void CheckState(Index index)
         {
             lock (_thisLock)
@@ -293,69 +357,6 @@ namespace Library.Net.Amoeba
             }
         }
 
-        private void WatchTimer()
-        {
-            try
-            {
-                if (this.State == ManagerState.Stop) return;
-
-                {
-                    _cache_BroadcastLinks.TrimExcess();
-                    _cache_BroadcastProfiles.TrimExcess();
-                    _cache_BroadcastStores.TrimExcess();
-                    _cache_UnicastMessages.TrimExcess();
-                    _cache_MulticastMessages.TrimExcess();
-                    _cache_MulticastWebsites.TrimExcess();
-                }
-
-                lock (_thisLock)
-                {
-                    var now = DateTime.UtcNow;
-
-                    foreach (var pair in _downloadItems.ToArray())
-                    {
-                        if ((now - pair.Value.UpdateTime).TotalMinutes > 30)
-                        {
-                            this.Remove(pair.Key);
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
-        }
-
-        public void Remove(Metadata metadata)
-        {
-            lock (_thisLock)
-            {
-                BackgroundDownloadItem item;
-                if (!_downloadItems.TryGetValue(metadata, out item)) return;
-
-                if (item.State != BackgroundDownloadState.Completed)
-                {
-                    _cacheManager.Unlock(metadata.Key);
-
-                    foreach (var index in item.Indexes)
-                    {
-                        foreach (var group in index.Groups)
-                        {
-                            foreach (var key in group.Keys)
-                            {
-                                _cacheManager.Unlock(key);
-                            }
-                        }
-                    }
-                }
-
-                this.UncheckState(item.Index);
-
-                _downloadItems.Remove(metadata);
-            }
-        }
-
         private void DownloadThread()
         {
             var random = new Random();
@@ -380,11 +381,8 @@ namespace Library.Net.Amoeba
                                    .Where(n => n.Value.State == BackgroundDownloadState.Downloading)
                                    .Where(x =>
                                    {
-                                       var m = x.Key;
-                                       var o = x.Value;
-
-                                       if (o.Depth == 1) return 0 == (!_cacheManager.Contains(m.Key) ? 1 : 0);
-                                       else return 0 == (o.Index.Groups.Sum(n => n.InformationLength) - o.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
+                                       if (x.Value.Depth == 1) return 0 == (!_cacheManager.Contains(x.Key.Key) ? 1 : 0);
+                                       else return 0 == (x.Value.Index.Groups.Sum(n => n.InformationLength) - x.Value.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
                                    })
                                    .ToList();
 
@@ -719,6 +717,10 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    this.UncheckState(item.Index);
+
+                                    item.Index = null;
+
                                     item.Stream = stream;
 
                                     _cacheManager.Unlock(metadata.Key);
@@ -796,196 +798,108 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public Link GetLink(string signature)
+        public T GetBroadcastContent<T>(string signature)
+            where T : ItemBase<T>
         {
             if (signature == null) throw new ArgumentNullException(nameof(signature));
 
             lock (_thisLock)
             {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Link");
+                _lockSignatures.Add(signature);
+
+                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, typeof(T).Name);
                 if (broadcastMetadata == null) return null;
 
-                Link result;
+                BackgroundDownloadItem item;
 
-                if (!_cache_BroadcastLinks.TryGetValue(broadcastMetadata, out result))
+                if (!_downloadItems.TryGetValue(broadcastMetadata.Metadata, out item))
                 {
-                    BackgroundDownloadItem item;
+                    item = new BackgroundDownloadItem();
+                    item.Depth = 1;
+                    item.State = BackgroundDownloadState.Downloading;
 
-                    if (!_downloadItems.TryGetValue(broadcastMetadata.Metadata, out item))
+                    _cacheManager.Lock(broadcastMetadata.Metadata.Key);
+
+                    _downloadItems.Add(broadcastMetadata.Metadata, item);
+                }
+
+                item.UpdateTime = DateTime.UtcNow;
+
+                object result;
+
+                if (!_cache_Results.TryGetValue(broadcastMetadata.Metadata, out result))
+                {
+                    if (item.State == BackgroundDownloadState.Completed)
                     {
-                        item = new BackgroundDownloadItem();
-                        item.Depth = 1;
-                        item.State = BackgroundDownloadState.Downloading;
-                        item.UpdateTime = DateTime.UtcNow;
+                        result = ContentConverter.FromStream<T>(item.Stream);
+                        _cache_Results[broadcastMetadata.Metadata] = result;
 
-                        _cacheManager.Lock(broadcastMetadata.Metadata.Key);
-
-                        _downloadItems.Add(broadcastMetadata.Metadata, item);
-                    }
-                    else
-                    {
-                        item.UpdateTime = DateTime.UtcNow;
-
-                        if (item.Stream != null)
-                        {
-                            result = ContentConverter.FromLinkStream(item.Stream);
-                            _cache_BroadcastLinks[broadcastMetadata] = result;
-
-                            this.Remove(broadcastMetadata.Metadata);
-                        }
+                        item.Stream.Dispose();
+                        item.Stream = null;
                     }
                 }
 
-                return result;
+                return result as T;
             }
+        }
+
+        public Link GetLink(string signature)
+        {
+            return this.GetBroadcastContent<Link>(signature);
         }
 
         public Profile GetProfile(string signature)
         {
-            if (signature == null) throw new ArgumentNullException(nameof(signature));
-
-            lock (_thisLock)
-            {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Profile");
-                if (broadcastMetadata == null) return null;
-
-                Profile result;
-
-                if (!_cache_BroadcastProfiles.TryGetValue(broadcastMetadata, out result))
-                {
-                    BackgroundDownloadItem item;
-
-                    if (!_downloadItems.TryGetValue(broadcastMetadata.Metadata, out item))
-                    {
-                        item = new BackgroundDownloadItem();
-                        item.Depth = 1;
-                        item.State = BackgroundDownloadState.Downloading;
-                        item.UpdateTime = DateTime.UtcNow;
-
-                        _cacheManager.Lock(broadcastMetadata.Metadata.Key);
-
-                        _downloadItems.Add(broadcastMetadata.Metadata, item);
-                    }
-                    else
-                    {
-                        item.UpdateTime = DateTime.UtcNow;
-
-                        if (item.Stream != null)
-                        {
-                            result = ContentConverter.FromProfileStream(item.Stream);
-                            _cache_BroadcastProfiles[broadcastMetadata] = result;
-
-                            this.Remove(broadcastMetadata.Metadata);
-                        }
-                    }
-                }
-
-                return result;
-            }
+            return this.GetBroadcastContent<Profile>(signature);
         }
 
         public Store GetStore(string signature)
         {
-            if (signature == null) throw new ArgumentNullException(nameof(signature));
-
-            lock (_thisLock)
-            {
-                var broadcastMetadata = _connectionsManager.GetBroadcastMetadatas(signature, "Store");
-                if (broadcastMetadata == null) return null;
-
-                Store result;
-
-                if (!_cache_BroadcastStores.TryGetValue(broadcastMetadata, out result))
-                {
-                    BackgroundDownloadItem item;
-
-                    if (!_downloadItems.TryGetValue(broadcastMetadata.Metadata, out item))
-                    {
-                        item = new BackgroundDownloadItem();
-                        item.Depth = 1;
-                        item.State = BackgroundDownloadState.Downloading;
-                        item.UpdateTime = DateTime.UtcNow;
-
-                        _cacheManager.Lock(broadcastMetadata.Metadata.Key);
-
-                        _downloadItems.Add(broadcastMetadata.Metadata, item);
-                    }
-                    else
-                    {
-                        item.UpdateTime = DateTime.UtcNow;
-
-                        if (item.Stream != null)
-                        {
-                            result = ContentConverter.FromStoreStream(item.Stream);
-                            _cache_BroadcastStores[broadcastMetadata] = result;
-
-                            this.Remove(broadcastMetadata.Metadata);
-                        }
-                    }
-                }
-
-                return result;
-            }
+            return this.GetBroadcastContent<Store>(signature);
         }
 
-        public IEnumerable<Information> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
+        public IEnumerable<Information> GetUnicastContents<T>(string signature, ExchangePrivateKey exchangePrivateKey)
+            where T : ItemBase<T>
         {
             if (signature == null) throw new ArgumentNullException(nameof(signature));
             if (exchangePrivateKey == null) throw new ArgumentNullException(nameof(exchangePrivateKey));
 
             lock (_thisLock)
             {
-                Dictionary<UnicastMetadata, Message> dic;
-
-                if (!_cache_UnicastMessages.TryGetValue(signature, out dic))
-                {
-                    dic = new Dictionary<UnicastMetadata, Message>();
-                    _cache_UnicastMessages[signature] = dic;
-                }
-
-                var unicastMetadatas = new HashSet<UnicastMetadata>(_connectionsManager.GetUnicastMetadatas(signature, "Message"));
-
-                foreach (var unicastMetadata in dic.Keys.ToArray())
-                {
-                    if (unicastMetadatas.Contains(unicastMetadata)) continue;
-
-                    dic.Remove(unicastMetadata);
-                }
+                _lockSignatures.Add(signature);
 
                 var informationList = new List<Information>();
 
-                foreach (var unicastMetadata in unicastMetadatas)
+                foreach (var unicastMetadata in _connectionsManager.GetUnicastMetadatas(signature, typeof(T).Name))
                 {
                     if (!_settings.TrustSignatures.Contains(unicastMetadata.Certificate.ToString())) continue;
 
-                    Message result = null;
+                    BackgroundDownloadItem item;
 
-                    if (!dic.TryGetValue(unicastMetadata, out result))
+                    if (!_downloadItems.TryGetValue(unicastMetadata.Metadata, out item))
                     {
-                        BackgroundDownloadItem item;
+                        item = new BackgroundDownloadItem();
+                        item.Depth = 1;
+                        item.State = BackgroundDownloadState.Downloading;
 
-                        if (!_downloadItems.TryGetValue(unicastMetadata.Metadata, out item))
+                        _cacheManager.Lock(unicastMetadata.Metadata.Key);
+
+                        _downloadItems.Add(unicastMetadata.Metadata, item);
+                    }
+
+                    item.UpdateTime = DateTime.UtcNow;
+
+                    object result = null;
+
+                    if (!_cache_Results.TryGetValue(unicastMetadata.Metadata, out result))
+                    {
+                        if (item.State == BackgroundDownloadState.Completed)
                         {
-                            item = new BackgroundDownloadItem();
-                            item.Depth = 1;
-                            item.State = BackgroundDownloadState.Downloading;
-                            item.UpdateTime = DateTime.UtcNow;
+                            result = ContentConverter.FromCryptoStream<T>(item.Stream, exchangePrivateKey);
+                            _cache_Results[unicastMetadata.Metadata] = result;
 
-                            _cacheManager.Lock(unicastMetadata.Metadata.Key);
-
-                            _downloadItems.Add(unicastMetadata.Metadata, item);
-                        }
-                        else
-                        {
-                            item.UpdateTime = DateTime.UtcNow;
-
-                            if (item.Stream != null)
-                            {
-                                result = ContentConverter.FromUnicastMessageStream(item.Stream, exchangePrivateKey);
-                                dic[unicastMetadata] = result;
-
-                                this.Remove(unicastMetadata.Metadata);
-                            }
+                            item.Stream.Dispose();
+                            item.Stream = null;
                         }
                     }
 
@@ -1005,32 +919,23 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
+        public IEnumerable<Information> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
+        {
+            return this.GetUnicastContents<Message>(signature, exchangePrivateKey);
+        }
+
+        public IEnumerable<Information> GetMulticastContents<T>(Tag tag, int limit)
+            where T : ItemBase<T>
         {
             if (tag == null) throw new ArgumentNullException(nameof(tag));
 
             lock (_thisLock)
             {
-                Dictionary<MulticastMetadata, Message> dic;
-
-                if (!_cache_MulticastMessages.TryGetValue(tag, out dic))
-                {
-                    dic = new Dictionary<MulticastMetadata, Message>();
-                    _cache_MulticastMessages[tag] = dic;
-                }
-
-                var multicastMetadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag, "Message"));
-
-                foreach (var multicastMetadata in dic.Keys.ToArray())
-                {
-                    if (multicastMetadatas.Contains(multicastMetadata)) continue;
-
-                    dic.Remove(multicastMetadata);
-                }
+                _lockTags.Add(tag);
 
                 var informationList = new List<Information>();
 
-                foreach (var multicastMetadata in multicastMetadatas)
+                foreach (var multicastMetadata in _connectionsManager.GetMulticastMetadatas(tag, typeof(T).Name))
                 {
                     if (limit < 0)
                     {
@@ -1041,34 +946,32 @@ namespace Library.Net.Amoeba
                         if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
                     }
 
-                    Message result = null;
+                    BackgroundDownloadItem item;
 
-                    if (!dic.TryGetValue(multicastMetadata, out result))
+                    if (!_downloadItems.TryGetValue(multicastMetadata.Metadata, out item))
                     {
-                        BackgroundDownloadItem item;
+                        item = new BackgroundDownloadItem();
+                        item.Depth = 1;
+                        item.State = BackgroundDownloadState.Downloading;
 
-                        if (!_downloadItems.TryGetValue(multicastMetadata.Metadata, out item))
+                        _cacheManager.Lock(multicastMetadata.Metadata.Key);
+
+                        _downloadItems.Add(multicastMetadata.Metadata, item);
+                    }
+
+                    item.UpdateTime = DateTime.UtcNow;
+
+                    object result = null;
+
+                    if (!_cache_Results.TryGetValue(multicastMetadata.Metadata, out result))
+                    {
+                        if (item.State == BackgroundDownloadState.Completed)
                         {
-                            item = new BackgroundDownloadItem();
-                            item.Depth = 1;
-                            item.State = BackgroundDownloadState.Downloading;
-                            item.UpdateTime = DateTime.UtcNow;
+                            result = ContentConverter.FromStream<T>(item.Stream);
+                            _cache_Results[multicastMetadata.Metadata] = result;
 
-                            _cacheManager.Lock(multicastMetadata.Metadata.Key);
-
-                            _downloadItems.Add(multicastMetadata.Metadata, item);
-                        }
-                        else
-                        {
-                            item.UpdateTime = DateTime.UtcNow;
-
-                            if (item.Stream != null)
-                            {
-                                result = ContentConverter.FromMulticastMessageStream(item.Stream);
-                                dic[multicastMetadata] = result;
-
-                                this.Remove(multicastMetadata.Metadata);
-                            }
+                            item.Stream.Dispose();
+                            item.Stream = null;
                         }
                     }
 
@@ -1089,88 +992,14 @@ namespace Library.Net.Amoeba
             }
         }
 
+        public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
+        {
+            return this.GetMulticastContents<Message>(tag, limit);
+        }
+
         public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
         {
-            if (tag == null) throw new ArgumentNullException(nameof(tag));
-
-            lock (_thisLock)
-            {
-                Dictionary<MulticastMetadata, Website> dic;
-
-                if (!_cache_MulticastWebsites.TryGetValue(tag, out dic))
-                {
-                    dic = new Dictionary<MulticastMetadata, Website>();
-                    _cache_MulticastWebsites[tag] = dic;
-                }
-
-                var multicastMetadatas = new HashSet<MulticastMetadata>(_connectionsManager.GetMulticastMetadatas(tag, "Website"));
-
-                foreach (var multicastMetadata in dic.Keys.ToArray())
-                {
-                    if (multicastMetadatas.Contains(multicastMetadata)) continue;
-
-                    dic.Remove(multicastMetadata);
-                }
-
-                var informationList = new List<Information>();
-
-                foreach (var multicastMetadata in multicastMetadatas)
-                {
-                    if (limit < 0)
-                    {
-                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString())) continue;
-                    }
-                    else
-                    {
-                        if (!_settings.TrustSignatures.Contains(multicastMetadata.Certificate.ToString()) && multicastMetadata.Cost < limit) continue;
-                    }
-
-                    Website result = null;
-
-                    if (!dic.TryGetValue(multicastMetadata, out result))
-                    {
-                        BackgroundDownloadItem item;
-
-                        if (!_downloadItems.TryGetValue(multicastMetadata.Metadata, out item))
-                        {
-                            item = new BackgroundDownloadItem();
-                            item.Depth = 1;
-                            item.State = BackgroundDownloadState.Downloading;
-                            item.UpdateTime = DateTime.UtcNow;
-
-                            _cacheManager.Lock(multicastMetadata.Metadata.Key);
-
-                            _downloadItems.Add(multicastMetadata.Metadata, item);
-                        }
-                        else
-                        {
-                            item.UpdateTime = DateTime.UtcNow;
-
-                            if (item.Stream != null)
-                            {
-                                result = ContentConverter.FromMulticastWebsiteStream(item.Stream);
-                                dic[multicastMetadata] = result;
-
-                                this.Remove(multicastMetadata.Metadata);
-                            }
-                        }
-                    }
-
-                    if (result != null)
-                    {
-                        var contexts = new List<InformationContext>();
-                        contexts.Add(new InformationContext("Tag", tag));
-                        contexts.Add(new InformationContext("CreationTime", multicastMetadata.CreationTime));
-                        contexts.Add(new InformationContext("Signature", multicastMetadata.Certificate.ToString()));
-                        contexts.Add(new InformationContext("Cost", multicastMetadata.Cost));
-                        contexts.Add(new InformationContext("Value", result));
-
-                        informationList.Add(new Information(contexts));
-                    }
-                }
-
-                return informationList;
-            }
+            return this.GetMulticastContents<Website>(tag, limit);
         }
 
         public override ManagerState State
