@@ -78,6 +78,12 @@ namespace Library.Net.Amoeba
             };
         }
 
+        private void Check()
+        {
+            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
+            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+        }
+
         public CreateCapEventHandler CreateCapEvent
         {
             set
@@ -115,8 +121,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -136,8 +141,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -150,8 +154,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -164,8 +167,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -178,8 +180,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -192,8 +193,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -206,8 +206,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -220,8 +219,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -230,8 +228,7 @@ namespace Library.Net.Amoeba
             }
             set
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -244,8 +241,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -254,8 +250,7 @@ namespace Library.Net.Amoeba
             }
             set
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -268,8 +263,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -282,8 +276,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -296,8 +289,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -310,8 +302,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -324,8 +315,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -338,8 +328,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -352,8 +341,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -366,8 +354,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -376,8 +363,7 @@ namespace Library.Net.Amoeba
             }
             set
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -390,8 +376,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -404,8 +389,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 lock (this.ThisLock)
                 {
@@ -416,8 +400,7 @@ namespace Library.Net.Amoeba
 
         public void SetBaseNode(Node baseNode)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -427,8 +410,7 @@ namespace Library.Net.Amoeba
 
         public void SetOtherNodes(IEnumerable<Node> nodes)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -438,8 +420,7 @@ namespace Library.Net.Amoeba
 
         public void Resize(long size)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -485,8 +466,7 @@ namespace Library.Net.Amoeba
 
         public void SetTrustSignatures(IEnumerable<string> signatures)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -496,24 +476,21 @@ namespace Library.Net.Amoeba
 
         public void CheckInternalBlocks(CheckBlocksProgressEventHandler getProgressEvent)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             _cacheManager.CheckInternalBlocks(getProgressEvent);
         }
 
         public void CheckExternalBlocks(CheckBlocksProgressEventHandler getProgressEvent)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             _cacheManager.CheckExternalBlocks(getProgressEvent);
         }
 
         public void Download(Seed seed, int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -523,8 +500,7 @@ namespace Library.Net.Amoeba
 
         public void Download(Seed seed, string path, int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -538,8 +514,7 @@ namespace Library.Net.Amoeba
             DigitalSignature digitalSignature,
             int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -557,8 +532,7 @@ namespace Library.Net.Amoeba
             DigitalSignature digitalSignature,
             int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -572,8 +546,7 @@ namespace Library.Net.Amoeba
 
         public void RemoveDownload(int id)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -583,8 +556,7 @@ namespace Library.Net.Amoeba
 
         public void RemoveUpload(int id)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -594,8 +566,7 @@ namespace Library.Net.Amoeba
 
         public void RemoveShare(string path)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -605,8 +576,7 @@ namespace Library.Net.Amoeba
 
         public void RemoveCache(Seed seed)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -616,8 +586,7 @@ namespace Library.Net.Amoeba
 
         public void ResetDownload(int id)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -627,8 +596,7 @@ namespace Library.Net.Amoeba
 
         public void ResetUpload(int id)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -638,8 +606,7 @@ namespace Library.Net.Amoeba
 
         public void SetDownloadPriority(int id, int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -649,8 +616,7 @@ namespace Library.Net.Amoeba
 
         public void SetUploadPriority(int id, int priority)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -660,8 +626,7 @@ namespace Library.Net.Amoeba
 
         public Link GetLink(string signature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -671,8 +636,7 @@ namespace Library.Net.Amoeba
 
         public Profile GetProfile(string signature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -682,8 +646,7 @@ namespace Library.Net.Amoeba
 
         public Store GetStore(string signature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -693,8 +656,7 @@ namespace Library.Net.Amoeba
 
         public IEnumerable<Information> GetUnicastMessages(string signature, ExchangePrivateKey exchangePrivateKey)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -704,8 +666,7 @@ namespace Library.Net.Amoeba
 
         public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -715,8 +676,7 @@ namespace Library.Net.Amoeba
 
         public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -726,8 +686,7 @@ namespace Library.Net.Amoeba
 
         public void Upload(Link link, DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -737,8 +696,7 @@ namespace Library.Net.Amoeba
 
         public void Upload(Profile profile, DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -748,8 +706,7 @@ namespace Library.Net.Amoeba
 
         public void Upload(Store store, DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -763,8 +720,7 @@ namespace Library.Net.Amoeba
             ExchangePublicKey exchangePublicKey,
             DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -779,8 +735,7 @@ namespace Library.Net.Amoeba
             TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -793,8 +748,7 @@ namespace Library.Net.Amoeba
 
             DigitalSignature digitalSignature)
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -806,8 +760,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 return _state;
             }
@@ -817,8 +770,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 return _encodeState;
             }
@@ -828,8 +780,7 @@ namespace Library.Net.Amoeba
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-                if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+                this.Check();
 
                 return _decodeState;
             }
@@ -837,8 +788,7 @@ namespace Library.Net.Amoeba
 
         public override void Start()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -855,8 +805,7 @@ namespace Library.Net.Amoeba
 
         public override void Stop()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -873,8 +822,7 @@ namespace Library.Net.Amoeba
 
         public void EncodeStart()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -887,8 +835,7 @@ namespace Library.Net.Amoeba
 
         public void EncodeStop()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -901,8 +848,7 @@ namespace Library.Net.Amoeba
 
         public void DecodeStart()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {
@@ -915,8 +861,7 @@ namespace Library.Net.Amoeba
 
         public void DecodeStop()
         {
-            if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
-            if (!_isLoaded) throw new AmoebaManagerException("AmoebaManager is not loaded.");
+            this.Check();
 
             lock (this.ThisLock)
             {

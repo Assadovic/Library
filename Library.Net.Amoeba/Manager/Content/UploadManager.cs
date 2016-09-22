@@ -384,6 +384,8 @@ namespace Library.Net.Amoeba
                                     item.EncodeOffset = 0;
                                     item.EncodeLength = 0;
 
+                                    item.UploadKeys.Add(keys[0]);
+
                                     item.Keys.Add(keys[0]);
 
                                     item.State = UploadState.Encoding;
@@ -758,6 +760,7 @@ namespace Library.Net.Amoeba
 
                 if (item.Type == UploadType.Share)
                 {
+                    _cacheManager.RemoveShare(item.FilePath);
                     _shareIdLink.Remove(item.FilePath);
                 }
             }

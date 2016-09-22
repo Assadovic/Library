@@ -763,14 +763,15 @@ namespace Library.Net.Amoeba
         {
             lock (this.ThisLock)
             {
-                var keys = _settings.ShareIndex[path].Indexes.Keys.ToList();
+                ShareInfo info;
+                if (!_settings.ShareIndex.TryGetValue(path, out info)) return;
 
                 _settings.ShareIndex.Remove(path);
 
                 _shareIndexLink_Initialized = false;
 
                 this.OnShareRemoveEvent(path);
-                this.OnBlockRemoveEvent(keys);
+                this.OnBlockRemoveEvent(info.Indexes.Keys.ToList());
             }
         }
 
