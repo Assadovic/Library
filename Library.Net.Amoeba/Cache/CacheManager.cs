@@ -194,13 +194,13 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public int Count
+        public long Count
         {
             get
             {
                 lock (this.ThisLock)
                 {
-                    return _settings.ClusterIndex.Count + _settings.ShareIndex.Sum(n => n.Value.Indexes.Count);
+                    return (long)_settings.ClusterIndex.Count + _settings.ShareIndex.Sum(n => (long)n.Value.Indexes.Count);
                 }
             }
         }
