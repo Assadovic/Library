@@ -26,9 +26,6 @@ namespace Library.Net.Amoeba
 
         private volatile ManagerState _state = ManagerState.Stop;
 
-        private Thread _uploadedThread;
-        private WaitQueue<Key> _uploadedKeys = new WaitQueue<Key>();
-
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
@@ -42,56 +39,38 @@ namespace Library.Net.Amoeba
 
             _watchTimer = new WatchTimer(this.WatchTimer, Timeout.Infinite);
 
-            _connectionsManager.BlockUploadedEvent += (IEnumerable<Key> keys) =>
-            {
-                foreach (var key in keys)
-                {
-                    _uploadedKeys.Enqueue(key);
-                }
-            };
+            _connectionsManager.BlockUploadedEvents += this.BlockUploadedThread;
+            _cacheManager.BlockRemoveEvents += this.BlockUploadedThread;
+        }
 
-            _cacheManager.BlockRemoveEvent += (IEnumerable<Key> keys) =>
+        private void BlockUploadedThread(IEnumerable<Key> keys)
+        {
+            try
             {
-                foreach (var key in keys)
+                lock (_thisLock)
                 {
-                    _uploadedKeys.Enqueue(key);
-                }
-            };
-
-            _uploadedThread = new Thread(() =>
-            {
-                try
-                {
-                    for (;;)
+                    foreach (var key in keys)
                     {
-                        var key = _uploadedKeys.Dequeue();
-
-                        lock (_thisLock)
+                        foreach (var item in _settings.UploadItems)
                         {
-                            foreach (var item in _settings.UploadItems.ToArray())
+                            if (item.UploadKeys.Remove(key))
                             {
-                                if (item.UploadKeys.Remove(key))
+                                if (item.State == BackgroundUploadState.Uploading)
                                 {
-                                    if (item.State == BackgroundUploadState.Uploading)
+                                    if (item.UploadKeys.Count == 0)
                                     {
-                                        if (item.UploadKeys.Count == 0)
-                                        {
-                                            item.State = BackgroundUploadState.Completed;
-                                        }
+                                        item.State = BackgroundUploadState.Completed;
                                     }
                                 }
                             }
                         }
                     }
                 }
-                catch (Exception)
-                {
+            }
+            catch (Exception)
+            {
 
-                }
-            });
-            _uploadedThread.Priority = ThreadPriority.BelowNormal;
-            _uploadedThread.Name = "BackgroundUploadManager_UploadedThread";
-            _uploadedThread.Start();
+            }
         }
 
         private void CheckState(BackgroundUploadItem item)
@@ -787,9 +766,22 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _uploadedKeys.Dispose();
+                _connectionsManager.BlockUploadedEvents -= this.BlockUploadedThread;
+                _cacheManager.BlockRemoveEvents -= this.BlockUploadedThread;
 
-                _uploadedThread.Join();
+                if (_watchTimer != null)
+                {
+                    try
+                    {
+                        _watchTimer.Dispose();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    _watchTimer = null;
+                }
             }
         }
     }

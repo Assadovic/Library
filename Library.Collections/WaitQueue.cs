@@ -39,11 +39,6 @@ namespace Library.Collections
             }
         }
 
-        ~WaitQueue()
-        {
-            Dispose(false);
-        }
-
         public int Capacity
         {
             get

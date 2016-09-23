@@ -7,7 +7,7 @@ using Library.Security;
 
 namespace Library.Net.Amoeba
 {
-    public delegate bool CheckUriEventHandler(string uri);
+    public delegate bool CheckUriEventHandler(object sender, string uri);
 
     // 色々力技が必要になり個々のクラスが見苦しので、このクラスで覆う
 
@@ -56,25 +56,25 @@ namespace Library.Net.Amoeba
             _backgroundDownloadManager = new BackgroundDownloadManager(_connectionsManager, _cacheManager, _bufferManager);
             _backgroundUploadManager = new BackgroundUploadManager(_connectionsManager, _cacheManager, _bufferManager);
 
-            _clientManager.CreateCapEvent = (string uri) =>
+            _clientManager.CreateCapEvent = (object sender, string uri) =>
             {
-                return _createCapEvent?.Invoke(uri);
+                return _createCapEvent?.Invoke(this, uri);
             };
 
-            _serverManager.AcceptCapEvent = (out string uri) =>
+            _serverManager.AcceptCapEvent = (object sender, out string uri) =>
             {
                 uri = null;
-                return _acceptCapEvent?.Invoke(out uri);
+                return _acceptCapEvent?.Invoke(this, out uri);
             };
 
-            _clientManager.CheckUriEvent = (string uri) =>
+            _clientManager.CheckUriEvent = (object sender, string uri) =>
             {
-                return _checkUriEvent?.Invoke(uri) ?? true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
 
-            _serverManager.CheckUriEvent = (string uri) =>
+            _serverManager.CheckUriEvent = (object sender, string uri) =>
             {
-                return _checkUriEvent?.Invoke(uri) ?? true;
+                return _checkUriEvent?.Invoke(this, uri) ?? true;
             };
         }
 
@@ -478,14 +478,22 @@ namespace Library.Net.Amoeba
         {
             this.Check();
 
-            _cacheManager.CheckInternalBlocks(getProgressEvent);
+            _cacheManager.CheckInternalBlocks((object sender, int badBlockCount, int checkedBlockCount, int blockCount, out bool isStop) =>
+            {
+                isStop = false;
+                getProgressEvent?.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
+            });
         }
 
         public void CheckExternalBlocks(CheckBlocksProgressEventHandler getProgressEvent)
         {
             this.Check();
 
-            _cacheManager.CheckExternalBlocks(getProgressEvent);
+            _cacheManager.CheckExternalBlocks((object sender, int badBlockCount, int checkedBlockCount, int blockCount, out bool isStop) =>
+            {
+                isStop = false;
+                getProgressEvent?.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
+            });
         }
 
         public void Download(Seed seed, int priority)

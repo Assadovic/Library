@@ -6,16 +6,15 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Library.Collections;
+using Library.Messaging;
 using Library.Net.Connections;
 using Library.Security;
 using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    public delegate IEnumerable<string> GetSignaturesEventHandler();
-    public delegate IEnumerable<Tag> GetTagsEventHandler();
-
-    delegate void BlockUploadedEventHandler(IEnumerable<Key> keys);
+    delegate IEnumerable<string> GetSignaturesEventHandler();
+    delegate IEnumerable<Tag> GetTagsEventHandler();
 
     class ConnectionsManager : StateManagerBase, Library.Configuration.ISettings
     {
@@ -59,10 +58,6 @@ namespace Library.Net.Amoeba
         private VolatileHashSet<string> _pushUnicastMetadatasRequestList;
         private VolatileHashSet<Tag> _pushMulticastMetadatasRequestList;
 
-        private LockedHashDictionary<string, DateTime> _broadcastMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<string, DateTime> _unicastMetadataLastAccessTimes = new LockedHashDictionary<string, DateTime>();
-        private LockedHashDictionary<Tag, DateTime> _multicastMetadataLastAccessTimes = new LockedHashDictionary<Tag, DateTime>();
-
         private Thread _connectionsManagerThread;
         private List<Thread> _createConnectionThreads = new List<Thread>();
         private List<Thread> _acceptConnectionThreads = new List<Thread>();
@@ -99,7 +94,7 @@ namespace Library.Net.Amoeba
         private GetSignaturesEventHandler _getLockSignaturesEvent;
         private GetTagsEventHandler _getLockTagsEvent;
 
-        public event BlockUploadedEventHandler BlockUploadedEvent;
+        private EventQueue<Key> _blockUploadedEventQueue = new EventQueue<Key>();
 
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
@@ -391,9 +386,16 @@ namespace Library.Net.Amoeba
             return _getLockTagsEvent?.Invoke();
         }
 
-        protected virtual void OnBlockUploadedEvent(IEnumerable<Key> keys)
+        public event Action<IEnumerable<Key>> BlockUploadedEvents
         {
-            this.BlockUploadedEvent?.Invoke(keys);
+            add
+            {
+                _blockUploadedEventQueue.Events += value;
+            }
+            remove
+            {
+                _blockUploadedEventQueue.Events -= value;
+            }
         }
 
         private static bool Check(Node node)
@@ -959,7 +961,7 @@ namespace Library.Net.Amoeba
 
                                 if (requestNodes.Count == 0)
                                 {
-                                    this.OnBlockUploadedEvent(new Key[] { key });
+                                    _blockUploadedEventQueue.Enqueue(key);
 
                                     _settings.UploadBlocksRequest.Remove(key);
                                     _settings.DiffusionBlocksRequest.Remove(key);
@@ -1902,7 +1904,7 @@ namespace Library.Net.Amoeba
                                     }
                                 }
 
-                                this.OnBlockUploadedEvent(new Key[] { key });
+                                _blockUploadedEventQueue.Enqueue(key);
 
                                 _settings.UploadBlocksRequest.Remove(key);
                                 _settings.DiffusionBlocksRequest.Remove(key);
@@ -1974,7 +1976,7 @@ namespace Library.Net.Amoeba
                                     }
                                 }
 
-                                this.OnBlockUploadedEvent(new Key[] { key });
+                                _blockUploadedEventQueue.Enqueue(key);
 
                                 _settings.UploadBlocksRequest.Remove(key);
                                 _settings.DiffusionBlocksRequest.Remove(key);
@@ -2250,8 +2252,6 @@ namespace Library.Net.Amoeba
 
                 packetManager.PullBroadcastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
-
-                _broadcastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2273,8 +2273,6 @@ namespace Library.Net.Amoeba
                     packetManager.StockBroadcastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
 
                     var signature = metadata.Certificate.ToString();
-
-                    _broadcastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2298,8 +2296,6 @@ namespace Library.Net.Amoeba
 
                 packetManager.PullUnicastMetadatasRequest.Add(signature);
                 _pullMetadataRequestCount.Increment();
-
-                _unicastMetadataLastAccessTimes[signature] = DateTime.UtcNow;
             }
         }
 
@@ -2319,8 +2315,6 @@ namespace Library.Net.Amoeba
                 if (_settings.MetadataManager.SetMetadata(metadata))
                 {
                     packetManager.StockUnicastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
-                    _unicastMetadataLastAccessTimes[metadata.Signature] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2344,8 +2338,6 @@ namespace Library.Net.Amoeba
 
                 packetManager.PullMulticastMetadatasRequest.Add(tag);
                 _pullMetadataRequestCount.Increment();
-
-                _multicastMetadataLastAccessTimes[tag] = DateTime.UtcNow;
             }
         }
 
@@ -2365,8 +2357,6 @@ namespace Library.Net.Amoeba
                 if (_settings.MetadataManager.SetMetadata(metadata))
                 {
                     packetManager.StockMulticastMetadatas.Add(metadata.CreateHash(_hashAlgorithm));
-
-                    _multicastMetadataLastAccessTimes[metadata.Tag] = DateTime.UtcNow;
                 }
 
                 _pullMetadataCount.Increment();
@@ -2744,8 +2734,8 @@ namespace Library.Net.Amoeba
                 // MetadataManager
                 {
                     var broadcastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "BroadcastMetadatas");
-                    var unicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "UnicastMetadatas");
-                    var multicastMetadatas = Settings.Load<List<BroadcastMetadata>>(directoryPath, "MulticastMetadatas");
+                    var unicastMetadatas = Settings.Load<List<UnicastMetadata>>(directoryPath, "UnicastMetadatas");
+                    var multicastMetadatas = Settings.Load<List<MulticastMetadata>>(directoryPath, "MulticastMetadatas");
 
                     if (broadcastMetadatas != null)
                     {

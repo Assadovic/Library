@@ -30,12 +30,6 @@ namespace Library.Net.Amoeba
         private volatile ManagerState _state = ManagerState.Stop;
         private volatile ManagerState _decodeState = ManagerState.Stop;
 
-        private Thread _setThread;
-        private WaitQueue<Key> _setKeys = new WaitQueue<Key>();
-
-        private Thread _removeThread;
-        private WaitQueue<Key> _removeKeys = new WaitQueue<Key>();
-
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
@@ -51,67 +45,44 @@ namespace Library.Net.Amoeba
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
-            _cacheManager.BlockSetEvent += (IEnumerable<Key> keys) =>
-            {
-                foreach (var key in keys)
-                {
-                    _setKeys.Enqueue(key);
-                }
-            };
+            _cacheManager.BlockSetEvents += this.BlockSetThread;
+            _cacheManager.BlockRemoveEvents += this.BlockRemoveThread;
+        }
 
-            _cacheManager.BlockRemoveEvent += (IEnumerable<Key> keys) =>
+        private void BlockSetThread(IEnumerable<Key> keys)
+        {
+            try
             {
-                foreach (var key in keys)
+                lock (_thisLock)
                 {
-                    _removeKeys.Enqueue(key);
-                }
-            };
-
-            _setThread = new Thread(() =>
-            {
-                try
-                {
-                    for (;;)
+                    foreach (var key in keys)
                     {
-                        var key = _setKeys.Dequeue();
-
-                        lock (_thisLock)
-                        {
-                            _existManager.Set(key, true);
-                        }
+                        _existManager.Set(key, true);
                     }
                 }
-                catch (Exception)
-                {
-
-                }
-            });
-            _setThread.Priority = ThreadPriority.BelowNormal;
-            _setThread.Name = "DownloadManager_SetThread";
-            _setThread.Start();
-
-            _removeThread = new Thread(() =>
+            }
+            catch (Exception)
             {
-                try
-                {
-                    for (;;)
-                    {
-                        var key = _removeKeys.Dequeue();
 
-                        lock (_thisLock)
-                        {
-                            _existManager.Set(key, false);
-                        }
+            }
+        }
+
+        private void BlockRemoveThread(IEnumerable<Key> keys)
+        {
+            try
+            {
+                lock (_thisLock)
+                {
+                    foreach (var key in keys)
+                    {
+                        _existManager.Set(key, false);
                     }
                 }
-                catch (Exception)
-                {
+            }
+            catch (Exception)
+            {
 
-                }
-            });
-            _removeThread.Priority = ThreadPriority.BelowNormal;
-            _removeThread.Name = "DownloadManager_RemoveThread";
-            _removeThread.Start();
+            }
         }
 
         public Information Information
@@ -1082,7 +1053,7 @@ namespace Library.Net.Amoeba
             public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<string>() { Name = "BaseDirectory", Value = "" },
-                    new Library.Configuration.SettingContent<LockedList<DownloadItem>>() { Name = "DownloadItems", Value = new LockedList<DownloadItem>() },
+                    new Library.Configuration.SettingContent<HashSet<DownloadItem>>() { Name = "DownloadItems", Value = new HashSet<DownloadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "DownloadedSeeds", Value = new SeedCollection() },
                 })
             {
@@ -1101,11 +1072,11 @@ namespace Library.Net.Amoeba
                 }
             }
 
-            public LockedList<DownloadItem> DownloadItems
+            public HashSet<DownloadItem> DownloadItems
             {
                 get
                 {
-                    return (LockedList<DownloadItem>)this["DownloadItems"];
+                    return (HashSet<DownloadItem>)this["DownloadItems"];
                 }
             }
 
@@ -1125,6 +1096,9 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
+                _cacheManager.BlockSetEvents -= this.BlockSetThread;
+                _cacheManager.BlockRemoveEvents -= this.BlockRemoveThread;
+
                 if (_existManager != null)
                 {
                     try
@@ -1138,12 +1112,6 @@ namespace Library.Net.Amoeba
 
                     _existManager = null;
                 }
-
-                _setKeys.Dispose();
-                _removeKeys.Dispose();
-
-                _setThread.Join();
-                _removeThread.Join();
             }
         }
     }

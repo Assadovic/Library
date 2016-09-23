@@ -9,6 +9,7 @@ call %TOOL% "Increment" Library.Collections\Library.Collections.csproj Propertie
 call %TOOL% "Increment" Library.Compression\Library.Compression.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Configuration\Library.Configuration.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Io\Library.Io.csproj Properties\AssemblyInfo.cs
+call %TOOL% "Increment" Library.Messaging\Library.Messaging.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net\Library.Net.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.Amoeba\Library.Net.Amoeba.csproj Properties\AssemblyInfo.cs
 call %TOOL% "Increment" Library.Net.Connections\Library.Net.Connections.csproj Properties\AssemblyInfo.cs

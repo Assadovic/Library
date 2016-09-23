@@ -10,7 +10,7 @@ namespace Library.Net
     /// ノード検索のためのメソッドを提供します
     /// </summary>
     public class Kademlia<T> : ICollection<T>, IEnumerable<T>, ICollection, IEnumerable, IThisLock
-        where T : INode
+        where T : class, INode
     {
         private int _row;
         private int _column;

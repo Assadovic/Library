@@ -209,7 +209,7 @@ namespace Library.Net.Amoeba
             }
         }
 
-        [DataMember(Name = "Key")]
+        [DataMember(Name = "Metadata")]
         public Metadata Metadata
         {
             get

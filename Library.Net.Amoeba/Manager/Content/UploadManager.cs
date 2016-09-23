@@ -27,12 +27,6 @@ namespace Library.Net.Amoeba
         private volatile ManagerState _state = ManagerState.Stop;
         private volatile ManagerState _encodeState = ManagerState.Stop;
 
-        private Thread _uploadedThread;
-        private WaitQueue<Key> _uploadedKeys = new WaitQueue<Key>();
-
-        private Thread _shareRemoveThread;
-        private WaitQueue<string> _shareRemovePaths = new WaitQueue<string>();
-
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
@@ -48,95 +42,66 @@ namespace Library.Net.Amoeba
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
-            _connectionsManager.BlockUploadedEvent += (IEnumerable<Key> keys) =>
-            {
-                foreach (var key in keys)
-                {
-                    _uploadedKeys.Enqueue(key);
-                }
-            };
+            _connectionsManager.BlockUploadedEvents += this.BlockUploadedThread;
+            _cacheManager.BlockRemoveEvents += this.BlockUploadedThread;
+            _cacheManager.ShareRemoveEvents += this.ShareRemoveThread;
+        }
 
-            _cacheManager.BlockRemoveEvent += (IEnumerable<Key> keys) =>
+        private void BlockUploadedThread(IEnumerable<Key> keys)
+        {
+            try
             {
-                foreach (var key in keys)
+                lock (_thisLock)
                 {
-                    _uploadedKeys.Enqueue(key);
-                }
-            };
-
-            _cacheManager.ShareRemoveEvent += (string path) =>
-            {
-                _shareRemovePaths.Enqueue(path);
-            };
-
-            _uploadedThread = new Thread(() =>
-            {
-                try
-                {
-                    for (;;)
+                    foreach (var key in keys)
                     {
-                        var key = _uploadedKeys.Dequeue();
-
-                        while (_shareRemovePaths.Count > 0) Thread.Sleep(1000);
-
-                        lock (_thisLock)
+                        foreach (var item in _settings.UploadItems)
                         {
-                            foreach (var item in _settings.UploadItems)
+                            if (item.UploadKeys.Remove(key))
                             {
-                                if (item.UploadKeys.Remove(key))
+                                item.UploadedKeys.Add(key);
+
+                                if (item.State == UploadState.Uploading)
                                 {
-                                    item.UploadedKeys.Add(key);
-
-                                    if (item.State == UploadState.Uploading)
+                                    if (item.UploadKeys.Count == 0)
                                     {
-                                        if (item.UploadKeys.Count == 0)
-                                        {
-                                            item.State = UploadState.Completed;
+                                        item.State = UploadState.Completed;
 
-                                            _settings.UploadedSeeds.Add(item.Seed.Clone());
-                                        }
+                                        _settings.UploadedSeeds.Add(item.Seed.Clone());
                                     }
                                 }
                             }
                         }
                     }
                 }
-                catch (Exception)
-                {
-
-                }
-            });
-            _uploadedThread.Priority = ThreadPriority.BelowNormal;
-            _uploadedThread.Name = "UploadManager_UploadedThread";
-            _uploadedThread.Start();
-
-            _shareRemoveThread = new Thread(() =>
+            }
+            catch (Exception)
             {
-                try
+
+            }
+        }
+
+        private void ShareRemoveThread(IEnumerable<string> paths)
+        {
+            try
+            {
+                lock (_thisLock)
                 {
-                    for (;;)
+                    foreach (var path in paths)
                     {
-                        var path = _shareRemovePaths.Dequeue();
+                        int id;
 
-                        lock (_thisLock)
+                        if (_shareIdLink.TryGetValue(path, out id))
                         {
-                            int id;
-
-                            if (_shareIdLink.TryGetValue(path, out id))
-                            {
-                                this.Remove(id);
-                            }
+                            this.Remove(id);
                         }
                     }
                 }
-                catch (Exception)
-                {
+            }
+            catch (Exception)
+            {
 
-                }
-            });
-            _shareRemoveThread.Priority = ThreadPriority.BelowNormal;
-            _shareRemoveThread.Name = "UploadManager_ShareRemoveThread";
-            _shareRemoveThread.Start();
+            }
         }
 
         public Information Information
@@ -760,7 +725,11 @@ namespace Library.Net.Amoeba
 
                 if (item.Type == UploadType.Share)
                 {
-                    _cacheManager.RemoveShare(item.FilePath);
+                    if (!(item.State == UploadState.Uploading || item.State == UploadState.Completed))
+                    {
+                        _cacheManager.RemoveShare(item.FilePath);
+                    }
+
                     _shareIdLink.Remove(item.FilePath);
                 }
             }
@@ -947,18 +916,18 @@ namespace Library.Net.Amoeba
         {
             public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<LockedList<UploadItem>>() { Name = "UploadItems", Value = new LockedList<UploadItem>() },
+                    new Library.Configuration.SettingContent<HashSet<UploadItem>>() { Name = "UploadItems", Value = new HashSet<UploadItem>() },
                     new Library.Configuration.SettingContent<SeedCollection>() { Name = "UploadedSeeds", Value = new SeedCollection() },
                 })
             {
 
             }
 
-            public LockedList<UploadItem> UploadItems
+            public HashSet<UploadItem> UploadItems
             {
                 get
                 {
-                    return (LockedList<UploadItem>)this["UploadItems"];
+                    return (HashSet<UploadItem>)this["UploadItems"];
                 }
             }
 
@@ -978,11 +947,9 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _uploadedKeys.Dispose();
-                _shareRemovePaths.Dispose();
-
-                _uploadedThread.Join();
-                _shareRemoveThread.Join();
+                _connectionsManager.BlockUploadedEvents -= this.BlockUploadedThread;
+                _cacheManager.BlockRemoveEvents -= this.BlockUploadedThread;
+                _cacheManager.ShareRemoveEvents -= this.ShareRemoveThread;
             }
         }
     }

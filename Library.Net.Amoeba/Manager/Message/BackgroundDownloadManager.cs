@@ -34,12 +34,6 @@ namespace Library.Net.Amoeba
 
         private ManagerState _state = ManagerState.Stop;
 
-        private Thread _setThread;
-        private WaitQueue<Key> _setKeys = new WaitQueue<Key>();
-
-        private Thread _removeThread;
-        private WaitQueue<Key> _removeKeys = new WaitQueue<Key>();
-
         private volatile bool _disposed;
         private readonly object _thisLock = new object();
 
@@ -62,67 +56,8 @@ namespace Library.Net.Amoeba
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
-            _cacheManager.BlockSetEvent += (IEnumerable<Key> keys) =>
-            {
-                foreach (var key in keys)
-                {
-                    _setKeys.Enqueue(key);
-                }
-            };
-
-            _cacheManager.BlockRemoveEvent += (IEnumerable<Key> keys) =>
-            {
-                foreach (var key in keys)
-                {
-                    _removeKeys.Enqueue(key);
-                }
-            };
-
-            _setThread = new Thread(() =>
-            {
-                try
-                {
-                    for (;;)
-                    {
-                        var key = _setKeys.Dequeue();
-
-                        lock (_thisLock)
-                        {
-                            _existManager.Set(key, true);
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            });
-            _setThread.Priority = ThreadPriority.BelowNormal;
-            _setThread.Name = "DownloadManager_SetThread";
-            _setThread.Start();
-
-            _removeThread = new Thread(() =>
-            {
-                try
-                {
-                    for (;;)
-                    {
-                        var key = _removeKeys.Dequeue();
-
-                        lock (_thisLock)
-                        {
-                            _existManager.Set(key, false);
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            });
-            _removeThread.Priority = ThreadPriority.BelowNormal;
-            _removeThread.Name = "DownloadManager_RemoveThread";
-            _removeThread.Start();
+            _cacheManager.BlockSetEvents += this.BlockSetThread;
+            _cacheManager.BlockRemoveEvents += this.BlockRemoveThread;
 
             _connectionsManager.GetLockSignaturesEvent = () =>
             {
@@ -140,6 +75,42 @@ namespace Library.Net.Amoeba
 
                 return tags;
             };
+        }
+
+        private void BlockSetThread(IEnumerable<Key> keys)
+        {
+            try
+            {
+                lock (_thisLock)
+                {
+                    foreach (var key in keys)
+                    {
+                        _existManager.Set(key, true);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+
+        private void BlockRemoveThread(IEnumerable<Key> keys)
+        {
+            try
+            {
+                lock (_thisLock)
+                {
+                    foreach (var key in keys)
+                    {
+                        _existManager.Set(key, false);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         public IEnumerable<string> TrustSignatures
@@ -1112,6 +1083,23 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
+                _cacheManager.BlockSetEvents -= this.BlockSetThread;
+                _cacheManager.BlockRemoveEvents -= this.BlockRemoveThread;
+
+                if (_existManager != null)
+                {
+                    try
+                    {
+                        _existManager.Dispose();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    _existManager = null;
+                }
+
                 if (_watchTimer != null)
                 {
                     try
@@ -1125,12 +1113,6 @@ namespace Library.Net.Amoeba
 
                     _watchTimer = null;
                 }
-
-                _setKeys.Dispose();
-                _removeKeys.Dispose();
-
-                _setThread.Join();
-                _removeThread.Join();
             }
         }
     }

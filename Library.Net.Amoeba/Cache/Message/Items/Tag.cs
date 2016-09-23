@@ -16,9 +16,7 @@ namespace Library.Net.Amoeba
             Id = 1,
         }
 
-        private static Intern<string> _nameCache = new Intern<string>();
         private volatile string _name;
-        private static Intern<byte[]> _idCache = new Intern<byte[]>(new ByteArrayEqualityComparer());
         private volatile byte[] _id;
 
         private volatile int _hashCode;
@@ -119,7 +117,7 @@ namespace Library.Net.Amoeba
                 }
                 else
                 {
-                    _name = _nameCache.GetValue(value, this);
+                    _name = value;
                 }
             }
         }
@@ -139,12 +137,12 @@ namespace Library.Net.Amoeba
                 }
                 else
                 {
-                    _id = _idCache.GetValue(value, this);
+                    _id = value;
                 }
 
                 if (value != null)
                 {
-                    _hashCode = RuntimeHelpers.GetHashCode(_id);
+                    _hashCode = ItemUtils.GetHashCode(_id);
                 }
                 else
                 {

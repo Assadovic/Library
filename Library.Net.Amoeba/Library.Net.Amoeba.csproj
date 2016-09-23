@@ -145,6 +145,10 @@
     <Compile Include="Manager\Connection\UriCollection.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Library.Messaging\Library.Messaging.csproj">
+      <Project>{8617b9ae-bcbf-4f85-a09c-4daf0dbb9614}</Project>
+      <Name>Library.Messaging</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Library.Net.Connections\Library.Net.Connections.csproj">
       <Project>{38994E3C-0699-4D6C-AD02-F9F657340347}</Project>
       <Name>Library.Net.Connections</Name>

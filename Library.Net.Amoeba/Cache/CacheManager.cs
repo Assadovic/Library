@@ -10,17 +10,13 @@ using System.Threading.Tasks;
 using Library.Collections;
 using Library.Compression;
 using Library.Correction;
+using Library.Messaging;
 using Library.Security;
 using Library.Utilities;
 
 namespace Library.Net.Amoeba
 {
-    public delegate void CheckBlocksProgressEventHandler(int badBlockCount, int checkedBlockCount, int blockCount, out bool isStop);
-
-    delegate void BlockSetEventHandler(IEnumerable<Key> keys);
-    delegate void BlockRemoveEventHandler(IEnumerable<Key> keys);
-
-    delegate void ShareRemoveEventHandler(string path);
+    public delegate void CheckBlocksProgressEventHandler(object sender, int badBlockCount, int checkedBlockCount, int blockCount, out bool isStop);
 
     interface ISetOperators<T>
     {
@@ -47,10 +43,9 @@ namespace Library.Net.Amoeba
 
         private Dictionary<Key, int> _lockedKeys = new Dictionary<Key, int>();
 
-        public event BlockSetEventHandler BlockSetEvent;
-        public event BlockRemoveEventHandler BlockRemoveEvent;
-
-        public event ShareRemoveEventHandler ShareRemoveEvent;
+        private EventQueue<Key> _blockSetEventQueue = new EventQueue<Key>();
+        private EventQueue<Key> _blockRemoveEventQueue = new EventQueue<Key>();
+        private EventQueue<string> _shareRemoveEventQueue = new EventQueue<string>();
 
         private WatchTimer _watchTimer;
         private WatchTimer _checkTimer;
@@ -355,19 +350,40 @@ namespace Library.Net.Amoeba
             }
         }
 
-        protected virtual void OnBlockSetEvent(IEnumerable<Key> keys)
+        public event Action<IEnumerable<Key>> BlockSetEvents
         {
-            this.BlockSetEvent?.Invoke(keys);
+            add
+            {
+                _blockSetEventQueue.Events += value;
+            }
+            remove
+            {
+                _blockSetEventQueue.Events -= value;
+            }
         }
 
-        protected virtual void OnBlockRemoveEvent(IEnumerable<Key> keys)
+        public event Action<IEnumerable<Key>> BlockRemoveEvents
         {
-            this.BlockRemoveEvent?.Invoke(keys);
+            add
+            {
+                _blockRemoveEventQueue.Events += value;
+            }
+            remove
+            {
+                _blockRemoveEventQueue.Events -= value;
+            }
         }
 
-        protected virtual void OnShareRemoveEvent(string path)
+        public event Action<IEnumerable<string>> ShareRemoveEvents
         {
-            this.ShareRemoveEvent?.Invoke(path);
+            add
+            {
+                _shareRemoveEventQueue.Events += value;
+            }
+            remove
+            {
+                _shareRemoveEventQueue.Events -= value;
+            }
         }
 
         public int GetLength(Key key)
@@ -466,7 +482,7 @@ namespace Library.Net.Amoeba
                         if (_spaceSectors.Count < CacheManager.SpaceSectorUnit) _spaceSectors.Add(sector);
                     }
 
-                    this.OnBlockRemoveEvent(new Key[] { key });
+                    _blockRemoveEventQueue.Enqueue(key);
                 }
             }
         }
@@ -569,7 +585,7 @@ namespace Library.Net.Amoeba
                 foreach (var key in keys)
                 {
                     _settings.ClusterIndex.Remove(key);
-                    this.OnBlockRemoveEvent(new Key[] { key });
+                    _blockRemoveEventQueue.Enqueue(key);
                 }
 
                 _spaceSectors.Clear();
@@ -590,7 +606,7 @@ namespace Library.Net.Amoeba
                 int blockCount = list.Count;
                 bool isStop;
 
-                getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
 
                 if (isStop) return;
 
@@ -616,12 +632,12 @@ namespace Library.Net.Amoeba
                     }
 
                     if (checkedBlockCount % 8 == 0)
-                        getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                        getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
 
                     if (isStop) return;
                 }
 
-                getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
             }
         }
 
@@ -646,7 +662,7 @@ namespace Library.Net.Amoeba
                 int blockCount = list.Count;
                 bool isStop;
 
-                getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
 
                 if (isStop) return;
 
@@ -672,12 +688,12 @@ namespace Library.Net.Amoeba
                     }
 
                     if (checkedBlockCount % 8 == 0)
-                        getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                        getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
 
                     if (isStop) return;
                 }
 
-                getProgressEvent.Invoke(badBlockCount, checkedBlockCount, blockCount, out isStop);
+                getProgressEvent.Invoke(this, badBlockCount, checkedBlockCount, blockCount, out isStop);
             }
         }
 
@@ -754,7 +770,10 @@ namespace Library.Net.Amoeba
                 _shareIndexLink_Add(path, shareInfo);
             }
 
-            this.OnBlockSetEvent(keys);
+            foreach (var key in keys)
+            {
+                _blockSetEventQueue.Enqueue(key);
+            }
 
             return keys;
         }
@@ -770,8 +789,8 @@ namespace Library.Net.Amoeba
 
                 _shareIndexLink_Initialized = false;
 
-                this.OnShareRemoveEvent(path);
-                this.OnBlockRemoveEvent(info.Indexes.Keys.ToList());
+                _shareRemoveEventQueue.Enqueue(path);
+                _blockRemoveEventQueue.Enqueue(info.Indexes.Keys.ToList());
             }
         }
 
@@ -1437,7 +1456,7 @@ namespace Library.Net.Amoeba
                     clusterInfo.UpdateTime = DateTime.UtcNow;
                     _settings.ClusterIndex[key] = clusterInfo;
 
-                    this.OnBlockSetEvent(new Key[] { key });
+                    _blockSetEventQueue.Enqueue(key);
                 }
             }
         }
