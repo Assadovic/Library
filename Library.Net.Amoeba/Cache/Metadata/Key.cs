@@ -7,7 +7,7 @@ using Library.Utilities;
 namespace Library.Net.Amoeba
 {
     [DataContract(Name = "Key")]
-    public sealed class Key : ItemBase<Key>, IKey
+    public struct Key : IKey, IEquatable<Key>
     {
         private volatile HashAlgorithm _hashAlgorithm;
         private volatile byte[] _hash;
@@ -18,20 +18,24 @@ namespace Library.Net.Amoeba
 
         public Key(HashAlgorithm hashAlgorithm, byte[] hash)
         {
+            _hashAlgorithm = 0;
+            _hash = null;
+
+            _hashCode = 0;
+
             this.HashAlgorithm = hashAlgorithm;
             this.Hash = hash;
         }
 
-        protected override void ProtectedImport(Stream stream, BufferManager bufferManager, int count)
+        public static Key Import(Stream stream, BufferManager bufferManager)
         {
             using (var reader = new ItemStreamReader(stream, bufferManager))
             {
-                this.HashAlgorithm = (HashAlgorithm)reader.GetId();
-                this.Hash = reader.GetBytes();
+                return new Key((HashAlgorithm)reader.GetId(), reader.GetBytes());
             }
         }
 
-        protected override Stream Export(BufferManager bufferManager, int count)
+        public Stream Export(BufferManager bufferManager)
         {
             using (var writer = new ItemStreamWriter(bufferManager))
             {
@@ -53,11 +57,8 @@ namespace Library.Net.Amoeba
             return this.Equals((Key)obj);
         }
 
-        public override bool Equals(Key other)
+        public bool Equals(Key other)
         {
-            if ((object)other == null) return false;
-            if (object.ReferenceEquals(this, other)) return true;
-
             if (this.HashAlgorithm != other.HashAlgorithm
                 || (this.Hash == null) != (other.Hash == null))
             {
@@ -70,6 +71,16 @@ namespace Library.Net.Amoeba
             }
 
             return true;
+        }
+
+        public static bool operator ==(Key x, Key y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(Key x, Key y)
+        {
+            return !(x == y);
         }
 
         #region IKey

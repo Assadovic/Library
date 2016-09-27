@@ -16,11 +16,6 @@ namespace Library.Security
         private static readonly BufferManager _bufferManager = BufferManager.Instance;
         private static readonly ThreadLocal<Encoding> _threadLocalEncoding = new ThreadLocal<Encoding>(() => new UTF8Encoding(false));
 
-        private static Intern<string> _signatureCache = new Intern<string>();
-
-        private static ConditionalWeakTable<string, byte[]> _hashCache = new ConditionalWeakTable<string, byte[]>();
-        private static readonly object _hashCacheLockObject = new object();
-
         private unsafe static bool CheckBase64(string value)
         {
             fixed (char* p_value = value)
@@ -56,8 +51,7 @@ namespace Library.Security
                         bufferStream.Write(digitalSignature.PublicKey, 0, digitalSignature.PublicKey.Length);
                         bufferStream.Seek(0, SeekOrigin.Begin);
 
-                        var signature = digitalSignature.Nickname + "@" + NetworkConverter.ToBase64UrlString(Sha256.ComputeHash(bufferStream));
-                        return _signatureCache.GetValue(signature, digitalSignature);
+                        return string.Concat(digitalSignature.Nickname, "@", NetworkConverter.ToBase64UrlString(Sha256.ComputeHash(bufferStream)));
                     }
                 }
 
@@ -84,8 +78,7 @@ namespace Library.Security
                         bufferStream.Write(certificate.PublicKey, 0, certificate.PublicKey.Length);
                         bufferStream.Seek(0, SeekOrigin.Begin);
 
-                        var signature = certificate.Nickname + "@" + NetworkConverter.ToBase64UrlString(Sha256.ComputeHash(bufferStream));
-                        return _signatureCache.GetValue(signature, certificate);
+                        return string.Concat(certificate.Nickname, "@", NetworkConverter.ToBase64UrlString(Sha256.ComputeHash(bufferStream)));
                     }
                 }
 
@@ -161,27 +154,16 @@ namespace Library.Security
 
             try
             {
-                lock (_hashCacheLockObject)
-                {
-                    byte[] value;
+                var index = item.LastIndexOf('@');
+                if (index == -1) return null;
 
-                    if (!_hashCache.TryGetValue(item, out value))
-                    {
-                        var index = item.LastIndexOf('@');
-                        if (index == -1) return null;
+                var nickname = item.Substring(0, index);
+                var hash = item.Substring(index + 1);
 
-                        var nickname = item.Substring(0, index);
-                        var hash = item.Substring(index + 1);
+                if (nickname.Length > 256) return null;
+                if (hash.Length > 256 || !Signature.CheckBase64(hash)) return null;
 
-                        if (nickname.Length > 256) return null;
-                        if (hash.Length > 256 || !Signature.CheckBase64(hash)) return null;
-
-                        value = NetworkConverter.FromBase64UrlString(hash);
-                        _hashCache.Add(item, value);
-                    }
-
-                    return value;
-                }
+                return NetworkConverter.FromBase64UrlString(hash);
             }
             catch (Exception)
             {

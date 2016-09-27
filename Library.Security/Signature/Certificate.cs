@@ -21,10 +21,8 @@ namespace Library.Security
             Signature = 3,
         }
 
-        private static Intern<string> _nicknameCache = new Intern<string>();
         private volatile string _nickname;
         private volatile DigitalSignatureAlgorithm _digitalSignatureAlgorithm;
-        private static Intern<byte[]> _publicKeyCache = new Intern<byte[]>(new ByteArrayEqualityComparer());
         private volatile byte[] _publicKey;
         private volatile byte[] _signature;
 
@@ -134,12 +132,17 @@ namespace Library.Security
             if ((object)other == null) return false;
             if (object.ReferenceEquals(this, other)) return true;
 
-            if (!object.ReferenceEquals(this.Nickname, other.Nickname)
+            if (this.Nickname != other.Nickname
                 || this.DigitalSignatureAlgorithm != other.DigitalSignatureAlgorithm
-                || !object.ReferenceEquals(this.PublicKey, other.PublicKey)
+                || ((this.PublicKey == null) != (other.PublicKey == null))
                 || ((this.Signature == null) != (other.Signature == null)))
             {
                 return false;
+            }
+
+            if (this.PublicKey != null && other.PublicKey != null)
+            {
+                if (!Unsafe.Equals(this.PublicKey, other.PublicKey)) return false;
             }
 
             if (this.Signature != null && other.Signature != null)
@@ -189,7 +192,7 @@ namespace Library.Security
                 }
                 else
                 {
-                    _nickname = _nicknameCache.GetValue(value, this);
+                    _nickname = value;
                 }
             }
         }
@@ -229,7 +232,7 @@ namespace Library.Security
                 }
                 else
                 {
-                    _publicKey = _publicKeyCache.GetValue(value, this);
+                    _publicKey = value;
                 }
 
                 if (value != null)

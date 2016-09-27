@@ -21,13 +21,13 @@ namespace Library.Net.Amoeba
             CryptoKey = 4,
         }
 
-        private int _depth;
+        private volatile int _depth;
         private Key _key;
 
-        private CompressionAlgorithm _compressionAlgorithm;
+        private volatile CompressionAlgorithm _compressionAlgorithm;
 
-        private CryptoAlgorithm _cryptoAlgorithm;
-        private byte[] _cryptoKey;
+        private volatile CryptoAlgorithm _cryptoAlgorithm;
+        private volatile byte[] _cryptoKey;
 
         public static readonly int MaxCryptoKeyLength = 256;
 
@@ -87,7 +87,7 @@ namespace Library.Net.Amoeba
                     writer.Write((int)SerializeId.Depth, this.Depth);
                 }
                 // Key
-                if (this.Key != null)
+                if (this.Key != default(Key))
                 {
                     using (var exportStream = this.Key.Export(bufferManager))
                     {
@@ -118,7 +118,7 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            if (this.Key == null) return 0;
+            if (this.Key == default(Key)) return 0;
             else return this.Key.GetHashCode();
         }
 

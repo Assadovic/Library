@@ -124,7 +124,7 @@ namespace Library.Net.Amoeba
 
                 if (_blockBufferLength == _blockBufferPosition)
                 {
-                    Key key = null;
+                    Key key = default(Key);
 
                     if (_hashAlgorithm == HashAlgorithm.Sha256)
                     {
@@ -161,7 +161,7 @@ namespace Library.Net.Amoeba
 
             if (_blockBufferPosition != 0)
             {
-                Key key = null;
+                Key key = default(Key);
 
                 if (_hashAlgorithm == HashAlgorithm.Sha256)
                 {

@@ -1409,7 +1409,7 @@ namespace Library.Net.Amoeba
                 Value = 1,
             }
 
-            private volatile Key _key;
+            private Key _key;
             private ArraySegment<byte> _value;
 
             private volatile object _thisLock;
@@ -1480,7 +1480,7 @@ namespace Library.Net.Amoeba
                 using (var writer = new ItemStreamWriter(bufferManager))
                 {
                     // Key
-                    if (this.Key != null)
+                    if (this.Key != default(Key))
                     {
                         using (var exportStream = this.Key.Export(bufferManager))
                         {

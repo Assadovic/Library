@@ -827,7 +827,7 @@ namespace Library.Net.Amoeba
 
                 {
                     if (seed.Metadata == null) return;
-                    if (seed.Metadata.Key == null) return;
+                    if (seed.Metadata.Key == default(Key)) return;
 
                     var item = new DownloadItem();
 
