@@ -210,7 +210,6 @@ namespace Library.Net.Amoeba
 #endif
 
                 var pathList = new HashSet<string>();
-
                 pathList.UnionWith(_settings.ShareIndex.Keys);
 
                 foreach (var pair in _settings.SeedIndex.ToArray())
@@ -218,21 +217,22 @@ namespace Library.Net.Amoeba
                     var seed = pair.Key;
                     var info = pair.Value;
 
-                    bool flag = true;
-
                     if (info.Path != null)
                     {
-                        if (!(flag = pathList.Contains(info.Path))) goto End;
+                        if (!pathList.Contains(info.Path)) goto End;
                     }
+
+                    if (!this.Contains(seed.Metadata.Key)) goto End;
 
                     foreach (var key in info.Keys)
                     {
-                        if (!(flag = this.Contains(key))) goto End;
+                        if (!this.Contains(key)) goto End;
                     }
+
+                    continue;
 
                     End:;
 
-                    if (!flag)
                     {
                         if (info.Path != null)
                         {
