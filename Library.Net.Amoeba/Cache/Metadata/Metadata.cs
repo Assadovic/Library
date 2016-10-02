@@ -29,6 +29,8 @@ namespace Library.Net.Amoeba
         private volatile CryptoAlgorithm _cryptoAlgorithm;
         private volatile byte[] _cryptoKey;
 
+        private volatile int _hashCode;
+
         public static readonly int MaxCryptoKeyLength = 256;
 
         public Metadata(int depth, Key key, CompressionAlgorithm compressionAlgorithm, CryptoAlgorithm cryptoAlgorithm, byte[] cryptoKey)
@@ -178,6 +180,11 @@ namespace Library.Net.Amoeba
             private set
             {
                 _key = value;
+
+                // HashCode
+                {
+                    _hashCode = value.GetHashCode();
+                }
             }
         }
 

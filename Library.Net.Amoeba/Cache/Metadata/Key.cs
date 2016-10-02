@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Library.Io;
 using Library.Utilities;
@@ -7,12 +8,11 @@ using Library.Utilities;
 namespace Library.Net.Amoeba
 {
     [DataContract(Name = "Key")]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Key : IKey, IEquatable<Key>
     {
         private volatile HashAlgorithm _hashAlgorithm;
         private volatile byte[] _hash;
-
-        private volatile int _hashCode;
 
         public static readonly int MaxHashLength = 32;
 
@@ -20,8 +20,6 @@ namespace Library.Net.Amoeba
         {
             _hashAlgorithm = 0;
             _hash = null;
-
-            _hashCode = 0;
 
             this.HashAlgorithm = hashAlgorithm;
             this.Hash = hash;
@@ -47,7 +45,7 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return ItemUtils.GetHashCode(this.Hash);
         }
 
         public override bool Equals(object obj)
@@ -121,15 +119,6 @@ namespace Library.Net.Amoeba
                 else
                 {
                     _hash = value;
-                }
-
-                if (value != null)
-                {
-                    _hashCode = ItemUtils.GetHashCode(value);
-                }
-                else
-                {
-                    _hashCode = 0;
                 }
             }
         }
