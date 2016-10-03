@@ -14,7 +14,7 @@ namespace Library.Messaging
         private readonly object _thisLock = new object();
         private volatile bool _disposed;
 
-        public void Enqueue(T item)
+        public void Enqueue(params T[] item)
         {
             if (_disposed) throw new ObjectDisposedException(this.GetType().FullName);
 
@@ -131,15 +131,6 @@ namespace Library.Messaging
                 catch (Exception)
                 {
 
-                }
-            }
-
-            public void Enqueue(T item)
-            {
-                lock (_thisLock)
-                {
-                    _queue.Add(item);
-                    _resetEvent.Set();
                 }
             }
 
