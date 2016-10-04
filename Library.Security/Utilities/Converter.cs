@@ -147,6 +147,8 @@ namespace Library.Security
                                     while ((length = deflateStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                     {
                                         deflateBufferStream.Write(safeBuffer.Value, 0, length);
+
+                                        if (deflateBufferStream.Length > 1024 * 1024 * 32) throw new Exception("too large");
                                     }
                                 }
 

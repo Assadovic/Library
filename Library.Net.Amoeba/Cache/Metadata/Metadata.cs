@@ -22,14 +22,12 @@ namespace Library.Net.Amoeba
         }
 
         private volatile int _depth;
-        private Key _key;
+        private volatile Key _key;
 
         private volatile CompressionAlgorithm _compressionAlgorithm;
 
         private volatile CryptoAlgorithm _cryptoAlgorithm;
         private volatile byte[] _cryptoKey;
-
-        private volatile int _hashCode;
 
         public static readonly int MaxCryptoKeyLength = 256;
 
@@ -120,7 +118,8 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            if (this.Key == null) return 0;
+            else return this.Key.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -179,15 +178,6 @@ namespace Library.Net.Amoeba
             private set
             {
                 _key = value;
-
-                if (value != null)
-                {
-                    _hashCode = value.GetHashCode();
-                }
-                else
-                {
-                    _hashCode = 0;
-                }
             }
         }
 

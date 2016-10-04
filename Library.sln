@@ -48,6 +48,7 @@ Global
 		Library.Utilities\Library.Utilities.projitems*{82230c99-6599-4130-aac9-fc926abc0724}*SharedItemsImports = 4
 		Library.Utilities\Library.Utilities.projitems*{aa2384f3-29b1-42d5-9a4c-52303965c287}*SharedItemsImports = 4
 		Library.Utilities\Library.Utilities.projitems*{d314c626-a6fc-4fd5-be3c-9d36c2738418}*SharedItemsImports = 4
+		Library.Utilities\Library.Utilities.projitems*{e7d58a5e-1387-4fae-9dfc-1d60763e8f7d}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

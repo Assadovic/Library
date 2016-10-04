@@ -162,6 +162,8 @@ namespace Library.Net.Amoeba
                                 while ((length = deflateStream.Read(safeBuffer.Value, 0, safeBuffer.Value.Length)) > 0)
                                 {
                                     deflateBufferStream.Write(safeBuffer.Value, 0, length);
+
+                                    if (deflateBufferStream.Length > 1024 * 1024 * 256) throw new Exception("too large");
                                 }
                             }
 
@@ -183,11 +185,15 @@ namespace Library.Net.Amoeba
                             {
                                 deflateBufferStream.Dispose();
                             }
+
+                            throw;
                         }
                     }
                 }
-
-                throw new ArgumentException("ArgumentException");
+                else
+                {
+                    throw new ArgumentException("ArgumentException");
+                }
             }
             catch (Exception e)
             {

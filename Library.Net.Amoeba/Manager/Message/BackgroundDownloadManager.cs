@@ -656,7 +656,7 @@ namespace Library.Net.Amoeba
                                     {
                                         isStop = (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(metadata));
 
-                                        if (!isStop && (stream.Length > 1024 * 1024 * 32))
+                                        if (!isStop && (stream.Length > 1024 * 1024 * 256))
                                         {
                                             isStop = true;
                                             largeFlag = true;
