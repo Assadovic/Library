@@ -1079,7 +1079,10 @@ namespace Library.Net.Amoeba
             {
                 foreach (var item in _downloadItems.Values)
                 {
+                    if (item.Stream == null) continue;
+
                     item.Stream.Dispose();
+                    item.Stream = null;
                 }
 
                 if (_existManager != null)
