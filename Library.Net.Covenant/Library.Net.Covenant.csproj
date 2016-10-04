@@ -61,56 +61,43 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Exchange\Information\Bitmap\Bitmap.cs" />
-    <Compile Include="Exchange\Information\BlocksInfo\BlocksInfo.cs" />
-    <Compile Include="Exchange\Information\QueryBlocks\QueryBlocks.cs" />
-    <Compile Include="Exchange\Information\QueryBlocks\QueryBlocksCollection.cs" />
-    <Compile Include="Exchange\Information\_Interface\Bitmap\IBitmap.cs" />
-    <Compile Include="Exchange\Information\_Interface\BlocksInfo\IBlocksInfo.cs" />
-    <Compile Include="Exchange\ConnectionManager.cs" />
-    <Compile Include="Exchange\ExchangeManager.cs" />
-    <Compile Include="Exchange\Information\_Interface\QueryBlocks\IQueryBlocks.cs" />
-    <Compile Include="Search\Cache\Key\Key.cs" />
-    <Compile Include="Search\Cache\Key\KeyCollection.cs" />
-    <Compile Include="Search\Cache\Metadata\MetadataCollection.cs" />
-    <Compile Include="Search\Cache\_Interface\Location\ILocation.cs" />
-    <Compile Include="Search\Cache\Metadata\Metadata.cs" />
-    <Compile Include="Search\Cache\_Interface\Metadata\IMetadata.cs" />
-    <Compile Include="Exchange\Information\_Interface\IComputeHash.cs" />
-    <Compile Include="Search\Cache\_Interface\QueryMetadata\IQueryMetadata.cs" />
-    <Compile Include="Search\SearchManager.cs" />
-    <Compile Include="Exchange\ContentOptions.cs" />
-    <Compile Include="Exchange\ExchangeItem.cs" />
-    <Compile Include="Exchange\ContentManager.cs" />
-    <Compile Include="Search\Information\Link\Link.cs" />
-    <Compile Include="Search\Information\Link\LinkCollection.cs" />
-    <Compile Include="Search\Information\Store\Box.cs" />
-    <Compile Include="Search\Information\Store\BoxCollection.cs" />
-    <Compile Include="Search\Information\Store\Seed.cs" />
-    <Compile Include="Search\Information\Store\SeedCollection.cs" />
-    <Compile Include="Search\Information\Store\Store.cs" />
-    <Compile Include="Search\Information\Store\StoreCollection.cs" />
-    <Compile Include="Search\Information\_Interface\Link\ILink.cs" />
-    <Compile Include="Search\Information\_Interface\Store\IBox.cs" />
-    <Compile Include="Search\Information\_Interface\Store\ISeed.cs" />
-    <Compile Include="Search\Information\_Interface\Store\IStore.cs" />
-    <Compile Include="Search\MessagesManager.cs" />
-    <Compile Include="Search\Cache\_Interface\HashAlgorithm.cs" />
-    <Compile Include="Search\Cache\_Interface\Key\IKey.cs" />
-    <Compile Include="Search\Cache\Location\Location.cs" />
-    <Compile Include="Search\Cache\Location\LocationCollection.cs" />
-    <Compile Include="Search\Cache\QueryMetadata\QueryMetadata.cs" />
-    <Compile Include="Search\Cache\QueryMetadata\QueryMetadataCollection.cs" />
-    <Compile Include="CovenantConverter.cs" />
-    <Compile Include="Search\ConnectionManager.cs" />
-    <Compile Include="Utilities\CountManager.cs" />
-    <Compile Include="Utilities\EqualityComparer.cs" />
-    <Compile Include="Utilities\ItemUtilities.cs" />
+    <Compile Include="Cache\BitmapManager.cs" />
+    <Compile Include="Cache\Content\Items\KeywordCollection.cs" />
+    <Compile Include="Cache\Content\Seed.cs" />
+    <Compile Include="Cache\Content\SeedCollection.cs" />
+    <Compile Include="Cache\Content\_Interface\ISeed.cs" />
+    <Compile Include="Cache\Message\BroadcastMetadata.cs" />
+    <Compile Include="Cache\Message\BroadcastMetadataCollection.cs" />
+    <Compile Include="Cache\Message\_Interface\IBroadcastMetadata.cs" />
+    <Compile Include="Cache\Metadata\BlocksInfo.cs" />
+    <Compile Include="Cache\Metadata\Metadata.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IMetadata.cs" />
+    <Compile Include="Information\Link\Link.cs" />
+    <Compile Include="Information\Link\LinkCollection.cs" />
+    <Compile Include="Information\Store\Box.cs" />
+    <Compile Include="Information\Store\BoxCollection.cs" />
+    <Compile Include="Information\Store\Store.cs" />
+    <Compile Include="Information\Store\StoreCollection.cs" />
+    <Compile Include="Information\_Interface\Link\ILink.cs" />
+    <Compile Include="Information\_Interface\Store\IBox.cs" />
+    <Compile Include="Information\_Interface\Store\IStore.cs" />
+    <Compile Include="Manager\Connection\Exchange\QueryBlocks\QueryBlocks.cs" />
+    <Compile Include="Manager\Connection\Exchange\QueryBlocks\QueryBlocksCollection.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\IHashAlgorithm.cs" />
+    <Compile Include="Cache\Metadata\_Interface\IBlocksInfo.cs" />
+    <Compile Include="Manager\Connection\Exchange\ConnectionManager.cs" />
+    <Compile Include="Manager\Connection\Exchange\QueryBlocks\QueryBlocks\IQueryBlocks.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\IComputeHash.cs" />
+    <Compile Include="Manager\Connection\Search\SearchManager.cs" />
+    <Compile Include="Cache\CacheManager.cs" />
+    <Compile Include="Manager\Connection\Search\MessagesManager.cs" />
+    <Compile Include="Manager\CovenantConverter.cs" />
+    <Compile Include="Manager\Connection\Search\ConnectionManager.cs" />
+    <Compile Include="Manager\Connection\Search\Utilities\CountManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Search\NodeCollection.cs" />
-    <Compile Include="Search\Node.cs" />
-    <Compile Include="Search\UriCollection.cs" />
-    <Compile Include="Utilities\WatchTimer.cs" />
+    <Compile Include="Manager\Connection\Search\NodeCollection.cs" />
+    <Compile Include="Manager\Connection\Search\Node.cs" />
+    <Compile Include="Manager\Connection\Search\UriCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library.Collections\Library.Collections.csproj">
@@ -167,6 +154,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup />
+  <Import Project="..\Library.Utilities\Library.Utilities.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
