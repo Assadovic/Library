@@ -27,6 +27,8 @@ namespace Library.Net.Amoeba
     {
         private BackgroundDownloadState _state;
 
+        private Metadata _metadata;
+
         private int _depth;
         private Index _index;
         private Stream _stream;
@@ -72,6 +74,25 @@ namespace Library.Net.Amoeba
                 lock (this.ThisLock)
                 {
                     _state = value;
+                }
+            }
+        }
+
+        [DataMember(Name = "Metadata")]
+        public Metadata Metadata
+        {
+            get
+            {
+                lock (this.ThisLock)
+                {
+                    return _metadata;
+                }
+            }
+            set
+            {
+                lock (this.ThisLock)
+                {
+                    _metadata = value;
                 }
             }
         }

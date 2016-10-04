@@ -68,7 +68,7 @@ namespace Library.Net.Amoeba
             _bitmapManager = bitmapManager;
             _bufferManager = bufferManager;
 
-            _settings = new Settings(this.ThisLock);
+            _settings = new Settings();
 
             _threadCount = Math.Max(1, Math.Min(System.Environment.ProcessorCount, 32) / 2);
 
@@ -1553,9 +1553,7 @@ namespace Library.Net.Amoeba
 
         private class Settings : Library.Configuration.SettingsBase
         {
-            private volatile object _thisLock;
-
-            public Settings(object lockObject)
+            public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
                     new Library.Configuration.SettingContent<long>() { Name = "Size", Value = (long)1024 * 1024 * 1024 * 256 },
                     new Library.Configuration.SettingContent<LockedHashDictionary<Key, ClusterInfo>>() { Name = "ClusterIndex", Value = new LockedHashDictionary<Key, ClusterInfo>() },
@@ -1563,40 +1561,28 @@ namespace Library.Net.Amoeba
                     new Library.Configuration.SettingContent<LockedHashDictionary<Seed, SeedInfo>>() { Name = "SeedIndex", Value = new LockedHashDictionary<Seed, SeedInfo>() },
                 })
             {
-                _thisLock = lockObject;
+
             }
 
             public override void Load(string directoryPath)
             {
-                lock (_thisLock)
-                {
-                    base.Load(directoryPath);
-                }
+                base.Load(directoryPath);
             }
 
             public override void Save(string directoryPath)
             {
-                lock (_thisLock)
-                {
-                    base.Save(directoryPath);
-                }
+                base.Save(directoryPath);
             }
 
             public long Size
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (long)this["Size"];
-                    }
+                    return (long)this["Size"];
                 }
                 set
                 {
-                    lock (_thisLock)
-                    {
-                        this["Size"] = value;
-                    }
+                    this["Size"] = value;
                 }
             }
 
@@ -1604,10 +1590,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashDictionary<Key, ClusterInfo>)this["ClusterIndex"];
-                    }
+                    return (LockedHashDictionary<Key, ClusterInfo>)this["ClusterIndex"];
                 }
             }
 
@@ -1615,10 +1598,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashDictionary<string, ShareInfo>)this["ShareIndex"];
-                    }
+                    return (LockedHashDictionary<string, ShareInfo>)this["ShareIndex"];
                 }
             }
 
@@ -1626,10 +1606,7 @@ namespace Library.Net.Amoeba
             {
                 get
                 {
-                    lock (_thisLock)
-                    {
-                        return (LockedHashDictionary<Seed, SeedInfo>)this["SeedIndex"];
-                    }
+                    return (LockedHashDictionary<Seed, SeedInfo>)this["SeedIndex"];
                 }
             }
         }
@@ -1753,6 +1730,10 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
+                _blockSetEventQueue.Dispose();
+                _blockRemoveEventQueue.Dispose();
+                _shareRemoveEventQueue.Dispose();
+
                 if (_fileStream != null)
                 {
                     try

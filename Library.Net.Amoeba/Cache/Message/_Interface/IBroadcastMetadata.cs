@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    public interface IBroadcastMetadata : IComputeHash
+    interface IBroadcastMetadata : IComputeHash
     {
         string Type { get; }
         DateTime CreationTime { get; }

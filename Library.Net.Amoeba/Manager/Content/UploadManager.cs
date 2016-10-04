@@ -947,9 +947,7 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _connectionsManager.BlockUploadedEvents -= this.BlockUploadedThread;
-                _cacheManager.BlockRemoveEvents -= this.BlockUploadedThread;
-                _cacheManager.ShareRemoveEvents -= this.ShareRemoveThread;
+
             }
         }
     }

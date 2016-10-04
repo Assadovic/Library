@@ -620,6 +620,8 @@ namespace Library.Net.Amoeba
         public void MulticastUpload(Tag tag,
             Website website,
 
+            int miningLimit,
+            TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
             if (tag == null) throw new ArgumentNullException(nameof(tag));
@@ -640,8 +642,8 @@ namespace Library.Net.Amoeba
                 item.BlockLength = 1024 * 1024 * 1;
                 item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
                 item.HashAlgorithm = HashAlgorithm.Sha256;
-                item.MiningLimit = 0;
-                item.MiningTime = TimeSpan.Zero;
+                item.MiningLimit = miningLimit;
+                item.MiningTime = miningTime;
                 item.DigitalSignature = digitalSignature;
 
                 _settings.UploadItems.RemoveAll((target) =>
@@ -766,9 +768,6 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _connectionsManager.BlockUploadedEvents -= this.BlockUploadedThread;
-                _cacheManager.BlockRemoveEvents -= this.BlockUploadedThread;
-
                 if (_watchTimer != null)
                 {
                     try

@@ -1096,9 +1096,6 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _cacheManager.BlockSetEvents -= this.BlockSetThread;
-                _cacheManager.BlockRemoveEvents -= this.BlockRemoveThread;
-
                 if (_existManager != null)
                 {
                     try

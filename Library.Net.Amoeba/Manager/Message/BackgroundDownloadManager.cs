@@ -265,7 +265,7 @@ namespace Library.Net.Amoeba
 
                 if (item.State != BackgroundDownloadState.Completed)
                 {
-                    _cacheManager.Unlock(metadata.Key);
+                    _cacheManager.Unlock(item.Metadata.Key);
 
                     foreach (var index in item.Indexes)
                     {
@@ -338,7 +338,6 @@ namespace Library.Net.Amoeba
                 Thread.Sleep(1000 * 1);
                 if (this.State == ManagerState.Stop) return;
 
-                Metadata metadata = null;
                 BackgroundDownloadItem item = null;
 
                 try
@@ -348,32 +347,28 @@ namespace Library.Net.Amoeba
                         if (_downloadItems.Count > 0)
                         {
                             {
-                                var pairs = _downloadItems
-                                   .Where(n => n.Value.State == BackgroundDownloadState.Downloading)
+                                var items = _downloadItems.Values
+                                   .Where(n => n.State == BackgroundDownloadState.Downloading)
                                    .Where(x =>
                                    {
-                                       if (x.Value.Depth == 1) return 0 == (!_cacheManager.Contains(x.Key.Key) ? 1 : 0);
-                                       else return 0 == (x.Value.Index.Groups.Sum(n => n.InformationLength) - x.Value.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
+                                       if (x.Depth == 1) return 0 == (!_cacheManager.Contains(x.Metadata.Key) ? 1 : 0);
+                                       else return 0 == (x.Index.Groups.Sum(n => n.InformationLength) - x.Index.Groups.Sum(n => Math.Min(n.InformationLength, _existManager.GetCount(n))));
                                    })
                                    .ToList();
 
-                                var pair = pairs.FirstOrDefault();
-                                metadata = pair.Key;
-                                item = pair.Value;
+                                item = items.FirstOrDefault();
                             }
 
                             if (item == null)
                             {
-                                var pairs = _downloadItems
-                                    .Where(n => n.Value.State == BackgroundDownloadState.Downloading)
+                                var items = _downloadItems.Values
+                                    .Where(n => n.State == BackgroundDownloadState.Downloading)
                                     .ToList();
 
-                                if (pairs.Count > 0)
+                                if (items.Count > 0)
                                 {
-                                    round = (round >= pairs.Count) ? 0 : round;
-                                    var pair = pairs[round++];
-                                    metadata = pair.Key;
-                                    item = pair.Value;
+                                    round = (round >= items.Count) ? 0 : round;
+                                    item = items[round++];
                                 }
                             }
                         }
@@ -390,11 +385,11 @@ namespace Library.Net.Amoeba
                 {
                     if (item.Depth == 1)
                     {
-                        if (!_cacheManager.Contains(metadata.Key))
+                        if (!_cacheManager.Contains(item.Metadata.Key))
                         {
                             item.State = BackgroundDownloadState.Downloading;
 
-                            _connectionsManager.Download(metadata.Key);
+                            _connectionsManager.Download(item.Metadata.Key);
                         }
                         else
                         {
@@ -477,7 +472,6 @@ namespace Library.Net.Amoeba
                 Thread.Sleep(1000 * 1);
                 if (this.State == ManagerState.Stop) return;
 
-                Metadata metadata = null;
                 BackgroundDownloadItem item = null;
 
                 try
@@ -486,17 +480,14 @@ namespace Library.Net.Amoeba
                     {
                         if (_downloadItems.Count > 0)
                         {
-                            var pair = _downloadItems
-                                .Where(n => n.Value.State == BackgroundDownloadState.Decoding)
-                                .Where(n => !_workingMetadatas.Contains(n.Key))
+                            item = _downloadItems.Values
+                                .Where(n => n.State == BackgroundDownloadState.Decoding)
+                                .Where(n => !_workingMetadatas.Contains(n.Metadata))
                                 .FirstOrDefault();
 
-                            metadata = pair.Key;
-                            item = pair.Value;
-
-                            if (metadata != null)
+                            if (item != null)
                             {
-                                _workingMetadatas.Add(metadata);
+                                _workingMetadatas.Add(item.Metadata);
                             }
                         }
                     }
@@ -511,7 +502,7 @@ namespace Library.Net.Amoeba
                 try
                 {
                     {
-                        if ((item.Depth == 1 && !_cacheManager.Contains(metadata.Key))
+                        if ((item.Depth == 1 && !_cacheManager.Contains(item.Metadata.Key))
                             || (item.Depth > 1 && !item.Index.Groups.All(n => _existManager.GetCount(n) >= n.InformationLength)))
                         {
                             item.State = BackgroundDownloadState.Downloading;
@@ -525,10 +516,10 @@ namespace Library.Net.Amoeba
 
                             if (item.Depth == 1)
                             {
-                                keys.Add(metadata.Key);
-                                compressionAlgorithm = metadata.CompressionAlgorithm;
-                                cryptoAlgorithm = metadata.CryptoAlgorithm;
-                                cryptoKey = metadata.CryptoKey;
+                                keys.Add(item.Metadata.Key);
+                                compressionAlgorithm = item.Metadata.CompressionAlgorithm;
+                                cryptoAlgorithm = item.Metadata.CryptoAlgorithm;
+                                cryptoKey = item.Metadata.CryptoKey;
                             }
                             else
                             {
@@ -544,7 +535,7 @@ namespace Library.Net.Amoeba
 
                                             while (!task.IsCompleted)
                                             {
-                                                if (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(metadata)) tokenSource.Cancel();
+                                                if (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(item.Metadata)) tokenSource.Cancel();
 
                                                 Thread.Sleep(1000);
                                             }
@@ -565,7 +556,7 @@ namespace Library.Net.Amoeba
 
                             item.State = BackgroundDownloadState.Decoding;
 
-                            if (item.Depth < metadata.Depth)
+                            if (item.Depth < item.Metadata.Depth)
                             {
                                 string fileName = null;
                                 bool largeFlag = false;
@@ -575,7 +566,7 @@ namespace Library.Net.Amoeba
                                     using (FileStream stream = BackgroundDownloadManager.GetUniqueFileStream(Path.Combine(_workDirectory, "index")))
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(metadata));
+                                        isStop = (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(item.Metadata));
 
                                         if (!isStop && (stream.Length > 1024 * 1024 * 256))
                                         {
@@ -654,7 +645,7 @@ namespace Library.Net.Amoeba
 
                                     using (ProgressStream decodingProgressStream = new ProgressStream(stream, (object sender, long readSize, long writeSize, out bool isStop) =>
                                     {
-                                        isStop = (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(metadata));
+                                        isStop = (this.State == ManagerState.Stop || !_downloadItems.ContainsKey(item.Metadata));
 
                                         if (!isStop && (stream.Length > 1024 * 1024 * 256))
                                         {
@@ -694,7 +685,7 @@ namespace Library.Net.Amoeba
 
                                     item.Stream = stream;
 
-                                    _cacheManager.Unlock(metadata.Key);
+                                    _cacheManager.Unlock(item.Metadata.Key);
 
                                     foreach (var index in item.Indexes)
                                     {
@@ -720,7 +711,7 @@ namespace Library.Net.Amoeba
                     // Check
                     {
                         var list = new List<Key>();
-                        list.Add(metadata.Key);
+                        list.Add(item.Metadata.Key);
 
                         foreach (var index in item.Indexes)
                         {
@@ -764,7 +755,7 @@ namespace Library.Net.Amoeba
                 }
                 finally
                 {
-                    _workingMetadatas.Remove(metadata);
+                    _workingMetadatas.Remove(item.Metadata);
                 }
             }
         }
@@ -786,6 +777,7 @@ namespace Library.Net.Amoeba
                 if (!_downloadItems.TryGetValue(broadcastMetadata.Metadata, out item))
                 {
                     item = new BackgroundDownloadItem();
+                    item.Metadata = broadcastMetadata.Metadata;
                     item.Depth = 1;
                     item.State = BackgroundDownloadState.Downloading;
 
@@ -850,6 +842,7 @@ namespace Library.Net.Amoeba
                     if (!_downloadItems.TryGetValue(unicastMetadata.Metadata, out item))
                     {
                         item = new BackgroundDownloadItem();
+                        item.Metadata = unicastMetadata.Metadata;
                         item.Depth = 1;
                         item.State = BackgroundDownloadState.Downloading;
 
@@ -922,6 +915,7 @@ namespace Library.Net.Amoeba
                     if (!_downloadItems.TryGetValue(multicastMetadata.Metadata, out item))
                     {
                         item = new BackgroundDownloadItem();
+                        item.Metadata = multicastMetadata.Metadata;
                         item.Depth = 1;
                         item.State = BackgroundDownloadState.Downloading;
 
@@ -1083,8 +1077,10 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
-                _cacheManager.BlockSetEvents -= this.BlockSetThread;
-                _cacheManager.BlockRemoveEvents -= this.BlockRemoveThread;
+                foreach (var item in _downloadItems.Values)
+                {
+                    item.Stream.Dispose();
+                }
 
                 if (_existManager != null)
                 {

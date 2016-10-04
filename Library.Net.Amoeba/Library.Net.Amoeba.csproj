@@ -83,7 +83,7 @@
     <Compile Include="Cache\Message\_Interface\Items\ITag.cs" />
     <Compile Include="Cache\Message\_Interface\IMulticastMetadata.cs" />
     <Compile Include="Cache\Message\_Interface\IUnicastMetadata.cs" />
-    <Compile Include="Cache\Message\_Interface\Common\IComputeHash.cs" />
+    <Compile Include="Cache\Metadata\_Interface\Common\IComputeHash.cs" />
     <Compile Include="Cache\Metadata\Key.cs" />
     <Compile Include="Cache\Metadata\KeyCollection.cs" />
     <Compile Include="Cache\Content\Items\KeywordCollection.cs" />
@@ -115,7 +115,7 @@
     <Compile Include="Manager\Connection\ClientManager.cs" />
     <Compile Include="Manager\Connection\ConnectionFilterCollection.cs" />
     <Compile Include="Manager\Connection\ConnectionFilter.cs" />
-    <Compile Include="Manager\Connection\PacketsManager.cs" />
+    <Compile Include="Manager\Connection\PacketControlManager.cs" />
     <Compile Include="Manager\Content\Utilities\ExistManager.cs" />
     <Compile Include="Manager\Content\DownloadItem.cs" />
     <Compile Include="Manager\Content\DownloadManager.cs" />

@@ -32,7 +32,7 @@ namespace Library.Net.Amoeba
         private byte[] _mySessionId;
 
         private LockedList<ConnectionManager> _connectionManagers;
-        private PacketsManager _packetsManager;
+        private PacketControlManager _packetControlManager;
 
         private LockedHashDictionary<Node, List<Key>> _pushBlocksLinkDictionary = new LockedHashDictionary<Node, List<Key>>();
         private LockedHashDictionary<Node, List<Key>> _pushBlocksRequestDictionary = new LockedHashDictionary<Node, List<Key>>();
@@ -132,8 +132,8 @@ namespace Library.Net.Amoeba
 
             _connectionManagers = new LockedList<ConnectionManager>();
 
-            _packetsManager = new PacketsManager();
-            _packetsManager.GetLockNodesEvent = (object sender) =>
+            _packetControlManager = new PacketControlManager();
+            _packetControlManager.GetLockNodesEvent = (object sender) =>
             {
                 lock (_thisLock)
                 {
@@ -282,7 +282,7 @@ namespace Library.Net.Amoeba
                     {
                         var contexts = new List<InformationContext>();
 
-                        var packetManager = _packetsManager[connectionManager.Node];
+                        var packetManager = _packetControlManager[connectionManager.Node];
 
                         contexts.Add(new InformationContext("Id", packetManager.Id));
                         contexts.Add(new InformationContext("Node", connectionManager.Node));
@@ -451,7 +451,7 @@ namespace Library.Net.Amoeba
 
             lock (_thisLock)
             {
-                var priority = (long)_packetsManager[node].Priority;
+                var priority = (long)_packetControlManager[node].Priority;
 
                 return ((double)(priority + average)) / (average * 2);
             }
@@ -493,16 +493,16 @@ namespace Library.Net.Amoeba
                 _connectionManagers.Add(connectionManager);
 
                 {
-                    var tempPacketManager = _packetsManager[connectionManager.Node];
+                    var tempPacketManager = _packetControlManager[connectionManager.Node];
 
                     if (tempPacketManager.SessionId != null
                         && !CollectionUtils.Equals(tempPacketManager.SessionId, connectionManager.SesstionId))
                     {
-                        _packetsManager.Remove(connectionManager.Node);
+                        _packetControlManager.Remove(connectionManager.Node);
                     }
                 }
 
-                var packetManager = _packetsManager[connectionManager.Node];
+                var packetManager = _packetControlManager[connectionManager.Node];
                 packetManager.SessionId = connectionManager.SesstionId;
                 packetManager.LastPullTime = DateTime.UtcNow;
 
@@ -525,7 +525,7 @@ namespace Library.Net.Amoeba
                             _sentByteCount += connectionManager.SentByteCount;
                             _receivedByteCount += connectionManager.ReceivedByteCount;
 
-                            var packetManager = _packetsManager[connectionManager.Node];
+                            var packetManager = _packetControlManager[connectionManager.Node];
                             packetManager.SentByteCount.Add(connectionManager.SentByteCount);
                             packetManager.ReceivedByteCount.Add(connectionManager.ReceivedByteCount);
 
@@ -780,8 +780,8 @@ namespace Library.Net.Amoeba
                             nodeSortItems.Add(new NodeSortItem()
                             {
                                 Node = connectionManager.Node,
-                                Priority = _packetsManager[connectionManager.Node].Priority,
-                                LastPullTime = _packetsManager[connectionManager.Node].LastPullTime,
+                                Priority = _packetControlManager[connectionManager.Node].Priority,
+                                LastPullTime = _packetControlManager[connectionManager.Node].LastPullTime,
                             });
                         }
                     }
@@ -912,7 +912,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
 
                     var diffusionBlocksList = new List<Key>();
@@ -1022,7 +1022,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
 
                     {
@@ -1070,7 +1070,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
 
                     var pushBlocksLinkList = new HashSet<Key>();
@@ -1277,7 +1277,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
 
                     // Broadcast
@@ -1371,7 +1371,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
 
                     var pushBroadcastSignaturesRequestList = new HashSet<string>();
@@ -1659,7 +1659,7 @@ namespace Library.Net.Amoeba
 
             try
             {
-                var packetManager = _packetsManager[connectionManager.Node];
+                var packetManager = _packetControlManager[connectionManager.Node];
 
                 var nodeUpdateTime = new Stopwatch();
                 var updateTime = new Stopwatch();
@@ -2140,7 +2140,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.PullBlocksLink.Count > _maxBlockLinkCount * packetManager.PullBlocksLink.SurvivalTime.TotalMinutes) return;
 
@@ -2160,7 +2160,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.PullBlocksRequest.Count > _maxBlockRequestCount * packetManager.PullBlocksRequest.SurvivalTime.TotalMinutes) return;
 
@@ -2194,7 +2194,7 @@ namespace Library.Net.Amoeba
 
                     foreach (var node in otherNodes)
                     {
-                        packetManagers[node] = _packetsManager[node];
+                        packetManagers[node] = _packetControlManager[node];
                     }
                 }
 
@@ -2240,7 +2240,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.PullBroadcastMetadatasRequest.Count > _maxMetadataRequestCount * packetManager.PullBroadcastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
@@ -2260,7 +2260,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.StockBroadcastMetadatas.Count > _maxMetadataCount * packetManager.StockBroadcastMetadatas.SurvivalTime.TotalMinutes) return;
 
@@ -2284,7 +2284,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.PullUnicastMetadatasRequest.Count > _maxMetadataRequestCount * packetManager.PullUnicastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
@@ -2304,7 +2304,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.StockUnicastMetadatas.Count > _maxMetadataCount * packetManager.StockUnicastMetadatas.SurvivalTime.TotalMinutes) return;
 
@@ -2326,7 +2326,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.PullMulticastMetadatasRequest.Count > _maxMetadataRequestCount * packetManager.PullMulticastMetadatasRequest.SurvivalTime.TotalMinutes) return;
 
@@ -2346,7 +2346,7 @@ namespace Library.Net.Amoeba
             var connectionManager = sender as ConnectionManager;
             if (connectionManager == null) return;
 
-            var packetManager = _packetsManager[connectionManager.Node];
+            var packetManager = _packetControlManager[connectionManager.Node];
 
             if (packetManager.StockMulticastMetadatas.Count > _maxMetadataCount * packetManager.StockMulticastMetadatas.SurvivalTime.TotalMinutes) return;
 
@@ -2642,7 +2642,7 @@ namespace Library.Net.Amoeba
                     _cuttingNodes.Clear();
                     _removeNodes.Clear();
 
-                    _packetsManager.Clear();
+                    _packetControlManager.Clear();
                 }
             }
         }
@@ -3359,6 +3359,8 @@ namespace Library.Net.Amoeba
 
             if (disposing)
             {
+                _blockUploadedEventQueue.Dispose();
+
                 if (_refreshTimer != null)
                 {
                     try
@@ -3373,18 +3375,18 @@ namespace Library.Net.Amoeba
                     _refreshTimer = null;
                 }
 
-                if (_packetsManager != null)
+                if (_packetControlManager != null)
                 {
                     try
                     {
-                        _packetsManager.Dispose();
+                        _packetControlManager.Dispose();
                     }
                     catch (Exception)
                     {
 
                     }
 
-                    _packetsManager = null;
+                    _packetControlManager = null;
                 }
 
                 if (_bandwidthLimit != null)

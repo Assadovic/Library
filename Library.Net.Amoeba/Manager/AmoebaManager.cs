@@ -754,13 +754,15 @@ namespace Library.Net.Amoeba
         public void MulticastUpload(Tag tag,
             Website website,
 
+            int miningLimit,
+            TimeSpan miningTime,
             DigitalSignature digitalSignature)
         {
             this.Check();
 
             lock (this.ThisLock)
             {
-                _backgroundUploadManager.MulticastUpload(tag, website, digitalSignature);
+                _backgroundUploadManager.MulticastUpload(tag, website, miningLimit, miningTime, digitalSignature);
             }
         }
 

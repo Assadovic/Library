@@ -2,7 +2,7 @@
 
 namespace Library.Net.Amoeba
 {
-    public interface IMulticastMetadata<TTag> : IComputeHash
+    interface IMulticastMetadata<TTag> : IComputeHash
         where TTag : ITag
     {
         string Type { get; }

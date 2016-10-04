@@ -10,7 +10,7 @@ namespace Library.Net.Amoeba
 {
     delegate IEnumerable<Node> GetLockNodesEventHandler(object sender);
 
-    sealed class PacketsManager : ManagerBase, IThisLock
+    sealed class PacketControlManager : ManagerBase, IThisLock
     {
         private Dictionary<Node, PacketManager> _packetManagerDictionary = new Dictionary<Node, PacketManager>();
         private Dictionary<Node, DateTime> _updateTimeDictionary = new Dictionary<Node, DateTime>();
@@ -24,7 +24,7 @@ namespace Library.Net.Amoeba
 
         public GetLockNodesEventHandler GetLockNodesEvent;
 
-        public PacketsManager()
+        public PacketControlManager()
         {
             _refreshTimer = new WatchTimer(this.RefreshTimer, new TimeSpan(0, 0, 30));
         }
