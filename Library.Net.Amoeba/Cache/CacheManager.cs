@@ -747,7 +747,7 @@ namespace Library.Net.Amoeba
                     var length = (int)Math.Min(stream.Length - stream.Position, blockLength);
                     stream.Read(safeBuffer.Value, 0, length);
 
-                    Key key = default(Key);
+                    Key key = null;
 
                     if (hashAlgorithm == HashAlgorithm.Sha256)
                     {

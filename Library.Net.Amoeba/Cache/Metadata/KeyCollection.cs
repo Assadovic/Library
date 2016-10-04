@@ -11,7 +11,7 @@ namespace Library.Net.Amoeba
 
         protected override bool Filter(Key item)
         {
-            if (item == default(Key)) return true;
+            if (item == null) return true;
 
             return false;
         }

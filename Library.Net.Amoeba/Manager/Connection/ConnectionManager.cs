@@ -1480,7 +1480,7 @@ namespace Library.Net.Amoeba
                 using (var writer = new ItemStreamWriter(bufferManager))
                 {
                     // Key
-                    if (this.Key != default(Key))
+                    if (this.Key != null)
                     {
                         using (var exportStream = this.Key.Export(bufferManager))
                         {

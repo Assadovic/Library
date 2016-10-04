@@ -89,7 +89,7 @@ namespace Library.Net.Amoeba
                     writer.Write((int)SerializeId.Depth, this.Depth);
                 }
                 // Key
-                if (this.Key != default(Key))
+                if (this.Key != null)
                 {
                     using (var exportStream = this.Key.Export(bufferManager))
                     {
@@ -120,8 +120,7 @@ namespace Library.Net.Amoeba
 
         public override int GetHashCode()
         {
-            if (this.Key == default(Key)) return 0;
-            else return this.Key.GetHashCode();
+            return _hashCode;
         }
 
         public override bool Equals(object obj)
@@ -181,9 +180,13 @@ namespace Library.Net.Amoeba
             {
                 _key = value;
 
-                // HashCode
+                if (value != null)
                 {
                     _hashCode = value.GetHashCode();
+                }
+                else
+                {
+                    _hashCode = 0;
                 }
             }
         }

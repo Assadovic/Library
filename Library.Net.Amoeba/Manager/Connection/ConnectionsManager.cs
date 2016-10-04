@@ -406,7 +406,7 @@ namespace Library.Net.Amoeba
 
         private static bool Check(Key key)
         {
-            return !(key == default(Key)
+            return !(key == null
                 || key.Hash == null || key.Hash.Length == 0
                 || key.HashAlgorithm != HashAlgorithm.Sha256);
         }
@@ -1855,7 +1855,7 @@ namespace Library.Net.Amoeba
                         // PushBlock
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
-                            Key key = default(Key);
+                            Key key = null;
 
                             lock (_diffusionBlocksDictionary.ThisLock)
                             {
@@ -1871,7 +1871,7 @@ namespace Library.Net.Amoeba
                                 }
                             }
 
-                            if (key != default(Key))
+                            if (key != null)
                             {
                                 var buffer = new ArraySegment<byte>();
 
@@ -1917,7 +1917,7 @@ namespace Library.Net.Amoeba
                         // PushBlock
                         if (connectionCount >= _uploadingConnectionCountLowerLimit)
                         {
-                            Key key = default(Key);
+                            Key key = null;
 
                             lock (_uploadBlocksDictionary.ThisLock)
                             {
@@ -1933,7 +1933,7 @@ namespace Library.Net.Amoeba
                                 }
                             }
 
-                            if (key != default(Key))
+                            if (key != null)
                             {
                                 var buffer = new ArraySegment<byte>();
 
