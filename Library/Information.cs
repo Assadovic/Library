@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace Library
@@ -46,7 +48,7 @@ namespace Library
         }
     }
 
-    public class Information : IEnumerable<InformationContext>
+    public class Information : DynamicObject, IEnumerable<InformationContext>
     {
         private Dictionary<string, object> _contexts;
 
@@ -58,6 +60,32 @@ namespace Library
             {
                 _contexts.Add(item.Key, item.Value);
             }
+        }
+
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
+            return _contexts.Keys.ToArray();
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        {
+            Type type = typeof(Information);
+
+            try
+            {
+                result = type.InvokeMember(binder.Name, BindingFlags.InvokeMethod, null, this, args);
+                return true;
+            }
+            catch (Exception)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            return _contexts.TryGetValue(binder.Name, out result);
         }
 
         public object this[string propertyName]

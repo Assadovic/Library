@@ -261,14 +261,7 @@ namespace Library.Io
                 _readerBufferLength = 0;
                 _readerBufferPosition = 0;
 
-                try
-                {
-                    _stream.Position = _position;
-                }
-                catch (Exception)
-                {
-
-                }
+                _stream.Position = _position;
             }
 
             _mode = StreamMode.Write;
