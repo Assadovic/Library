@@ -583,7 +583,9 @@ namespace Library.Net.Amoeba
                                 catch (StopIoException)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     if (largeFlag)
                                     {
@@ -595,7 +597,9 @@ namespace Library.Net.Amoeba
                                 catch (Exception)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     throw;
                                 }
@@ -611,6 +615,8 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_downloadItems.ContainsKey(item.Metadata)) continue;
+
                                     this.UncheckState(item.Index);
 
                                     item.Index = index;
@@ -679,6 +685,8 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_downloadItems.ContainsKey(item.Metadata)) continue;
+
                                     this.UncheckState(item.Index);
 
                                     item.Index = null;
@@ -960,11 +968,6 @@ namespace Library.Net.Amoeba
         public IEnumerable<Information> GetMulticastMessages(Tag tag, int limit)
         {
             return this.GetMulticastContents<Message>(tag, limit);
-        }
-
-        public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
-        {
-            return this.GetMulticastContents<Website>(tag, limit);
         }
 
         public override ManagerState State

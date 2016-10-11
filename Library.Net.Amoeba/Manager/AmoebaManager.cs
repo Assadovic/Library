@@ -682,16 +682,6 @@ namespace Library.Net.Amoeba
             }
         }
 
-        public IEnumerable<Information> GetMulticastWebsites(Tag tag, int limit)
-        {
-            this.Check();
-
-            lock (this.ThisLock)
-            {
-                return _backgroundDownloadManager.GetMulticastWebsites(tag, limit);
-            }
-        }
-
         public void Upload(Link link, DigitalSignature digitalSignature)
         {
             this.Check();
@@ -748,21 +738,6 @@ namespace Library.Net.Amoeba
             lock (this.ThisLock)
             {
                 _backgroundUploadManager.MulticastUpload(tag, message, miningLimit, miningTime, digitalSignature);
-            }
-        }
-
-        public void MulticastUpload(Tag tag,
-            Website website,
-
-            int miningLimit,
-            TimeSpan miningTime,
-            DigitalSignature digitalSignature)
-        {
-            this.Check();
-
-            lock (this.ThisLock)
-            {
-                _backgroundUploadManager.MulticastUpload(tag, website, miningLimit, miningTime, digitalSignature);
             }
         }
 

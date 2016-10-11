@@ -213,13 +213,6 @@ namespace Library.Net.Amoeba
 
                                     stream = ContentConverter.ToStream(value);
                                 }
-                                else if (item.Type == "Website")
-                                {
-                                    var value = item.Website;
-                                    if (value == null) throw new FormatException();
-
-                                    stream = ContentConverter.ToStream(value);
-                                }
                             }
                             else
                             {
@@ -272,6 +265,16 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_settings.UploadItems.Contains(item))
+                                    {
+                                        foreach (var key in keys)
+                                        {
+                                            _cacheManager.Unlock(key);
+                                        }
+
+                                        continue;
+                                    }
+
                                     foreach (var key in keys)
                                     {
                                         item.UploadKeys.Add(key);
@@ -334,6 +337,8 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item)) continue;
+
                             if (item.Scheme == "Broadcast")
                             {
                                 _connectionsManager.Upload(broadcastMetadata);
@@ -388,6 +393,16 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item))
+                            {
+                                foreach (var key in group.Keys.Skip(group.InformationLength))
+                                {
+                                    _cacheManager.Unlock(key);
+                                }
+
+                                continue;
+                            }
+
                             foreach (var key in group.Keys.Skip(group.InformationLength))
                             {
                                 item.UploadKeys.Add(key);
@@ -427,6 +442,16 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item))
+                            {
+                                foreach (var key in keys)
+                                {
+                                    _cacheManager.Unlock(key);
+                                }
+
+                                continue;
+                            }
+
                             foreach (var key in keys)
                             {
                                 item.UploadKeys.Add(key);
@@ -470,11 +495,14 @@ namespace Library.Net.Amoeba
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.DigitalSignature = digitalSignature;
 
-                _settings.UploadItems.RemoveAll((target) =>
+                foreach (var target in _settings.UploadItems.ToArray())
                 {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
+                    if (target.Scheme == item.Scheme && target.Type == item.Type
+                        && target.DigitalSignature == digitalSignature)
+                    {
+                        this.Remove(target);
+                    }
+                }
 
                 _settings.UploadItems.Add(item);
             }
@@ -500,11 +528,14 @@ namespace Library.Net.Amoeba
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.DigitalSignature = digitalSignature;
 
-                _settings.UploadItems.RemoveAll((target) =>
+                foreach (var target in _settings.UploadItems.ToArray())
                 {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
+                    if (target.Scheme == item.Scheme && target.Type == item.Type
+                        && target.DigitalSignature == digitalSignature)
+                    {
+                        this.Remove(target);
+                    }
+                }
 
                 _settings.UploadItems.Add(item);
             }
@@ -530,11 +561,14 @@ namespace Library.Net.Amoeba
                 item.HashAlgorithm = HashAlgorithm.Sha256;
                 item.DigitalSignature = digitalSignature;
 
-                _settings.UploadItems.RemoveAll((target) =>
+                foreach (var target in _settings.UploadItems.ToArray())
                 {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
+                    if (target.Scheme == item.Scheme && target.Type == item.Type
+                        && target.DigitalSignature == digitalSignature)
+                    {
+                        this.Remove(target);
+                    }
+                }
 
                 _settings.UploadItems.Add(item);
             }
@@ -568,12 +602,6 @@ namespace Library.Net.Amoeba
                 item.ExchangePublicKey = exchangePublicKey;
                 item.DigitalSignature = digitalSignature;
 
-                _settings.UploadItems.RemoveAll((target) =>
-                {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
-
                 _settings.UploadItems.Add(item);
             }
         }
@@ -606,51 +634,6 @@ namespace Library.Net.Amoeba
                 item.MiningLimit = miningLimit;
                 item.MiningTime = miningTime;
                 item.DigitalSignature = digitalSignature;
-
-                _settings.UploadItems.RemoveAll((target) =>
-                {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
-
-                _settings.UploadItems.Add(item);
-            }
-        }
-
-        public void MulticastUpload(Tag tag,
-            Website website,
-
-            int miningLimit,
-            TimeSpan miningTime,
-            DigitalSignature digitalSignature)
-        {
-            if (tag == null) throw new ArgumentNullException(nameof(tag));
-            if (website == null) throw new ArgumentNullException(nameof(website));
-            if (digitalSignature == null) throw new ArgumentNullException(nameof(digitalSignature));
-
-            lock (_thisLock)
-            {
-                var item = new BackgroundUploadItem();
-
-                item.State = BackgroundUploadState.Encoding;
-                item.Tag = tag;
-                item.Website = website;
-                item.Scheme = "Multicast";
-                item.Type = "Website";
-                item.CreationTime = DateTime.UtcNow;
-                item.Depth = 1;
-                item.BlockLength = 1024 * 1024 * 1;
-                item.CorrectionAlgorithm = CorrectionAlgorithm.ReedSolomon8;
-                item.HashAlgorithm = HashAlgorithm.Sha256;
-                item.MiningLimit = miningLimit;
-                item.MiningTime = miningTime;
-                item.DigitalSignature = digitalSignature;
-
-                _settings.UploadItems.RemoveAll((target) =>
-                {
-                    return target.Scheme == item.Scheme && target.Type == item.Type
-                        && target.DigitalSignature == digitalSignature;
-                });
 
                 _settings.UploadItems.Add(item);
             }
@@ -746,17 +729,17 @@ namespace Library.Net.Amoeba
         {
             public Settings()
                 : base(new List<Library.Configuration.ISettingContent>() {
-                    new Library.Configuration.SettingContent<LockedList<BackgroundUploadItem>>() { Name = "UploadItems", Value = new LockedList<BackgroundUploadItem>() },
+                    new Library.Configuration.SettingContent<HashSet<BackgroundUploadItem>>() { Name = "UploadItems", Value = new HashSet<BackgroundUploadItem>() },
                 })
             {
 
             }
 
-            public LockedList<BackgroundUploadItem> UploadItems
+            public HashSet<BackgroundUploadItem> UploadItems
             {
                 get
                 {
-                    return (LockedList<BackgroundUploadItem>)this["UploadItems"];
+                    return (HashSet<BackgroundUploadItem>)this["UploadItems"];
                 }
             }
         }

@@ -62,12 +62,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Information\Website\WebpageCollection.cs" />
-    <Compile Include="Information\Website\WebsiteCollection.cs" />
-    <Compile Include="Information\Website\Webpage.cs" />
-    <Compile Include="Information\Website\Website.cs" />
-    <Compile Include="Information\_Interface\Website\IWebpage.cs" />
-    <Compile Include="Information\_Interface\Website\IWebsite.cs" />
     <Compile Include="Manager\AmoebaConverter.cs" />
     <Compile Include="Manager\AmoebaManager.cs" />
     <Compile Include="Cache\BitmapManager.cs" />

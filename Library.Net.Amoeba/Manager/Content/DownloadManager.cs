@@ -581,7 +581,9 @@ namespace Library.Net.Amoeba
                                 catch (StopIoException)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     if (largeFlag)
                                     {
@@ -593,7 +595,9 @@ namespace Library.Net.Amoeba
                                 catch (Exception)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     throw;
                                 }
@@ -609,6 +613,8 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_settings.DownloadItems.Contains(item)) continue;
+
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
 
@@ -688,7 +694,9 @@ namespace Library.Net.Amoeba
                                 catch (StopIoException)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     if (largeFlag)
                                     {
@@ -700,7 +708,9 @@ namespace Library.Net.Amoeba
                                 catch (Exception)
                                 {
                                     if (File.Exists(fileName))
+                                    {
                                         File.Delete(fileName);
+                                    }
 
                                     throw;
                                 }
@@ -709,6 +719,8 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_settings.DownloadItems.Contains(item)) continue;
+
                                     item.DecodeOffset = 0;
                                     item.DecodeLength = 0;
 

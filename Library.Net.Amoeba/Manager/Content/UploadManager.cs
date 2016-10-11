@@ -300,6 +300,16 @@ namespace Library.Net.Amoeba
 
                             lock (_thisLock)
                             {
+                                if (!_settings.UploadItems.Contains(item))
+                                {
+                                    foreach (var key in keys)
+                                    {
+                                        _cacheManager.Unlock(key);
+                                    }
+
+                                    continue;
+                                }
+
                                 foreach (var key in keys)
                                 {
                                     item.UploadKeys.Add(key);
@@ -346,6 +356,16 @@ namespace Library.Net.Amoeba
                             {
                                 lock (_thisLock)
                                 {
+                                    if (!_settings.UploadItems.Contains(item))
+                                    {
+                                        foreach (var key in keys)
+                                        {
+                                            _cacheManager.Unlock(key);
+                                        }
+
+                                        continue;
+                                    }
+
                                     item.EncodeOffset = 0;
                                     item.EncodeLength = 0;
 
@@ -376,6 +396,16 @@ namespace Library.Net.Amoeba
 
                                 lock (_thisLock)
                                 {
+                                    if (!_settings.UploadItems.Contains(item))
+                                    {
+                                        foreach (var key in keys)
+                                        {
+                                            _cacheManager.Unlock(key);
+                                        }
+
+                                        continue;
+                                    }
+
                                     item.EncodeOffset = 0;
                                     item.EncodeLength = 0;
 
@@ -395,6 +425,8 @@ namespace Library.Net.Amoeba
                     {
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item)) continue;
+
                             Metadata metadata = null;
                             {
                                 if (item.Type == UploadType.Upload)
@@ -511,6 +543,16 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item))
+                            {
+                                foreach (var key in group.Keys.Skip(group.InformationLength))
+                                {
+                                    _cacheManager.Unlock(key);
+                                }
+
+                                continue;
+                            }
+
                             foreach (var key in group.Keys.Skip(group.InformationLength))
                             {
                                 item.UploadKeys.Add(key);
@@ -612,6 +654,16 @@ namespace Library.Net.Amoeba
 
                         lock (_thisLock)
                         {
+                            if (!_settings.UploadItems.Contains(item))
+                            {
+                                foreach (var key in keys)
+                                {
+                                    _cacheManager.Unlock(key);
+                                }
+
+                                continue;
+                            }
+
                             foreach (var key in keys)
                             {
                                 item.UploadKeys.Add(key);
